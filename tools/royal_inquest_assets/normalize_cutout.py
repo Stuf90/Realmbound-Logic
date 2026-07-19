@@ -11,6 +11,7 @@ from PIL import Image
 
 KEY_CLEAR_DISTANCE = 12.0
 KEY_OPAQUE_DISTANCE = 80.0
+LOW_ALPHA_KEY_RESIDUE_CUTOFF = 12
 BREATHING_ROOM = 0.08
 
 
@@ -90,6 +91,14 @@ def _despill_chroma_key(image: Image.Image, key_color: tuple[int, int, int]) -> 
             sum((color - key) ** 2 for color, key in zip((red, green, blue), key_color))
         )
         if alpha == 0 or key_distance <= KEY_CLEAR_DISTANCE:
+            pixels.append((0, 0, 0, 0))
+            continue
+        if alpha <= LOW_ALPHA_KEY_RESIDUE_CUTOFF and key_distance < KEY_OPAQUE_DISTANCE:
+            # A generator's chroma-key anti-aliasing can retain a one-digit
+            # alpha value after matte calculation.  It is not useful subject
+            # coverage and becomes visible as a key-coloured fringe when the
+            # token is composited.  Use the sampled key colour, so this also
+            # handles non-green keys such as magenta.
             pixels.append((0, 0, 0, 0))
             continue
         if alpha == 255:

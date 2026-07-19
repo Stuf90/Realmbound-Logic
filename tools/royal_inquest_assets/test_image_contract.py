@@ -7,7 +7,8 @@ from PIL import Image
 
 from build_tile_set import build_environment
 from image_contract import edge_distance, inspect_png
-from normalize_cutout import normalize_cutout
+from normalize_cutout import _despill_chroma_key, normalize_cutout
+from split_prop import reframe_prop, split_prop
 
 
 EDGE_BAND = 48
@@ -89,6 +90,39 @@ class ImageContractTests(unittest.TestCase):
             ]
             self.assertEqual(green_dominant, [])
 
+    def test_despill_discards_low_alpha_green_key_residue(self):
+        self._assert_low_alpha_key_residue_is_transparent((0, 255, 0))
+
+    def test_despill_discards_low_alpha_magenta_key_residue(self):
+        self._assert_low_alpha_key_residue_is_transparent((255, 0, 255))
+
+    def test_split_prop_preserves_two_cell_recomposition(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "long-prop.png"
+            left = root / "long-prop-left.png"
+            right = root / "long-prop-right.png"
+            image = Image.new("RGBA", (512, 512), (0, 0, 0, 0))
+            for x in range(24, 488):
+                for y in range(196, 316):
+                    image.putpixel((x, y), (90 + (x % 20), 45, 30, 255))
+            image.save(source)
+
+            expected = reframe_prop(source)
+            split_prop(source, left, right)
+
+            for path in (left, right):
+                facts = inspect_png(path)
+                self.assertTrue(facts.is_512, path)
+                self.assertTrue(facts.has_alpha, path)
+                self.assertTrue(facts.transparent_corners, path)
+            recomposed = Image.new("RGBA", (1024, 512), (0, 0, 0, 0))
+            with Image.open(left) as opened:
+                recomposed.alpha_composite(opened.convert("RGBA"), (0, 0))
+            with Image.open(right) as opened:
+                recomposed.alpha_composite(opened.convert("RGBA"), (512, 0))
+            self.assertEqual(recomposed.tobytes(), expected.tobytes())
+
     def test_tile_variants_share_exact_edges(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -117,6 +151,15 @@ class ImageContractTests(unittest.TestCase):
             f"{first.name} {first_edge} band did not match {second.name} {second_edge} band",
         )
 
+    def _assert_low_alpha_key_residue_is_transparent(self, key: tuple[int, int, int]) -> None:
+        image = Image.new("RGBA", (3, 1), (*key, 0))
+        near_key = tuple(max(0, component - 18) for component in key)
+        image.putpixel((1, 0), (*near_key, 8))
+
+        result = _despill_chroma_key(image, key)
+
+        self.assertEqual(result.getpixel((1, 0)), (0, 0, 0, 0))
+
 
 class CompletePackTests(unittest.TestCase):
     def test_runtime_pack_contract(self):
@@ -128,7 +171,7 @@ class CompletePackTests(unittest.TestCase):
         props = sorted((root / "props").glob("*.png"))
         tiles = sorted((root / "tiles").glob("*.png"))
         self.assertEqual(len(avatars), 18)
-        self.assertEqual(len(props), 12)
+        self.assertEqual(len(props), 22)
         self.assertEqual(len(tiles), 21)
 
         for path in [*avatars, *props]:
