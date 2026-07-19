@@ -48,6 +48,7 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
     {complete && <section className="resolution" aria-labelledby="resolution-title"><p className="seal">Solved</p><h2 id="resolution-title">The traitor is unmasked</h2><p>Lord Aldric alone shared the Solar with the Royal Envoy. The chamber arrangement proves his treason.</p></section>}
     <div className="puzzle-layout app-workspace">
       <section className="board-panel puzzle-board-region" aria-label="Castle floor plan">
+        <div className="board-scroll">
         <div className="inquest-board" role="grid" aria-label="Blackwood Keep, six by six">
           {blackwoodKeep.cells.map((cell) => {
             const occupant = Object.entries(state.placements).find(([, position]) => position && positionKey(position) === positionKey(cell.position))?.[0];
@@ -57,14 +58,14 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
             const label = `Row ${cell.position.row + 1}, column ${cell.position.column + 1}, ${cell.chamberId.replace('-', ' ')}, ${character?.name ?? cellState.replace('-', ' ')}`;
             return <button key={positionKey(cell.position)} role="gridcell" className={`cell ${cellState}`} disabled={cell.blocked} aria-label={label} onClick={() => activate(cell.position.row, cell.position.column)} onKeyDown={(event) => { if (event.key.toLowerCase() === 'x') { event.preventDefault(); if (selected) dispatch({ type: 'toggle-cross', characterId: selected, position: cell.position }); } }}>{character ? character.portraitLabel.slice(0, 2) : cell.blocked ? '◆' : cellState === 'manual-cross' ? '×' : cellState === 'derived-unavailable' ? '·' : ''}<span className="sr-only">{label}</span></button>;
           })}
-        </div>
+        </div></div>
         <div className="toolbar" role="toolbar" aria-label="Puzzle actions">
           <button disabled={!history.past.length} onClick={() => setHistory(undoHistory)}>Undo</button><button disabled={!history.future.length} onClick={() => setHistory(redoHistory)}>Redo</button>
           <button aria-pressed={state.tool === 'place'} onClick={() => dispatch({ type: 'set-tool', tool: 'place' }, false)}>Place</button><button aria-pressed={state.tool === 'cross'} onClick={() => dispatch({ type: 'set-tool', tool: 'cross' }, false)}>Ink cross</button>
           <button onClick={() => { setChecks((n) => n + 1); setStatus(checkInquestProgress(blackwoodKeep, state)?.message ?? 'No contradictions found.'); }}>Check progress</button>
           <button onClick={() => { const hint = getInquestHint(blackwoodKeep, state); setHints((n) => n + 1); if (!hint) return setStatus('No hint is needed.'); setStatus(hint.message); if (hint.characterId && hint.position) dispatch({ type: 'place', characterId: hint.characterId, position: hint.position }); }}>Apply hint</button><button onClick={reset}>Reset</button>
         </div>
-        <p className="status" role="status">{status}</p><p className="metrics puzzle-metrics">Hints {hints} · Checks {checks}</p>
+        <p className="status internal-scroll" role="status">{status}</p><p className="metrics puzzle-metrics">Hints {hints} · Checks {checks}</p>
       </section>
       <aside className="dossier context-tray">
         <nav className="tray-tabs" aria-label="Inquest reference">
