@@ -1,0 +1,2 @@
+import { describe, expect, it } from 'vitest'; import { blackwoodKeep } from './definition'; import { getInquestHint } from './hints'; import { createInitialInquestState } from './reducer';
+describe('inquest hints',()=>{it('offers the first deterministic deduction',()=>{expect(getInquestHint(blackwoodKeep,createInitialInquestState())).toMatchObject({characterId:'envoy',position:{row:0,column:1}});});});
