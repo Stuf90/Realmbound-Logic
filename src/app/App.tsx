@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { RoyalInquest } from '../features/royal-inquest/RoyalInquest';
 import { SiegeLines } from '../features/siege-lines/SiegeLines';
-import { loadPuzzle } from '../shared/persistence';
+import { deletePuzzle, loadPuzzle, type PuzzleSave } from '../shared/persistence';
 import { getPuzzleFamily, PUZZLE_FAMILIES, type PuzzleFamily, type PuzzleFamilyId } from './puzzleCatalog';
 import './app.css';
 
@@ -13,7 +13,7 @@ export function App() {
   if (view.kind === 'ledger') return <PuzzleLedger onSelect={(familyId) => setView({ kind: 'levels', familyId })} />;
   const family = getPuzzleFamily(view.familyId);
   const showLevels = () => setView({ kind: 'levels', familyId: family.id });
-  if (view.kind === 'levels') return <LevelSelection family={family} onBack={() => setView({ kind: 'ledger' })} onSelect={() => setView({ kind: 'briefing', familyId: family.id })} />;
+  if (view.kind === 'levels') return <LevelSelection family={family} onBack={() => setView({ kind: 'ledger' })} onBriefing={() => setView({ kind: 'briefing', familyId: family.id })} onPlay={() => setView({ kind: 'puzzle', familyId: family.id })} />;
   if (view.kind === 'briefing') return <Briefing family={family} onBack={showLevels} onBegin={() => setView({ kind: 'puzzle', familyId: family.id })} />;
   if (family.id === 'royal-inquest') return <RoyalInquest onBack={showLevels} />;
   if (family.id === 'siege-lines') return <SiegeLines onBack={showLevels} />;
@@ -32,9 +32,18 @@ function PuzzleLedger({ onSelect }: { onSelect: (familyId: PuzzleFamilyId) => vo
   </main>;
 }
 
-function LevelSelection({ family, onBack, onSelect }: { family: PuzzleFamily; onBack: () => void; onSelect: () => void }) {
-  const completed = family.levelOne ? loadPuzzle<unknown>(family.levelOne.puzzleId)?.completed === true : false;
-  return <main className="app-shell level-page"><header className="app-topbar"><button className="text-button" onClick={onBack} aria-label="Back to puzzle families">← Puzzle families</button></header><section className="level-workspace app-workspace"><header className="level-header"><p className="eyebrow">{family.discipline} · Commission archive</p><h1>{family.name}</h1><p>Select a level. Further commissions will be unsealed as they are prepared.</p></header><ol className="level-grid internal-scroll" aria-label={`${family.name} levels`}>{Array.from({ length: LEVEL_COUNT }, (_, index) => { const level = index + 1; const available = level === 1 && Boolean(family.levelOne); return <li key={level}><button className="level-card" disabled={!available} onClick={available ? onSelect : undefined} aria-label={available ? `Level ${level}: ${family.levelOne?.title}` : `Level ${level}: sealed`}><span className="level-number">Level {level}</span>{available ? <span className="level-title">{family.levelOne?.title}</span> : <span className="level-locked">Sealed</span>}{available && completed ? <span className="completion-mark" role="status" aria-label="Completed"><span aria-hidden="true">✓</span> Completed</span> : null}</button></li>; })}</ol></section></main>;
+function LevelSelection({ family, onBack, onBriefing, onPlay }: { family: PuzzleFamily; onBack: () => void; onBriefing: () => void; onPlay: () => void }) {
+  const save = family.levelOne ? loadPuzzle<unknown>(family.levelOne.puzzleId) : null;
+  const completed = save?.completed === true;
+  const [pendingReplay, setPendingReplay] = useState<PuzzleSave<unknown> | null>(null);
+  const selectLevel = () => completed && save ? setPendingReplay(save) : onBriefing();
+  const resetAndReplay = () => {
+    if (!family.levelOne) return;
+    deletePuzzle(family.levelOne.puzzleId);
+    setPendingReplay(null);
+    onPlay();
+  };
+  return <main className="app-shell level-page"><header className="app-topbar"><button className="text-button" onClick={onBack} aria-label="Back to puzzle families">← Puzzle families</button></header><section className="level-workspace app-workspace"><header className="level-header"><p className="eyebrow">{family.discipline} · Commission archive</p><h1>{family.name}</h1><p>Select a level. Further commissions will be unsealed as they are prepared.</p></header><ol className="level-grid internal-scroll" aria-label={`${family.name} levels`}>{Array.from({ length: LEVEL_COUNT }, (_, index) => { const level = index + 1; const available = level === 1 && Boolean(family.levelOne); return <li key={level}><button className="level-card" disabled={!available} onClick={available ? selectLevel : undefined} aria-label={available ? `Level ${level}: ${family.levelOne?.title}` : `Level ${level}: sealed`}><span className="level-number">Level {level}</span>{available ? <span className="level-title">{family.levelOne?.title}</span> : <span className="level-locked">Sealed</span>}{available && completed ? <span className="completion-mark" role="status" aria-label="Completed"><span aria-hidden="true">✓</span> Completed</span> : null}</button></li>; })}</ol></section>{pendingReplay ? <div className="replay-backdrop"><section className="replay-dialog" role="dialog" aria-modal="true" aria-labelledby="replay-dialog-title"><p className="eyebrow">Completed commission</p><h2 id="replay-dialog-title">Replay completed puzzle?</h2><p>{family.levelOne?.title}</p><p className="completion-time">Completed in {formatElapsedTime(pendingReplay.elapsedSeconds)}</p><p>Resetting removes the saved solution and starts a fresh attempt immediately.</p><div className="replay-actions"><button autoFocus onClick={() => setPendingReplay(null)}>Cancel</button><button className="primary" onClick={resetAndReplay}>Reset and replay</button></div></section></div> : null}</main>;
 }
 
 function Briefing({ family, onBack, onBegin }: { family: PuzzleFamily; onBack: () => void; onBegin: () => void }) {
@@ -43,3 +52,14 @@ function Briefing({ family, onBack, onBegin }: { family: PuzzleFamily; onBack: (
 }
 
 function toRoman(value: number): string { return ['I', 'II', 'III', 'IV', 'V'][value - 1] ?? String(value); }
+
+export function formatElapsedTime(elapsedSeconds: number): string {
+  const totalSeconds = Math.max(0, Math.floor(Number.isFinite(elapsedSeconds) ? elapsedSeconds : 0));
+  const seconds = totalSeconds % 60;
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  const minutes = totalMinutes % 60;
+  const hours = Math.floor(totalMinutes / 60);
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+    : `${totalMinutes}:${String(seconds).padStart(2, '0')}`;
+}

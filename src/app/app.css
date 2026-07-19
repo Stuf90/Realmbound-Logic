@@ -132,6 +132,13 @@ h2 { font-size: clamp(1.15rem, 4vw, 1.8rem); line-height: 1.05; }
 .level-card:disabled { opacity:1;color:#6a6052;border-style:dashed;background:repeating-linear-gradient(135deg,#e2d3af 0,#e2d3af 7px,#d8c8a4 7px,#d8c8a4 14px); }
 .level-number,.completion-mark { font:800 .72rem system-ui,sans-serif;text-transform:uppercase; }
 .level-title { font-weight:700;line-height:1.15; }.level-locked{font-style:italic}.completion-mark{margin-top:auto;color:#1c5a36}
+.replay-backdrop { position:fixed;z-index:10;inset:0;display:grid;place-items:center;padding:var(--shell-pad);background:rgba(25,18,14,.72); }
+.replay-dialog { width:min(100%,30rem);padding:clamp(1rem,5vmin,2rem);border:double 5px var(--ink);background:var(--paper);box-shadow:0 1rem 3rem rgba(0,0,0,.45); }
+.replay-dialog h2 { margin-block:.35rem .75rem; }
+.replay-dialog > p + p { margin-top:.6rem; }
+.completion-time { color:#1c5a36;font-weight:800; }
+.replay-actions { display:flex;flex-wrap:wrap;justify-content:flex-end;gap:.65rem;margin-top:1.25rem; }
+.replay-actions > button:not(.primary) { border:1px solid var(--ink);background:#fff4d2;color:var(--ink);padding:.55rem .8rem; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
 @media (min-width: 801px) {
