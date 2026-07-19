@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { RoyalInquest } from '../features/royal-inquest/RoyalInquest';
 import { SiegeLines } from '../features/siege-lines/SiegeLines';
+import { loadPuzzle } from '../shared/persistence';
 import { getPuzzleFamily, PUZZLE_FAMILIES, type PuzzleFamily, type PuzzleFamilyId } from './puzzleCatalog';
 import './app.css';
 
@@ -51,7 +52,7 @@ function PuzzleLedger({ onSelect }: { onSelect: (familyId: PuzzleFamilyId) => vo
       </header>
       <section className="commission-grid" aria-label="Puzzle families">
         {PUZZLE_FAMILIES.map((family, index) => (
-          <article className={`commission-card ${family.accent}`} key={family.id}>
+          <article className={`commission-card ${family.accent}${family.available ? '' : ' unavailable'}`} key={family.id}>
             <span className="card-mark" aria-hidden="true">{toRoman(index + 1)}</span>
             <p className="eyebrow">{family.discipline}</p>
             <h2>{family.name}</h2>
@@ -73,6 +74,10 @@ function PuzzleLedger({ onSelect }: { onSelect: (familyId: PuzzleFamilyId) => vo
 }
 
 function LevelSelection({ family, onBack, onSelect }: { family: PuzzleFamily; onBack: () => void; onSelect: () => void }) {
+  const completed = family.levelOne
+    ? loadPuzzle<unknown>(family.levelOne.puzzleId)?.completed === true
+    : false;
+
   return (
     <main className="level-page">
       <button className="text-button" onClick={onBack} aria-label="Back to puzzle families">← Back to puzzle families</button>
@@ -95,6 +100,11 @@ function LevelSelection({ family, onBack, onSelect }: { family: PuzzleFamily; on
               >
                 <span className="level-number">Level {level}</span>
                 {available ? <span className="level-title">{family.levelOne?.title}</span> : <span className="level-locked">Sealed</span>}
+                {available && completed ? (
+                  <span className="completion-mark" role="status" aria-label="Completed">
+                    <span aria-hidden="true">✓</span> Completed
+                  </span>
+                ) : null}
               </button>
             </li>
           );

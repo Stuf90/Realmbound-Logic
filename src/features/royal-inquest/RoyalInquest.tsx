@@ -40,7 +40,7 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
   function reset() { if (window.confirm('Erase the current inquest and begin again?')) { setHistory(createHistory(createInitialInquestState())); setSeconds(0); setHints(0); setChecks(0); setStatus('The inquest has been reset.'); } }
 
   return <main className="commission-page">
-    <button className="text-button" onClick={onBack}>← King’s Ledger</button>
+    <button className="text-button" onClick={onBack} aria-label="Back to Royal Inquest levels">← Royal Inquest levels</button>
     <header className="commission-header"><p className="eyebrow">Royal Commission · Grand Investigator</p><h1>{blackwoodKeep.title}</h1><p>Place each guest. Exactly one belongs in every row and column. Lord Aldric, alone with the slain envoy, is the traitor.</p></header>
     {complete && <section className="resolution" aria-labelledby="resolution-title"><p className="seal">Solved</p><h2 id="resolution-title">The traitor is unmasked</h2><p>Lord Aldric alone shared the Solar with the Royal Envoy. The chamber arrangement proves his treason.</p></section>}
     <div className="puzzle-layout">

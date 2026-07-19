@@ -40,6 +40,33 @@ describe('puzzle navigation', () => {
     expect(within(levelGrid).getByRole('button', { name: /^Level 40\b/ })).toBeDisabled();
   });
 
+  it('marks a persisted completed level', async () => {
+    localStorage.setItem('realmbound:blackwood-keep', JSON.stringify({
+      schemaVersion: 1,
+      puzzleId: 'blackwood-keep',
+      state: {},
+      elapsedSeconds: 1,
+      completed: true,
+      hintsUsed: 0,
+      checksUsed: 0,
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: /Select Royal Inquest/ }));
+
+    expect(screen.getByRole('status', { name: 'Completed' })).toBeInTheDocument();
+  });
+
+  it('does not mark an incomplete level', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: /Select Royal Inquest/ }));
+
+    expect(screen.queryByRole('status', { name: 'Completed' })).not.toBeInTheDocument();
+  });
+
   it('opens the selected level briefing and puzzle', async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -63,6 +90,18 @@ describe('puzzle navigation', () => {
 
     await user.click(screen.getByRole('button', { name: 'Back to puzzle families' }));
     expect(screen.getByRole('heading', { name: /The King.s Ledger/ })).toBeInTheDocument();
+  });
+
+  it('returns from a puzzle to its level selection', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: /Select Royal Inquest/ }));
+    await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
+    await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
+    await user.click(screen.getByRole('button', { name: 'Back to Royal Inquest levels' }));
+
+    expect(screen.getByRole('list', { name: 'Royal Inquest levels' })).toBeInTheDocument();
   });
 });
 
