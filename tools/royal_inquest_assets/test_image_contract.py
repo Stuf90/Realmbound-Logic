@@ -10,6 +10,9 @@ from image_contract import edge_distance, inspect_png
 from normalize_cutout import normalize_cutout
 
 
+EDGE_BAND = 48
+
+
 class ImageContractTests(unittest.TestCase):
     def test_rgba_cutouts_report_transparent_corners(self):
         with TemporaryDirectory() as tmp:
@@ -74,8 +77,17 @@ class ImageContractTests(unittest.TestCase):
                 self.assertEqual(facts.opaque_fraction, 1.0)
             for first in outputs:
                 for second in outputs:
-                    self.assertEqual(edge_distance(first, second, "right", "left"), 0.0)
-                    self.assertEqual(edge_distance(first, second, "bottom", "top"), 0.0)
+                    self._assert_matching_edge_band(first, second, "right", "left")
+                    self._assert_matching_edge_band(first, second, "bottom", "top")
+
+    def _assert_matching_edge_band(
+        self, first: Path, second: Path, first_edge: str, second_edge: str
+    ) -> None:
+        self.assertEqual(
+            _edge_band_bytes(first, first_edge),
+            _edge_band_bytes(second, second_edge),
+            f"{first.name} {first_edge} band did not match {second.name} {second_edge} band",
+        )
 
 
 class CompletePackTests(unittest.TestCase):
@@ -111,8 +123,37 @@ class CompletePackTests(unittest.TestCase):
             self.assertEqual(len(variants), 3, environment)
             for first in variants:
                 for second in variants:
-                    self.assertEqual(edge_distance(first, second, "right", "left"), 0.0)
-                    self.assertEqual(edge_distance(first, second, "bottom", "top"), 0.0)
+                    self.assertEqual(
+                        _edge_band_bytes(first, "right"),
+                        _edge_band_bytes(second, "left"),
+                        f"{environment}: {first.name} right band != {second.name} left band",
+                    )
+                    self.assertEqual(
+                        _edge_band_bytes(first, "bottom"),
+                        _edge_band_bytes(second, "top"),
+                        f"{environment}: {first.name} bottom band != {second.name} top band",
+                    )
+
+
+def _edge_band_bytes(path: Path, edge: str) -> bytes:
+    """Return an edge band ordered from an edge into a tile's interior."""
+
+    with Image.open(path) as opened:
+        image = opened.convert("RGB")
+    width, height = image.size
+    if edge == "top":
+        band = image.crop((0, 0, width, EDGE_BAND))
+    elif edge == "bottom":
+        band = image.crop((0, height - EDGE_BAND, width, height))
+        band = band.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+    elif edge == "left":
+        band = image.crop((0, 0, EDGE_BAND, height))
+    elif edge == "right":
+        band = image.crop((width - EDGE_BAND, 0, width, height))
+        band = band.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    else:
+        raise ValueError(f"Unknown edge {edge!r}")
+    return band.tobytes()
 
 
 if __name__ == "__main__":

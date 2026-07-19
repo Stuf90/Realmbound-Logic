@@ -16,7 +16,7 @@ GAP = 12
 
 
 def build_contact_sheet(root: Path, out: Path, tile_size: int = 96, repeat_tiles: bool = False) -> None:
-    """Render every PNG below *root*, with an optional 3x3 tile preview."""
+    """Render every PNG below *root*, with optional 3x3 previews for tiles."""
 
     if tile_size <= 0:
         raise ValueError("tile_size must be positive")
@@ -25,11 +25,13 @@ def build_contact_sheet(root: Path, out: Path, tile_size: int = 96, repeat_tiles
         raise ValueError(f"No PNG files found below {root}.")
 
     font = ImageFont.load_default()
-    preview_size = tile_size * (3 if repeat_tiles else 1)
     labels = [path.relative_to(root).as_posix() for path in files]
+    previews = [
+        _preview(path, tile_size, repeat_tiles and _is_tile_asset(path, root)) for path in files
+    ]
     label_height = max(_text_height(label, font) for label in labels)
-    cell_width = max(preview_size, max(_text_width(label, font) for label in labels))
-    cell_height = preview_size + 6 + label_height
+    cell_width = max(max(preview.width for preview in previews), max(_text_width(label, font) for label in labels))
+    cell_height = max(preview.height for preview in previews) + 6 + label_height
     columns = min(4, len(files))
     rows = math.ceil(len(files) / columns)
     canvas = Image.new(
@@ -39,13 +41,12 @@ def build_contact_sheet(root: Path, out: Path, tile_size: int = 96, repeat_tiles
     )
     draw = ImageDraw.Draw(canvas)
 
-    for index, (path, label) in enumerate(zip(files, labels)):
+    for index, (path, label, preview) in enumerate(zip(files, labels, previews)):
         column, row = index % columns, index // columns
         x = PADDING + column * (cell_width + GAP)
         y = PADDING + row * (cell_height + GAP)
-        preview = _preview(path, tile_size, repeat_tiles)
         canvas.alpha_composite(preview, (x, y))
-        draw.text((x, y + preview_size + 6), label, fill=INK, font=font)
+        draw.text((x, y + preview.height + 6), label, fill=INK, font=font)
 
     out.parent.mkdir(parents=True, exist_ok=True)
     canvas.convert("RGB").save(out, format="PNG")
@@ -61,6 +62,14 @@ def _preview(path: Path, tile_size: int, repeat_tiles: bool) -> Image.Image:
         for x in range(3):
             preview.alpha_composite(thumbnail, (x * tile_size, y * tile_size))
     return preview
+
+
+def _is_tile_asset(path: Path, root: Path) -> bool:
+    """Identify tile files both from a tiles root and a broader asset root."""
+
+    if root.name == "tiles":
+        return True
+    return "tiles" in path.relative_to(root).parts[:-1]
 
 
 def _text_width(text: str, font: ImageFont.ImageFont) -> int:
