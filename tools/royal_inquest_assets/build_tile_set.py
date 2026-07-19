@@ -57,7 +57,7 @@ def _mirrored_seamless_base(source: Path, size: int) -> Image.Image:
 def _blend_interior_into_shared_edge(
     shared_edge: Image.Image, variant: Image.Image, edge_band: int
 ) -> Image.Image:
-    """Cosine-feather a variant centre over the common edge texture."""
+    """Keep a shared edge band, then cosine-feather into each variant centre."""
 
     width, height = shared_edge.size
     mask = Image.new("L", (width, height))
@@ -65,7 +65,11 @@ def _blend_interior_into_shared_edge(
     for y in range(height):
         for x in range(width):
             distance_to_edge = min(x, y, width - 1 - x, height - 1 - y)
-            progress = min(1.0, distance_to_edge / edge_band)
+            # The complete edge band is copied verbatim from ``shared_edge``.
+            # Begin the transition only after it, so all 48 pixels (by default)
+            # agree byte-for-byte across every compatible variant.
+            transition_distance = max(0, distance_to_edge - edge_band + 1)
+            progress = min(1.0, transition_distance / edge_band)
             values.append(round((1 - math.cos(math.pi * progress)) * 127.5))
     mask.putdata(values)
     return Image.composite(variant, shared_edge, mask)
