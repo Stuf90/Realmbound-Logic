@@ -8,17 +8,40 @@ const glyph: Record<number, string> = { 1: '╵', 2: '╴', 4: '╷', 8: '╶', 
 export function SiegeLines({ onBack }: { onBack: () => void }) {
   const restored = useMemo(() => loadPuzzle<SiegeState>(highgatePassage.id), []);
   const [history, setHistory] = useState(() => createHistory(restored?.state ?? createInitialSiegeState()));
-  const [tool, setTool] = useState<'route' | 'empty' | 'clear'>('route'); const [status, setStatus] = useState('Build one continuous highway between the royal gates.');
-  const [seconds, setSeconds] = useState(restored?.elapsedSeconds ?? 0); const [hints, setHints] = useState(restored?.hintsUsed ?? 0); const [checks, setChecks] = useState(restored?.checksUsed ?? 0);
-  const state = history.present, complete = isSiegeComplete(highgatePassage, state), counts = siegeCounts(highgatePassage, state);
+  const [tool, setTool] = useState<'route' | 'empty' | 'clear'>('route');
+  const [status, setStatus] = useState('Build one continuous highway between the royal gates.');
+  const [seconds, setSeconds] = useState(restored?.elapsedSeconds ?? 0);
+  const [hints, setHints] = useState(restored?.hintsUsed ?? 0);
+  const [checks, setChecks] = useState(restored?.checksUsed ?? 0);
+  const [activeTray, setActiveTray] = useState<'pieces' | 'rules'>('pieces');
+  const state = history.present;
+  const complete = isSiegeComplete(highgatePassage, state);
+  const counts = siegeCounts(highgatePassage, state);
+
   useEffect(() => { if (complete) return; const id = setInterval(() => setSeconds((n) => n + 1), 1000); return () => clearInterval(id); }, [complete]);
   useEffect(() => savePuzzle({ schemaVersion: 1, puzzleId: highgatePassage.id, state, elapsedSeconds: seconds, completed: complete, hintsUsed: hints, checksUsed: checks }), [state, seconds, complete, hints, checks]);
-  function edit(row: number, column: number, mask?: NormalMask) { const next = editSiegeCell(state, { row, column }, mask ? 'cycle' : tool === 'route' ? 'cycle' : tool, mask); setHistory((value) => commitHistory(value, next)); }
-  return <main className="commission-page"><button className="text-button" onClick={onBack} aria-label="Back to Siege Lines levels">← Siege Lines levels</button><header className="commission-header"><p className="eyebrow">Royal Commission · Architect</p><h1>{highgatePassage.title}</h1><p>Connect both gates with one unbroken road. Match every row and column count.</p></header>
+
+  function edit(row: number, column: number, mask?: NormalMask) {
+    const next = editSiegeCell(state, { row, column }, mask ? 'cycle' : tool === 'route' ? 'cycle' : tool, mask);
+    setHistory((value) => commitHistory(value, next));
+  }
+
+  return <main className="app-shell commission-page">
+    <header className="app-topbar puzzle-topbar"><button className="text-button" onClick={onBack}>← Ledger</button><div><p className="eyebrow">Siege Lines</p><h1>{highgatePassage.title}</h1></div><p className="metrics">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</p></header>
     {complete && <section className="resolution"><p className="seal">Complete</p><h2>The messenger rides</h2><p>The Highgate Passage now reaches the allied outpost without branch, break, or wasted stone.</p></section>}
-    <div className="puzzle-layout"><section className="board-panel"><div className="siege-wrap"><div className="column-counts" aria-label="Column road counts">{highgatePassage.columnCounts.map((target, i) => <span key={i}>{counts.columns[i]}/{target}</span>)}</div><div className="siege-rows">{Array.from({ length: 7 }, (_, row) => <div className="siege-row" key={row}>{Array.from({ length: 7 }, (_, column) => { const key = `${row}:${column}`, endpoint = highgatePassage.endpoints[key], value = state.cells[key], mask = endpoint ?? (value?.status === 'route' ? value.mask : 0); return <button key={key} className={`cell siege-cell ${endpoint ? 'fixed' : value?.status ?? ''}`} disabled={!!endpoint} aria-label={`Row ${row + 1}, column ${column + 1}, ${endpoint ? 'fixed gate' : value?.status === 'route' ? `road ${glyph[mask]}` : value?.status}`} onClick={() => edit(row, column)}>{endpoint ? `Gate ${glyph[mask]}` : value?.status === 'empty' ? '×' : glyph[mask] ?? ''}</button>; })}<span className="row-count">{counts.rows[row]}/{highgatePassage.rowCounts[row]}</span></div>)}</div></div>
-      <div className="toolbar"><button disabled={!history.past.length} onClick={() => setHistory(undoHistory)}>Undo</button><button disabled={!history.future.length} onClick={() => setHistory(redoHistory)}>Redo</button>{(['route', 'empty', 'clear'] as const).map((item) => <button key={item} aria-pressed={tool === item} onClick={() => setTool(item)}>{item}</button>)}<button onClick={() => { setChecks((n) => n + 1); setStatus(checkSiegeProgress(highgatePassage, state) ?? 'No contradictions found.'); }}>Check progress</button><button onClick={() => { const hint = getSiegeHint(state); setHints((n) => n + 1); if (hint) { setStatus(hint.message); const [row, column] = hint.key.split(':').map(Number); edit(row!, column!, hint.mask); } }}>Apply hint</button><button onClick={() => { if (confirm('Clear the whole passage?')) { setHistory(createHistory(createInitialSiegeState())); setSeconds(0); } }}>Reset</button></div>
-      <p className="status" role="status">{status}</p><p className="metrics">Time {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')} · Hints {hints} · Checks {checks}</p></section>
-      <aside className="dossier"><h2>Road pieces</h2><p>Choose a road tool and cycle a square, or select an exact orientation.</p><div className="orientation-picker">{ROUTE_MASKS.map((mask) => <button key={mask} onClick={() => setStatus(`Orientation ${glyph[mask]} selected; choose a square, then cycle to match.`)}>{glyph[mask]}</button>)}</div><h2>Architect’s rules</h2><ol><li>One continuous road joins the gates.</li><li>Every road segment has matching neighbours.</li><li>There are no branches, crossings, loops, or disconnected stones.</li><li>Each line matches its numbered total.</li></ol></aside></div>
+    <div className="puzzle-layout app-workspace">
+      <section className="board-panel puzzle-board-region">
+        <div className="siege-wrap">
+          <div className="column-counts" aria-label="Column road counts">{highgatePassage.columnCounts.map((target, i) => <span key={i}>{counts.columns[i]}/{target}</span>)}</div>
+          <div className="siege-rows">{Array.from({ length: 7 }, (_, row) => <div className="siege-row" key={row}>{Array.from({ length: 7 }, (_, column) => { const key = `${row}:${column}`, endpoint = highgatePassage.endpoints[key], value = state.cells[key], mask = endpoint ?? (value?.status === 'route' ? value.mask : 0); return <button key={key} className={`cell siege-cell ${endpoint ? 'fixed' : value?.status ?? ''}`} disabled={!!endpoint} aria-label={`Row ${row + 1}, column ${column + 1}, ${endpoint ? 'fixed gate' : value?.status === 'route' ? `road ${glyph[mask]}` : value?.status}`} onClick={() => edit(row, column)}>{endpoint ? glyph[mask] : value?.status === 'empty' ? '×' : glyph[mask] ?? ''}</button>; })}<span className="row-count">{counts.rows[row]}/{highgatePassage.rowCounts[row]}</span></div>)}</div>
+        </div>
+        <div className="toolbar" role="toolbar" aria-label="Puzzle actions"><button disabled={!history.past.length} onClick={() => setHistory(undoHistory)}>Undo</button><button disabled={!history.future.length} onClick={() => setHistory(redoHistory)}>Redo</button>{(['route', 'empty', 'clear'] as const).map((item) => <button key={item} aria-pressed={tool === item} onClick={() => setTool(item)}>{item}</button>)}<button onClick={() => { setChecks((n) => n + 1); setStatus(checkSiegeProgress(highgatePassage, state) ?? 'No contradictions found.'); }}>Check progress</button><button onClick={() => { const hint = getSiegeHint(state); setHints((n) => n + 1); if (hint) { setStatus(hint.message); const [row, column] = hint.key.split(':').map(Number); edit(row!, column!, hint.mask); } }}>Apply hint</button><button className="reset-action" onClick={() => { if (confirm('Clear the whole passage?')) { setHistory(createHistory(createInitialSiegeState())); setSeconds(0); } }}>Reset</button></div>
+        <p className="status" role="status">{status}</p><p className="metrics puzzle-metrics">Hints {hints} · Checks {checks}</p>
+      </section>
+      <aside className="dossier context-tray">
+        <nav className="tray-tabs" aria-label="Architect reference"><button aria-pressed={activeTray === 'pieces'} onClick={() => setActiveTray('pieces')}>Pieces</button><button aria-pressed={activeTray === 'rules'} onClick={() => setActiveTray('rules')}>Rules</button></nav>
+        {activeTray === 'pieces' ? <section className="tray-content"><p>Choose a road tool and cycle a square, or select an exact orientation.</p><div className="orientation-picker">{ROUTE_MASKS.map((mask) => <button key={mask} onClick={() => setStatus(`Orientation ${glyph[mask]} selected; choose a square, then cycle to match.`)}>{glyph[mask]}</button>)}</div></section> : <section className="internal-scroll rule-list" role="region" aria-label="Architect's rules"><ol><li>One continuous road joins the gates.</li><li>Every road segment has matching neighbours.</li><li>There are no branches, crossings, loops, or disconnected stones.</li><li>Each line matches its numbered total.</li></ol></section>}
+      </aside>
+    </div>
   </main>;
 }
