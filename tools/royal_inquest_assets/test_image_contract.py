@@ -142,6 +142,34 @@ class ImageContractTests(unittest.TestCase):
                     self._assert_matching_edge_band(first, second, "right", "left")
                     self._assert_matching_edge_band(first, second, "bottom", "top")
 
+    def test_tile_builder_does_not_force_bilateral_symmetry(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "asymmetric-source.png"
+            output = root / "tile.png"
+            width, height = 180, 140
+            pixels = [
+                ((x * 29 + y * 7) % 256, (x * 3 + y * 41) % 256, (x * 17 + y * 11) % 256)
+                for y in range(height)
+                for x in range(width)
+            ]
+            image = Image.new("RGB", (width, height))
+            image.putdata(pixels)
+            image.save(source)
+
+            build_environment([source], [output], size=128, edge_band=16)
+
+            with Image.open(output) as opened:
+                interior = opened.convert("RGB").crop((16, 16, 112, 112))
+            self.assertNotEqual(
+                interior.tobytes(),
+                interior.transpose(Image.Transpose.FLIP_LEFT_RIGHT).tobytes(),
+            )
+            self.assertNotEqual(
+                interior.tobytes(),
+                interior.transpose(Image.Transpose.FLIP_TOP_BOTTOM).tobytes(),
+            )
+
     def _assert_matching_edge_band(
         self, first: Path, second: Path, first_edge: str, second_edge: str
     ) -> None:
