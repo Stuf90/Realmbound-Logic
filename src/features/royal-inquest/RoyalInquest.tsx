@@ -44,7 +44,7 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
   const visibleCharacter = blackwoodKeep.characters[characterIndex]!;
 
   return <main className="app-shell commission-page">
-    <header className="app-topbar puzzle-topbar"><button className="text-button" onClick={onBack}>← Ledger</button><div><p className="eyebrow">Royal Inquest</p><h1>{blackwoodKeep.title}</h1></div><p className="metrics">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</p></header>
+    <header className="app-topbar puzzle-topbar"><button className="text-button" onClick={onBack} aria-label="Back to Royal Inquest levels">← Levels</button><div><p className="eyebrow">Royal Inquest</p><h1>{blackwoodKeep.title}</h1></div><p className="metrics">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</p></header>
     {complete && <section className="resolution" aria-labelledby="resolution-title"><p className="seal">Solved</p><h2 id="resolution-title">The traitor is unmasked</h2><p>Lord Aldric alone shared the Solar with the Royal Envoy. The chamber arrangement proves his treason.</p></section>}
     <div className="puzzle-layout app-workspace">
       <section className="board-panel puzzle-board-region" aria-label="Castle floor plan">
