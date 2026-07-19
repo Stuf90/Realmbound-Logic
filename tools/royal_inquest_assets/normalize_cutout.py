@@ -34,6 +34,7 @@ def normalize_cutout(source: Path, destination: Path, size: int = 512) -> None:
         [_matte_alpha(pixel, key_color) for pixel in image.getdata()]
     )
     image.putalpha(alpha)
+    image = _despill_chroma_key(image, key_color)
 
     bounds = alpha.getbbox()
     if bounds is None:
@@ -48,6 +49,7 @@ def normalize_cutout(source: Path, destination: Path, size: int = 512) -> None:
         max(1, round(subject_height * scale)),
     )
     subject = subject.resize(resized_size, Image.Resampling.LANCZOS)
+    subject = _despill_chroma_key(subject, key_color)
 
     output = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     offset = ((size - resized_size[0]) // 2, (size - resized_size[1]) // 2)
@@ -77,3 +79,31 @@ def _matte_alpha(pixel: tuple[int, int, int, int], key_color: tuple[int, int, in
         progress = (distance - KEY_CLEAR_DISTANCE) / (KEY_OPAQUE_DISTANCE - KEY_CLEAR_DISTANCE)
         key_alpha = progress * progress * (3 - (2 * progress))
     return round(pixel[3] * key_alpha)
+
+
+def _despill_chroma_key(image: Image.Image, key_color: tuple[int, int, int]) -> Image.Image:
+    """Unmix the sampled key color from partially transparent edge pixels."""
+
+    pixels: list[tuple[int, int, int, int]] = []
+    for red, green, blue, alpha in image.getdata():
+        key_distance = math.sqrt(
+            sum((color - key) ** 2 for color, key in zip((red, green, blue), key_color))
+        )
+        if alpha == 0 or key_distance <= KEY_CLEAR_DISTANCE:
+            pixels.append((0, 0, 0, 0))
+            continue
+        if alpha == 255:
+            pixels.append((red, green, blue, alpha))
+            continue
+
+        opacity = alpha / 255
+        colors = (red, green, blue)
+        corrected = tuple(
+            round(max(0, min(255, (color - ((1 - opacity) * key)) / opacity)))
+            for color, key in zip(colors, key_color)
+        )
+        pixels.append((*corrected, alpha))
+
+    result = Image.new("RGBA", image.size)
+    result.putdata(pixels)
+    return result
