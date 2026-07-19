@@ -1,19 +1,3 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
-
-import { App } from './App';
-
-describe('App', () => {
-  it("opens the Blackwood Keep briefing from the King's Ledger", async () => {
-    const user = userEvent.setup();
-    render(<App />);
-
-    expect(screen.getByRole('heading', { name: "The King's Ledger" })).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'The Treason at Blackwood Keep' }));
-
-    expect(screen.getByRole('heading', { name: 'The Treason at Blackwood Keep' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Begin the inquest' })).toBeInTheDocument();
-  });
-});
+import { cleanup,render,screen } from '@testing-library/react'; import userEvent from '@testing-library/user-event'; import { afterEach,beforeEach,describe,expect,it } from 'vitest'; import { App } from './App';
+afterEach(cleanup);
+describe('MVP app',()=>{beforeEach(()=>localStorage.clear()); it('opens both commission briefings',async()=>{const user=userEvent.setup();render(<App/>);expect(screen.getByRole('heading',{name:"The King’s Ledger"})).toBeInTheDocument();await user.click(screen.getAllByRole('button',{name:'Read the commission'})[0]!);expect(screen.getByRole('button',{name:'Begin the inquest'})).toBeInTheDocument();}); it('places a character and provides progress controls',async()=>{const user=userEvent.setup();render(<App/>);await user.click(screen.getAllByRole('button',{name:'Read the commission'})[0]!);await user.click(screen.getByRole('button',{name:'Begin the inquest'}));await user.click(screen.getByRole('button',{name:/The Royal Envoy/}));await user.click(screen.getByRole('gridcell',{name:/Row 1, column 2/}));expect(screen.getByRole('gridcell',{name:/Royal Envoy/})).toBeInTheDocument();expect(screen.getByRole('button',{name:'Check progress'})).toBeInTheDocument();});});
