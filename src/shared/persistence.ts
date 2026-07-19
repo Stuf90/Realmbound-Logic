@@ -24,3 +24,7 @@ export function loadPuzzle<T>(puzzleId: string): PuzzleSave<T> | null {
 export function savePuzzle<T>(save: PuzzleSave<T>): void {
   localStorage.setItem(`realmbound:${save.puzzleId}`, JSON.stringify(save));
 }
+
+export function deletePuzzle(puzzleId: string): void {
+  localStorage.removeItem(`realmbound:${puzzleId}`);
+}
