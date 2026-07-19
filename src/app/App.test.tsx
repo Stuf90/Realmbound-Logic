@@ -95,7 +95,7 @@ describe('puzzle navigation', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /Select Royal Inquest/ }));
+    await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
 
     expect(screen.getByRole('dialog', { name: 'Replay completed puzzle?' })).toBeInTheDocument();
@@ -109,7 +109,7 @@ describe('puzzle navigation', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /Select Royal Inquest/ }));
+    await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
@@ -124,7 +124,7 @@ describe('puzzle navigation', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /Select Royal Inquest/ }));
+    await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Reset and replay' }));
 
@@ -143,7 +143,7 @@ describe('puzzle navigation', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /Select Siege Lines/ }));
+    await user.click(screen.getByRole('button', { name: /Siege Lines/ }));
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     expect(screen.getByText('Completed in 1:01:01')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Reset and replay' }));
