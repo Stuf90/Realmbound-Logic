@@ -45,7 +45,7 @@ describe('puzzle navigation', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /Select Royal Inquest/ }));
+    await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
 
     const levelGrid = screen.getByRole('list', { name: 'Royal Inquest levels' });
     const levels = within(levelGrid).getAllByRole('button');
@@ -68,7 +68,7 @@ describe('puzzle navigation', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /Select Royal Inquest/ }));
+    await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
 
     expect(screen.getByRole('status', { name: 'Completed' })).toBeInTheDocument();
   });
@@ -77,7 +77,7 @@ describe('puzzle navigation', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /Select Royal Inquest/ }));
+    await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
 
     expect(screen.queryByRole('status', { name: 'Completed' })).not.toBeInTheDocument();
   });
@@ -156,7 +156,7 @@ describe('puzzle navigation', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /Select Royal Inquest/ }));
+    await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     expect(screen.getByRole('button', { name: 'Begin the inquest' })).toBeInTheDocument();
 
@@ -168,7 +168,7 @@ describe('puzzle navigation', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /Select Siege Lines/ }));
+    await user.click(screen.getByRole('button', { name: /Siege Lines/ }));
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Back to Siege Lines levels' }));
     expect(screen.getByRole('heading', { name: 'Siege Lines' })).toBeInTheDocument();
@@ -181,7 +181,7 @@ describe('puzzle navigation', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /Select Royal Inquest/ }));
+    await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
     await user.click(screen.getByRole('button', { name: 'Back to Royal Inquest levels' }));
@@ -207,7 +207,7 @@ describe('puzzle play', () => {
   it('places a character and provides progress controls', async () => {
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole('button', { name: /Select Royal Inquest/ }));
+    await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
     await user.click(screen.getByRole('button', { name: /The Royal Envoy/ }));
