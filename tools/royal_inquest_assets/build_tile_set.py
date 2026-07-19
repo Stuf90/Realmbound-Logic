@@ -1,4 +1,4 @@
-"""Build compatible, seamless tile variants for one Royal Inquest environment."""
+"""Build independently seamless Royal Inquest floor tiles."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from PIL import Image, ImageChops
 def build_environment(
     sources: list[Path], destinations: list[Path], size: int = 512, edge_band: int = 48
 ) -> None:
-    """Build one environment's variants with one shared seamless edge band."""
+    """Build every source as an independently self-seamless tile."""
 
     if not sources:
         raise ValueError("At least one source tile is required.")
@@ -23,12 +23,11 @@ def build_environment(
     if not 0 < edge_band <= size // 2:
         raise ValueError("edge_band must be greater than zero and at most half of size.")
 
-    variants = [_offset_wrapped_texture(source, size, edge_band) for source in sources]
-    shared_edge = _shared_seam_frame(variants[0], edge_band)
-    for variant, destination in zip(variants, destinations):
-        blended = _blend_interior_into_shared_edge(shared_edge, variant, edge_band)
+    for source, destination in zip(sources, destinations):
+        texture = _offset_wrapped_texture(source, size, edge_band)
+        seamless = _feather_opposing_edges(texture, edge_band)
         destination.parent.mkdir(parents=True, exist_ok=True)
-        blended.save(destination, format="PNG")
+        seamless.save(destination, format="PNG")
 
 
 def _offset_wrapped_texture(source: Path, size: int, edge_band: int) -> Image.Image:
@@ -59,38 +58,55 @@ def _offset_wrapped_texture(source: Path, size: int, edge_band: int) -> Image.Im
     return ImageChops.offset(texture, offset_x, offset_y)
 
 
-def _shared_seam_frame(base: Image.Image, edge_band: int) -> Image.Image:
-    """Reflect only the common perimeter band, preserving an asymmetric centre."""
+def _feather_opposing_edges(base: Image.Image, feather: int) -> Image.Image:
+    """Blend each opposing edge pair with a broad, wavy two-dimensional feather."""
 
-    width, height = base.size
-    framed = base.copy()
+    horizontal = base.copy()
     source = base.load()
-    pixels = framed.load()
+    pixels = horizontal.load()
+    width, height = base.size
     for y in range(height):
-        source_y = height - 1 - y if y >= height - edge_band else y
-        for x in range(width):
-            if x < edge_band or x >= width - edge_band or y < edge_band or y >= height - edge_band:
-                source_x = width - 1 - x if x >= width - edge_band else x
-                pixels[x, y] = source[source_x, source_y]
-    return framed
+        row_feather = _varying_feather(feather, y, height, phase=0.37)
+        for distance in range(row_feather):
+            left_x = distance
+            right_x = width - 1 - distance
+            strength = _cosine_falloff(distance, row_feather)
+            shared = _average(source[left_x, y], source[right_x, y])
+            pixels[left_x, y] = _mix(source[left_x, y], shared, strength)
+            pixels[right_x, y] = _mix(source[right_x, y], shared, strength)
+
+    vertical = horizontal.copy()
+    source = horizontal.load()
+    pixels = vertical.load()
+    for x in range(width):
+        column_feather = _varying_feather(feather, x, width, phase=1.91)
+        for distance in range(column_feather):
+            top_y = distance
+            bottom_y = height - 1 - distance
+            strength = _cosine_falloff(distance, column_feather)
+            shared = _average(source[x, top_y], source[x, bottom_y])
+            pixels[x, top_y] = _mix(source[x, top_y], shared, strength)
+            pixels[x, bottom_y] = _mix(source[x, bottom_y], shared, strength)
+    return vertical
 
 
-def _blend_interior_into_shared_edge(
-    shared_edge: Image.Image, variant: Image.Image, edge_band: int
-) -> Image.Image:
-    """Keep a shared edge band, then cosine-feather into each variant centre."""
+def _varying_feather(feather: int, position: int, span: int, phase: float) -> int:
+    wave = 0.5 + 0.5 * math.sin((position / (span - 1)) * math.tau + phase)
+    return max(2, round(feather * (0.72 + 0.28 * wave)))
 
-    width, height = shared_edge.size
-    mask = Image.new("L", (width, height))
-    values: list[int] = []
-    for y in range(height):
-        for x in range(width):
-            distance_to_edge = min(x, y, width - 1 - x, height - 1 - y)
-            # The complete edge band is copied verbatim from ``shared_edge``.
-            # Begin the transition only after it, so all 48 pixels (by default)
-            # agree byte-for-byte across every compatible variant.
-            transition_distance = max(0, distance_to_edge - edge_band + 1)
-            progress = min(1.0, transition_distance / edge_band)
-            values.append(round((1 - math.cos(math.pi * progress)) * 127.5))
-    mask.putdata(values)
-    return Image.composite(variant, shared_edge, mask)
+
+def _cosine_falloff(distance: int, feather: int) -> float:
+    if feather <= 1:
+        return 1.0
+    progress = distance / (feather - 1)
+    return (1.0 + math.cos(math.pi * progress)) / 2.0
+
+
+def _average(first: tuple[int, int, int], second: tuple[int, int, int]) -> tuple[int, int, int]:
+    return tuple(round((left + right) / 2) for left, right in zip(first, second))
+
+
+def _mix(
+    original: tuple[int, int, int], shared: tuple[int, int, int], strength: float
+) -> tuple[int, int, int]:
+    return tuple(round(left * (1.0 - strength) + right * strength) for left, right in zip(original, shared))

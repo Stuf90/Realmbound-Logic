@@ -11,9 +11,6 @@ from normalize_cutout import _despill_chroma_key, normalize_cutout
 from split_prop import reframe_prop, split_prop
 
 
-EDGE_BAND = 48
-
-
 class ImageContractTests(unittest.TestCase):
     def test_rgba_cutouts_report_transparent_corners(self):
         with TemporaryDirectory() as tmp:
@@ -123,7 +120,7 @@ class ImageContractTests(unittest.TestCase):
                 recomposed.alpha_composite(opened.convert("RGBA"), (512, 0))
             self.assertEqual(recomposed.tobytes(), expected.tobytes())
 
-    def test_tile_variants_share_exact_edges(self):
+    def test_tile_variants_are_independently_self_seamless(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
             sources = []
@@ -137,10 +134,8 @@ class ImageContractTests(unittest.TestCase):
                 facts = inspect_png(output)
                 self.assertEqual((facts.width, facts.height), (512, 512))
                 self.assertEqual(facts.opaque_fraction, 1.0)
-            for first in outputs:
-                for second in outputs:
-                    self._assert_matching_edge_band(first, second, "right", "left")
-                    self._assert_matching_edge_band(first, second, "bottom", "top")
+                self.assertEqual(edge_distance(output, output, "right", "left"), 0.0)
+                self.assertEqual(edge_distance(output, output, "bottom", "top"), 0.0)
 
     def test_tile_builder_does_not_force_bilateral_symmetry(self):
         with TemporaryDirectory() as tmp:
@@ -170,15 +165,6 @@ class ImageContractTests(unittest.TestCase):
                 interior.transpose(Image.Transpose.FLIP_TOP_BOTTOM).tobytes(),
             )
 
-    def _assert_matching_edge_band(
-        self, first: Path, second: Path, first_edge: str, second_edge: str
-    ) -> None:
-        self.assertEqual(
-            _edge_band_bytes(first, first_edge),
-            _edge_band_bytes(second, second_edge),
-            f"{first.name} {first_edge} band did not match {second.name} {second_edge} band",
-        )
-
     def _assert_low_alpha_key_residue_is_transparent(
         self, key: tuple[int, int, int], alpha: int
     ) -> None:
@@ -189,8 +175,6 @@ class ImageContractTests(unittest.TestCase):
         result = _despill_chroma_key(image, key)
 
         self.assertEqual(result.getpixel((1, 0)), (0, 0, 0, 0))
-
-
 class CompletePackTests(unittest.TestCase):
     def test_runtime_pack_contract(self):
         root = Path(__file__).resolve().parents[2] / "src" / "assets" / "royal-inquest"
@@ -202,7 +186,7 @@ class CompletePackTests(unittest.TestCase):
         tiles = sorted((root / "tiles").glob("*.png"))
         self.assertEqual(len(avatars), 18)
         self.assertEqual(len(props), 22)
-        self.assertEqual(len(tiles), 21)
+        self.assertEqual(len(tiles), 15)
 
         for path in [*avatars, *props]:
             facts = inspect_png(path)
@@ -220,42 +204,30 @@ class CompletePackTests(unittest.TestCase):
             environments[environment].append(path)
         self.assertEqual(len(environments), 7)
 
+        expected_variant_counts = {
+            "room-timber": 3,
+            "garden": 3,
+            "church-stone": 3,
+            "kitchen-flagstone": 3,
+            "hallway-stone": 1,
+            "dungeon-masonry": 1,
+            "royal-marble": 1,
+        }
+        self.assertEqual(
+            {environment: len(variants) for environment, variants in environments.items()},
+            expected_variant_counts,
+        )
         for environment, variants in environments.items():
-            self.assertEqual(len(variants), 3, environment)
-            for first in variants:
-                for second in variants:
-                    self.assertEqual(
-                        _edge_band_bytes(first, "right"),
-                        _edge_band_bytes(second, "left"),
-                        f"{environment}: {first.name} right band != {second.name} left band",
-                    )
-                    self.assertEqual(
-                        _edge_band_bytes(first, "bottom"),
-                        _edge_band_bytes(second, "top"),
-                        f"{environment}: {first.name} bottom band != {second.name} top band",
-                    )
-
-
-def _edge_band_bytes(path: Path, edge: str) -> bytes:
-    """Return an edge band ordered from an edge into a tile's interior."""
-
-    with Image.open(path) as opened:
-        image = opened.convert("RGB")
-    width, height = image.size
-    if edge == "top":
-        band = image.crop((0, 0, width, EDGE_BAND))
-    elif edge == "bottom":
-        band = image.crop((0, height - EDGE_BAND, width, height))
-        band = band.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
-    elif edge == "left":
-        band = image.crop((0, 0, EDGE_BAND, height))
-    elif edge == "right":
-        band = image.crop((width - EDGE_BAND, 0, width, height))
-        band = band.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
-    else:
-        raise ValueError(f"Unknown edge {edge!r}")
-    return band.tobytes()
-
-
+            for variant in variants:
+                self.assertEqual(
+                    edge_distance(variant, variant, "right", "left"),
+                    0.0,
+                    f"{environment}: {variant.name} right edge != left edge",
+                )
+                self.assertEqual(
+                    edge_distance(variant, variant, "bottom", "top"),
+                    0.0,
+                    f"{environment}: {variant.name} bottom edge != top edge",
+                )
 if __name__ == "__main__":
     unittest.main()
