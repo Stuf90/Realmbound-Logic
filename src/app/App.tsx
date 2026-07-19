@@ -21,12 +21,13 @@ export function App() {
 }
 
 function PuzzleLedger({ onSelect }: { onSelect: (familyId: PuzzleFamilyId) => void }) {
-  const [familyIndex, setFamilyIndex] = useState(0);
   return <main className="app-shell ledger">
     <header className="ledger-header"><p className="eyebrow">His Majesty’s Office of Reason</p><h1>The King’s Ledger</h1><p>Choose a discipline, then select a commission from its record.</p></header>
-    <section className="commission-selector app-workspace" role="region" aria-label="Puzzle families">
-      <div className="commission-grid">{PUZZLE_FAMILIES.map((family, index) => <article className={`commission-card ${family.accent}${family.available ? '' : ' unavailable'}`} data-active={familyIndex === index} aria-label={family.name} key={family.id}><span className="card-mark" aria-hidden="true">{toRoman(index + 1)}</span><p className="eyebrow">{family.discipline}</p><h2>{family.name}</h2><p>{family.description}</p><button className="primary" disabled={!family.available} onClick={() => onSelect(family.id)} aria-label={`Select ${family.name}${family.available ? '' : ', coming later'}`}>{family.available ? 'Choose puzzle' : 'Coming later'}</button></article>)}</div>
-      <nav className="carousel-controls" aria-label="Choose puzzle family"><button aria-label="Previous puzzle family" onClick={() => setFamilyIndex((familyIndex - 1 + PUZZLE_FAMILIES.length) % PUZZLE_FAMILIES.length)}>←</button><span aria-live="polite">{familyIndex + 1} / {PUZZLE_FAMILIES.length}</span><button aria-label="Next puzzle family" onClick={() => setFamilyIndex((familyIndex + 1) % PUZZLE_FAMILIES.length)}>→</button></nav>
+    <section className="commission-list app-workspace" role="region" aria-label="Puzzle families">
+      {PUZZLE_FAMILIES.map((family, index) => <button className={`commission-row ${family.accent}`} disabled={!family.available} onClick={() => onSelect(family.id)} aria-label={`${family.name}. ${family.discipline}. ${family.description}`} key={family.id}>
+        <span className="card-mark" aria-hidden="true">{['I', 'II', 'III', 'IV', 'V'][index]}</span>
+        <span className="commission-copy"><span className="eyebrow">{family.discipline}</span><strong>{family.name}</strong><span className="commission-description">{family.description}</span></span>
+      </button>)}
     </section>
     <footer className="ledger-footer">Progress is kept automatically in this browser.</footer>
   </main>;
@@ -50,8 +51,6 @@ function Briefing({ family, onBack, onBegin }: { family: PuzzleFamily; onBack: (
   const inquest = family.id === 'royal-inquest';
   return <main className="app-shell briefing"><header className="app-topbar"><button className="text-button" onClick={onBack} aria-label={`Back to ${family.name} levels`}>← {family.name} levels</button></header><section className="briefing-sheet app-workspace"><div className="briefing-scroll internal-scroll" role="region" aria-label="Commission briefing"><p className="eyebrow">By order of the Crown</p><h1>{family.levelOne?.title}</h1><p className="dropcap">{inquest ? 'A royal envoy lies slain inside Blackwood Keep. Six witnesses occupied six distinct rows and columns. Arrange them from their testimony, then identify the sole lord who shared the envoy’s chamber.' : 'The northern road has collapsed beneath a siege train. Rebuild one continuous passage between the two gates while satisfying the masons’ count for every line.'}</p><h2>Your charge</h2><ul>{inquest ? <><li>Place one character in every row and column.</li><li>Respect blocked scenery, chamber boundaries, and witness clues.</li><li>Use ink crosses to mark impossible cells.</li></> : <><li>Lay straight and curved road segments.</li><li>Match every connection and numbered line count.</li><li>Prevent branches, loops, and isolated road.</li></>}</ul></div><footer className="briefing-actions"><button className="primary" onClick={onBegin}>{inquest ? 'Begin the inquest' : 'Open the works'}</button></footer></section></main>;
 }
-
-function toRoman(value: number): string { return ['I', 'II', 'III', 'IV', 'V'][value - 1] ?? String(value); }
 
 export function formatElapsedTime(elapsedSeconds: number): string {
   const totalSeconds = Math.max(0, Math.floor(Number.isFinite(elapsedSeconds) ? elapsedSeconds : 0));
