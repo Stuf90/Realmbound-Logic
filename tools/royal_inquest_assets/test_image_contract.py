@@ -61,6 +61,34 @@ class ImageContractTests(unittest.TestCase):
             self.assertTrue(facts.has_alpha)
             self.assertTrue(facts.transparent_corners)
 
+    def test_normalized_cutout_despills_nontransparent_edges(self):
+        with TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source.png"
+            output = Path(tmp) / "output.png"
+            image = Image.new("RGB", (640, 640), "#00ff00")
+            for x in range(160, 480):
+                for y in range(160, 480):
+                    image.putpixel((x, y), (120, 80, 40))
+            for x in range(160, 480):
+                image.putpixel((x, 160), (10, 230, 5))
+                image.putpixel((x, 479), (10, 230, 5))
+            for y in range(160, 480):
+                image.putpixel((160, y), (10, 230, 5))
+                image.putpixel((479, y), (10, 230, 5))
+            image.save(source)
+
+            normalize_cutout(source, output)
+
+            with Image.open(output) as opened:
+                pixels = opened.convert("RGBA").getdata()
+            green_dominant = [
+                pixel
+                for red, green, blue, alpha in pixels
+                if alpha > 0 and green > red * 1.25 and green > blue * 1.25
+                for pixel in [(red, green, blue, alpha)]
+            ]
+            self.assertEqual(green_dominant, [])
+
     def test_tile_variants_share_exact_edges(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
