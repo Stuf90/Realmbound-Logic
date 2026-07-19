@@ -27,7 +27,7 @@ export function SiegeLines({ onBack }: { onBack: () => void }) {
   }
 
   return <main className="app-shell commission-page">
-    <header className="app-topbar puzzle-topbar"><button className="text-button" onClick={onBack}>← Ledger</button><div><p className="eyebrow">Siege Lines</p><h1>{highgatePassage.title}</h1></div><p className="metrics">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</p></header>
+    <header className="app-topbar puzzle-topbar"><button className="text-button" onClick={onBack} aria-label="Back to Siege Lines levels">← Levels</button><div><p className="eyebrow">Siege Lines</p><h1>{highgatePassage.title}</h1></div><p className="metrics">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</p></header>
     {complete && <section className="resolution"><p className="seal">Complete</p><h2>The messenger rides</h2><p>The Highgate Passage now reaches the allied outpost without branch, break, or wasted stone.</p></section>}
     <div className="puzzle-layout app-workspace">
       <section className="board-panel puzzle-board-region">
