@@ -57,7 +57,7 @@ Run:
 & 'C:\Program Files\nodejs\npm.cmd' install
 ```
 
-Expected: exit code 0, `package-lock.json` remains lockfile version 3, and its root package contains `"packageManager": "npm@11.16.0"`.
+Expected: exit code 0, `package-lock.json` remains lockfile version 3, and `package.json` contains `"packageManager": "npm@11.16.0"`.
 
 - [ ] **Step 4: Run the automated tests**
 
