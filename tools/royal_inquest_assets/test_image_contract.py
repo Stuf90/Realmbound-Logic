@@ -91,10 +91,10 @@ class ImageContractTests(unittest.TestCase):
             self.assertEqual(green_dominant, [])
 
     def test_despill_discards_low_alpha_green_key_residue(self):
-        self._assert_low_alpha_key_residue_is_transparent((0, 255, 0))
+        self._assert_low_alpha_key_residue_is_transparent((0, 255, 0), 14)
 
     def test_despill_discards_low_alpha_magenta_key_residue(self):
-        self._assert_low_alpha_key_residue_is_transparent((255, 0, 255))
+        self._assert_low_alpha_key_residue_is_transparent((255, 0, 255), 39)
 
     def test_split_prop_preserves_two_cell_recomposition(self):
         with TemporaryDirectory() as tmp:
@@ -151,10 +151,12 @@ class ImageContractTests(unittest.TestCase):
             f"{first.name} {first_edge} band did not match {second.name} {second_edge} band",
         )
 
-    def _assert_low_alpha_key_residue_is_transparent(self, key: tuple[int, int, int]) -> None:
+    def _assert_low_alpha_key_residue_is_transparent(
+        self, key: tuple[int, int, int], alpha: int
+    ) -> None:
         image = Image.new("RGBA", (3, 1), (*key, 0))
         near_key = tuple(max(0, component - 18) for component in key)
-        image.putpixel((1, 0), (*near_key, 8))
+        image.putpixel((1, 0), (*near_key, alpha))
 
         result = _despill_chroma_key(image, key)
 
