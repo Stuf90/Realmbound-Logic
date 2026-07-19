@@ -1,0 +1,58 @@
+import type { GridPosition } from '../../shared/geometry';
+
+export type CharacterId = string;
+
+export interface InquestCharacter {
+  id: CharacterId;
+  name: string;
+  portraitLabel: string;
+  isVictim?: boolean;
+}
+
+export interface InquestCell {
+  position: GridPosition;
+  chamberId: string;
+  blocked: boolean;
+  legalCharacterIds?: CharacterId[];
+}
+
+export type InquestPredicate =
+  | { type: 'exact-row'; characterId: CharacterId; row: number }
+  | { type: 'exact-column'; characterId: CharacterId; column: number }
+  | { type: 'same-chamber'; firstCharacterId: CharacterId; secondCharacterId: CharacterId }
+  | { type: 'different-chamber'; firstCharacterId: CharacterId; secondCharacterId: CharacterId }
+  | { type: 'north-of'; subjectCharacterId: CharacterId; referenceCharacterId: CharacterId }
+  | { type: 'beside'; firstCharacterId: CharacterId; secondCharacterId: CharacterId };
+
+export interface InquestClue {
+  id: string;
+  text: string;
+  predicate: InquestPredicate;
+}
+
+export interface InquestDefinition {
+  id: string;
+  title: string;
+  definitionVersion: number;
+  rows: number;
+  columns: number;
+  characters: InquestCharacter[];
+  cells: InquestCell[];
+  clues: InquestClue[];
+  traitorId: CharacterId;
+  solution: Record<CharacterId, GridPosition>;
+}
+
+export interface InquestState {
+  placements: Partial<Record<CharacterId, GridPosition>>;
+  manualCrosses: Partial<Record<CharacterId, string[]>>;
+  selectedCharacterId: CharacterId | null;
+  tool: 'place' | 'cross';
+}
+
+export type InquestAction =
+  | { type: 'select-character'; characterId: CharacterId | null }
+  | { type: 'set-tool'; tool: InquestState['tool'] }
+  | { type: 'place'; characterId: CharacterId; position: GridPosition }
+  | { type: 'toggle-cross'; characterId: CharacterId; position: GridPosition }
+  | { type: 'clear-placement'; characterId: CharacterId };
