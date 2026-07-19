@@ -1,17 +1,144 @@
 import { useState } from 'react';
 import { RoyalInquest } from '../features/royal-inquest/RoyalInquest';
 import { SiegeLines } from '../features/siege-lines/SiegeLines';
+import { getPuzzleFamily, PUZZLE_FAMILIES, type PuzzleFamily, type PuzzleFamilyId } from './puzzleCatalog';
 import './app.css';
 
-type View = 'ledger' | 'inquest-briefing' | 'inquest' | 'siege-briefing' | 'siege';
+type View =
+  | { kind: 'ledger' }
+  | { kind: 'levels'; familyId: PuzzleFamilyId }
+  | { kind: 'briefing'; familyId: PuzzleFamilyId }
+  | { kind: 'puzzle'; familyId: PuzzleFamilyId };
+
+const LEVEL_COUNT = 40;
 
 export function App() {
-  const [view, setView] = useState<View>('ledger');
-  if (view === 'inquest') return <RoyalInquest onBack={() => setView('ledger')} />;
-  if (view === 'siege') return <SiegeLines onBack={() => setView('ledger')} />;
-  if (view.endsWith('briefing')) {
-    const inquest = view === 'inquest-briefing';
-    return <main className="briefing"><button className="text-button" onClick={() => setView('ledger')}>← King’s Ledger</button><div className="briefing-sheet"><p className="eyebrow">By order of the Crown</p><h1>{inquest ? 'The Treason at Blackwood Keep' : 'The Highgate Passage'}</h1><p className="dropcap">{inquest ? 'A royal envoy lies slain inside Blackwood Keep. Six witnesses occupied six distinct rows and columns. Arrange them from their testimony, then identify the sole lord who shared the envoy’s chamber.' : 'The northern road has collapsed beneath a siege train. Rebuild one continuous passage between the two gates while satisfying the masons’ count for every line.'}</p><h2>Your charge</h2><ul>{inquest ? <><li>Place one character in every row and column.</li><li>Respect blocked scenery, chamber boundaries, and witness clues.</li><li>Use ink crosses to mark impossible cells.</li></> : <><li>Lay straight and curved road segments.</li><li>Match every connection and numbered line count.</li><li>Prevent branches, loops, and isolated road.</li></>}</ul><button className="primary" onClick={() => setView(inquest ? 'inquest' : 'siege')}>{inquest ? 'Begin the inquest' : 'Open the works'}</button></div></main>;
+  const [view, setView] = useState<View>({ kind: 'ledger' });
+
+  if (view.kind === 'ledger') {
+    return <PuzzleLedger onSelect={(familyId) => setView({ kind: 'levels', familyId })} />;
   }
-  return <main className="ledger"><header><p className="eyebrow">His Majesty’s Office of Reason</p><h1>The King’s Ledger</h1><p>Two urgent commissions await a discerning mind.</p></header><section className="commission-grid" aria-label="Royal commissions"><article className="commission-card"><span className="card-mark">I</span><p className="eyebrow">Royal Inquest</p><h2>The Treason at Blackwood Keep</h2><p>Place six persons within the keep and expose the traitor through spatial deduction.</p><dl><div><dt>Discipline</dt><dd>Investigation</dd></div><div><dt>Board</dt><dd>6 × 6</dd></div></dl><button className="primary" onClick={() => setView('inquest-briefing')}>Read the commission</button></article><article className="commission-card blue"><span className="card-mark">II</span><p className="eyebrow">Siege Lines</p><h2>The Highgate Passage</h2><p>Restore the King’s highway as one exact route through the besieged valley.</p><dl><div><dt>Discipline</dt><dd>Architecture</dd></div><div><dt>Board</dt><dd>7 × 7</dd></div></dl><button className="primary" onClick={() => setView('siege-briefing')}>Read the commission</button></article></section><footer>Progress is kept automatically in this browser.</footer></main>;
+
+  const family = getPuzzleFamily(view.familyId);
+  const showLevels = () => setView({ kind: 'levels', familyId: family.id });
+
+  if (view.kind === 'levels') {
+    return (
+      <LevelSelection
+        family={family}
+        onBack={() => setView({ kind: 'ledger' })}
+        onSelect={() => setView({ kind: 'briefing', familyId: family.id })}
+      />
+    );
+  }
+
+  if (view.kind === 'briefing') {
+    return <Briefing family={family} onBack={showLevels} onBegin={() => setView({ kind: 'puzzle', familyId: family.id })} />;
+  }
+
+  if (family.id === 'royal-inquest') return <RoyalInquest onBack={showLevels} />;
+  if (family.id === 'siege-lines') return <SiegeLines onBack={showLevels} />;
+  return null;
+}
+
+function PuzzleLedger({ onSelect }: { onSelect: (familyId: PuzzleFamilyId) => void }) {
+  return (
+    <main className="ledger">
+      <header>
+        <p className="eyebrow">His Majesty’s Office of Reason</p>
+        <h1>The King’s Ledger</h1>
+        <p>Choose a discipline, then select a commission from its record.</p>
+      </header>
+      <section className="commission-grid" aria-label="Puzzle families">
+        {PUZZLE_FAMILIES.map((family, index) => (
+          <article className={`commission-card ${family.accent}`} key={family.id}>
+            <span className="card-mark" aria-hidden="true">{toRoman(index + 1)}</span>
+            <p className="eyebrow">{family.discipline}</p>
+            <h2>{family.name}</h2>
+            <p>{family.description}</p>
+            <button
+              className="primary"
+              disabled={!family.available}
+              onClick={() => onSelect(family.id)}
+              aria-label={`Select ${family.name}${family.available ? '' : ', coming later'}`}
+            >
+              {family.available ? 'Choose puzzle' : 'Coming later'}
+            </button>
+          </article>
+        ))}
+      </section>
+      <footer>Progress is kept automatically in this browser.</footer>
+    </main>
+  );
+}
+
+function LevelSelection({ family, onBack, onSelect }: { family: PuzzleFamily; onBack: () => void; onSelect: () => void }) {
+  return (
+    <main className="level-page">
+      <button className="text-button" onClick={onBack} aria-label="Back to puzzle families">← Back to puzzle families</button>
+      <header className="level-header">
+        <p className="eyebrow">{family.discipline} · Commission archive</p>
+        <h1>{family.name}</h1>
+        <p>Select a level. Further commissions will be unsealed as they are prepared.</p>
+      </header>
+      <ol className="level-grid" aria-label={`${family.name} levels`}>
+        {Array.from({ length: LEVEL_COUNT }, (_, index) => {
+          const level = index + 1;
+          const available = level === 1 && Boolean(family.levelOne);
+          return (
+            <li key={level}>
+              <button
+                className="level-card"
+                disabled={!available}
+                onClick={available ? onSelect : undefined}
+                aria-label={available ? `Level ${level}: ${family.levelOne?.title}` : `Level ${level}: sealed`}
+              >
+                <span className="level-number">Level {level}</span>
+                {available ? <span className="level-title">{family.levelOne?.title}</span> : <span className="level-locked">Sealed</span>}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </main>
+  );
+}
+
+function Briefing({ family, onBack, onBegin }: { family: PuzzleFamily; onBack: () => void; onBegin: () => void }) {
+  const inquest = family.id === 'royal-inquest';
+  return (
+    <main className="briefing">
+      <button className="text-button" onClick={onBack} aria-label={`Back to ${family.name} levels`}>← Back to {family.name} levels</button>
+      <div className="briefing-sheet">
+        <p className="eyebrow">By order of the Crown</p>
+        <h1>{family.levelOne?.title}</h1>
+        <p className="dropcap">
+          {inquest
+            ? 'A royal envoy lies slain inside Blackwood Keep. Six witnesses occupied six distinct rows and columns. Arrange them from their testimony, then identify the sole lord who shared the envoy’s chamber.'
+            : 'The northern road has collapsed beneath a siege train. Rebuild one continuous passage between the two gates while satisfying the masons’ count for every line.'}
+        </p>
+        <h2>Your charge</h2>
+        <ul>
+          {inquest ? (
+            <>
+              <li>Place one character in every row and column.</li>
+              <li>Respect blocked scenery, chamber boundaries, and witness clues.</li>
+              <li>Use ink crosses to mark impossible cells.</li>
+            </>
+          ) : (
+            <>
+              <li>Lay straight and curved road segments.</li>
+              <li>Match every connection and numbered line count.</li>
+              <li>Prevent branches, loops, and isolated road.</li>
+            </>
+          )}
+        </ul>
+        <button className="primary" onClick={onBegin}>{inquest ? 'Begin the inquest' : 'Open the works'}</button>
+      </div>
+    </main>
+  );
+}
+
+function toRoman(value: number): string {
+  return ['I', 'II', 'III', 'IV', 'V'][value - 1] ?? String(value);
 }
