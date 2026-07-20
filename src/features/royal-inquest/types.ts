@@ -1,4 +1,5 @@
 import type { GridPosition } from '../../shared/geometry';
+import type { AvatarAssetId, TileEnvironment } from '../../assets/royal-inquest/manifest';
 
 export type CharacterId = string;
 
@@ -6,6 +7,7 @@ export interface InquestCharacter {
   id: CharacterId;
   name: string;
   portraitLabel: string;
+  avatarId: AvatarAssetId;
   isVictim?: boolean;
 }
 
@@ -41,6 +43,7 @@ export interface InquestDefinition {
   clues: InquestClue[];
   traitorId: CharacterId;
   solution: Record<CharacterId, GridPosition>;
+  chamberEnvironments: Record<string, TileEnvironment>;
 }
 
 export interface InquestState {
