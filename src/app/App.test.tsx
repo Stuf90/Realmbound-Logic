@@ -234,6 +234,23 @@ describe('puzzle play', () => {
     expect(throneCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('throne'));
   });
 
+  it('shows the currently browsed character clues without switching tabs', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
+    await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
+    await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
+
+    const envoyBrief = screen.getByRole('region', { name: /Clues about The Royal Envoy/i });
+    expect(within(envoyBrief).getByText('The envoy was seen along the northern wall.')).toBeInTheDocument();
+    expect(within(envoyBrief).getByText('The envoy stood in the second column.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Next character' }));
+
+    const aldricBrief = screen.getByRole('region', { name: /Clues about Lord Aldric/i });
+    expect(within(aldricBrief).getByText('Aldric kept to the western edge of the Solar.')).toBeInTheDocument();
+  });
+
   it('renders a wall indicator at every real chamber boundary', async () => {
     const user = userEvent.setup();
     const { container } = render(<App />);
