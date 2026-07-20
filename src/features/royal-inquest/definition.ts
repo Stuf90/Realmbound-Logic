@@ -2,16 +2,18 @@ import type { GridPosition } from '../../shared/geometry';
 import type { PropAssetId } from '../../assets/royal-inquest/manifest';
 import type { CharacterId, InquestCell, InquestDefinition } from './types';
 
-// Every chamber below is a 2-row x 3-column block (>= 5-tile minimum), so blocked cells double as
-// prop anchors without ever colliding with a solution/legal cell. Board is square (6x6) so future
-// levels can scale up (8x8, 10x10, ...) while keeping the same board-fit CSS contract.
+// The Solar spans the full top two rows (all 6 columns) so it can host both the envoy and the
+// traitor without squeezing every other chamber below it into a single shared column. The remaining
+// four rows are split into four irregular chambers (not a uniform 2x2 grid) so that, combined with
+// the exact-chamber clues below and the one-per-row/one-per-column rule, each non-victim character's
+// cell is uniquely forced — verified by `solveInquestDefinition` in definitionValidation.test.ts.
 const decorativePropsByPosition: Record<string, PropAssetId> = {
-  '0:0': 'throne',
-  '0:3': 'formal-chair',
   '3:0': 'barrel-cluster',
   '2:5': 'bookshelf',
-  '4:0': 'church-pew',
   '5:4': 'dungeon-cage',
+  '5:3': 'dungeon-cage',
+  '3:3': 'barrel-cluster',
+  '2:3': 'barrel-cluster',
 };
 
 // Seat props sit on a legal/solution cell instead of a blocked one: a character can be placed on
@@ -21,34 +23,28 @@ const seatPropsByPosition: Record<string, PropAssetId> = {
   '1:0': 'formal-chair',
 };
 
+// Plain impassable cells with no prop art (the church environment has no decorative-only prop
+// asset in the manifest — pews are seat props — so these stay bare walls/rubble).
+const blockedNoPropCells = new Set(['5:2', '4:1', '5:1']);
+
 const propsByPosition: Record<string, PropAssetId> = {
   ...decorativePropsByPosition,
   ...seatPropsByPosition,
 };
 
-const blockedCells = new Set(Object.keys(decorativePropsByPosition));
+const blockedCells = new Set([...Object.keys(decorativePropsByPosition), ...blockedNoPropCells]);
 
 const chamberByPosition = [
-  ['solar', 'solar', 'solar', 'great-hall', 'great-hall', 'great-hall'],
-  ['solar', 'solar', 'solar', 'great-hall', 'great-hall', 'great-hall'],
-  ['guardroom', 'guardroom', 'guardroom', 'archives', 'archives', 'archives'],
-  ['guardroom', 'guardroom', 'guardroom', 'archives', 'archives', 'archives'],
+  ['solar', 'solar', 'solar', 'solar', 'solar', 'solar'],
+  ['solar', 'solar', 'solar', 'solar', 'solar', 'solar'],
+  ['guardroom', 'guardroom', 'guardroom', 'guardroom', 'archives', 'archives'],
+  ['guardroom', 'chapel', 'chapel', 'archives', 'archives', 'archives'],
   ['chapel', 'chapel', 'chapel', 'crypt', 'crypt', 'crypt'],
   ['chapel', 'chapel', 'chapel', 'crypt', 'crypt', 'crypt'],
 ] as const;
 
-const legalCharacterIdsByPosition: Record<string, CharacterId[]> = {
-  '0:1': ['envoy'],
-  '1:0': ['aldric'],
-  '2:2': ['beatrice'],
-  '3:4': ['edmund'],
-  '4:3': ['cedric'],
-  '5:5': ['daria'],
-};
-
 const chamberEnvironments: InquestDefinition['chamberEnvironments'] = {
   solar: 'royalRoom',
-  'great-hall': 'royalRoom',
   guardroom: 'room',
   archives: 'room',
   chapel: 'church',
@@ -58,7 +54,6 @@ const chamberEnvironments: InquestDefinition['chamberEnvironments'] = {
 const chamberNames: InquestDefinition['chamberNames'] = {
   solar: 'The Solar',
   guardroom: 'Guardroom',
-  'great-hall': 'Great Hall',
   chapel: 'Chapel',
   archives: 'Archives',
   crypt: 'The Crypt',
@@ -71,20 +66,17 @@ const cells: InquestCell[] = chamberByPosition.flatMap((row, rowIndex) =>
       position: { row: rowIndex, column: columnIndex },
       chamberId,
       blocked: blockedCells.has(key),
-      ...(legalCharacterIdsByPosition[key]
-        ? { legalCharacterIds: legalCharacterIdsByPosition[key] }
-        : {}),
       ...(propsByPosition[key] ? { propId: propsByPosition[key] } : {}),
     };
   }),
 );
 
 const solution: Record<CharacterId, GridPosition> = {
-  envoy: { row: 0, column: 1 },
+  envoy: { row: 0, column: 3 },
   aldric: { row: 1, column: 0 },
-  beatrice: { row: 2, column: 2 },
+  beatrice: { row: 2, column: 1 },
   edmund: { row: 3, column: 4 },
-  cedric: { row: 4, column: 3 },
+  cedric: { row: 4, column: 2 },
   daria: { row: 5, column: 5 },
 };
 
@@ -101,7 +93,7 @@ export const blackwoodKeep: InquestDefinition = {
     // No dedicated "Dame" avatar exists in the pack; guard-captain is the nearest fit for an authority figure who searched the keep.
     { id: 'daria', name: 'Dame Daria', portraitLabel: 'Daria', avatarId: 'guard-captain' },
     { id: 'edmund', name: 'Brother Edmund', portraitLabel: 'Edmund', avatarId: 'monk' },
-    // The victim is always last: the only clue naming them is the one placing them with their killer.
+    // The victim is always last: no clue names them directly; their cell is derived only by elimination.
     { id: 'envoy', name: 'The Royal Envoy', portraitLabel: 'Royal Envoy', avatarId: 'royal-envoy', isVictim: true },
   ],
   cells,
@@ -109,38 +101,34 @@ export const blackwoodKeep: InquestDefinition = {
   chamberNames,
   clues: [
     {
-      id: 'aldric-first-column',
-      text: 'Aldric was seated in a chair against the western wall of the Solar.',
-      predicate: { type: 'exact-column', characterId: 'aldric', column: 0 },
+      id: 'aldric-solar',
+      text: 'Aldric was seen in the Solar.',
+      predicate: { type: 'exact-chamber', characterId: 'aldric', chamberId: 'solar' },
     },
     {
-      id: 'beatrice-third-column',
-      text: 'Beatrice occupied the third column.',
-      predicate: { type: 'exact-column', characterId: 'beatrice', column: 2 },
+      id: 'aldric-seated',
+      text: 'Aldric was found seated in the chair.',
+      predicate: { type: 'on-prop', characterId: 'aldric', propId: 'formal-chair' },
     },
     {
-      id: 'cedric-fourth-column',
-      text: 'Cedric kept watch in the fourth column.',
-      predicate: { type: 'exact-column', characterId: 'cedric', column: 3 },
+      id: 'beatrice-guardroom',
+      text: 'Beatrice was seen in the Guardroom.',
+      predicate: { type: 'exact-chamber', characterId: 'beatrice', chamberId: 'guardroom' },
     },
     {
-      id: 'daria-sixth-row',
-      text: 'Daria searched the sixth row.',
-      predicate: { type: 'exact-row', characterId: 'daria', row: 5 },
+      id: 'cedric-chapel',
+      text: 'Cedric prayed alone in the Chapel.',
+      predicate: { type: 'exact-chamber', characterId: 'cedric', chamberId: 'chapel' },
     },
     {
-      id: 'edmund-fourth-row',
-      text: 'Edmund descended to the fourth row.',
-      predicate: { type: 'exact-row', characterId: 'edmund', row: 3 },
+      id: 'edmund-archives',
+      text: 'Edmund was seen among the Archives.',
+      predicate: { type: 'exact-chamber', characterId: 'edmund', chamberId: 'archives' },
     },
     {
-      id: 'solar-witnesses',
-      text: 'Only Aldric remained in the envoy’s chamber.',
-      predicate: {
-        type: 'same-chamber',
-        firstCharacterId: 'aldric',
-        secondCharacterId: 'envoy',
-      },
+      id: 'daria-crypt',
+      text: 'Daria searched the Crypt.',
+      predicate: { type: 'exact-chamber', characterId: 'daria', chamberId: 'crypt' },
     },
     {
       id: 'beatrice-apart-from-cedric',
@@ -150,11 +138,6 @@ export const blackwoodKeep: InquestDefinition = {
         firstCharacterId: 'beatrice',
         secondCharacterId: 'cedric',
       },
-    },
-    {
-      id: 'edmund-archives',
-      text: 'Edmund was seen among the Archives.',
-      predicate: { type: 'exact-chamber', characterId: 'edmund', chamberId: 'archives' },
     },
     {
       id: 'aldric-not-beside-edmund',

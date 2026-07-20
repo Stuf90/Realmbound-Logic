@@ -64,6 +64,12 @@ export function evaluatePredicate(
         distance === 1 && chamberAt(definition, first) === chamberAt(definition, second);
       return predicate.type === 'beside' ? adjacentSameChamber : !adjacentSameChamber;
     }
+    case 'on-prop': {
+      const position = placements[predicate.characterId];
+      if (!position) return 'unknown';
+      const propCell = definition.cells.find((cell) => cell.propId === predicate.propId);
+      return propCell !== undefined && positionKey(propCell.position) === positionKey(position);
+    }
     default: {
       const exhaustive: never = predicate;
       return exhaustive;
@@ -76,6 +82,7 @@ export function getPredicateCharacterIds(predicate: InquestPredicate): Character
     case 'exact-row':
     case 'exact-column':
     case 'exact-chamber':
+    case 'on-prop':
       return [predicate.characterId];
     case 'same-chamber':
     case 'different-chamber':
