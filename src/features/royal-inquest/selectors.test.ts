@@ -20,7 +20,7 @@ describe('getCellState', () => {
     expect(getCellState(blackwoodKeep, placed, 'beatrice', { row: 1, column: 2 })).toBe(
       'manual-cross',
     );
-    expect(getCellState(blackwoodKeep, placed, 'beatrice', { row: 0, column: 3 })).toBe(
+    expect(getCellState(blackwoodKeep, placed, 'beatrice', { row: 0, column: 2 })).toBe(
       'derived-unavailable',
     );
     expect(getCellState(blackwoodKeep, placed, 'beatrice', { row: 2, column: 1 })).toBe(
@@ -38,12 +38,12 @@ describe('getCellState', () => {
 describe('getCluesForCharacter', () => {
   it('includes solo predicates that name the character directly', () => {
     const ids = getCluesForCharacter(blackwoodKeep, 'daria').map((clue) => clue.id);
-    expect(ids).toEqual(['daria-fifth-row']);
+    expect(ids).toEqual(['daria-sixth-row']);
   });
 
-  it('includes paired predicates that name the character as either participant, in clue order', () => {
+  it('gives the victim only the same-chamber clue that names their killer', () => {
     const ids = getCluesForCharacter(blackwoodKeep, 'envoy').map((clue) => clue.id);
-    expect(ids).toEqual(['envoy-first-row', 'envoy-second-column', 'solar-witnesses']);
+    expect(ids).toEqual(['solar-witnesses']);
   });
 
   it('matches a character referenced only as the second participant in a pair', () => {

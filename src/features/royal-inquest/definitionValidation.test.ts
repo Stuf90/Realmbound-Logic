@@ -7,7 +7,7 @@ import type { InquestDefinition } from './types';
 describe('Blackwood Keep definition', () => {
   it('contains a structurally valid six-character inquest', () => {
     expect(validateInquestDefinition(blackwoodKeep)).toEqual([]);
-    expect(blackwoodKeep.cells).toHaveLength(54);
+    expect(blackwoodKeep.cells).toHaveLength(36);
     expect(blackwoodKeep.characters).toHaveLength(6);
 
     const solutionPositions = Object.values(blackwoodKeep.solution);
@@ -63,10 +63,10 @@ describe('Blackwood Keep definition', () => {
 
   it('rejects a chamber with fewer than 5 tiles', () => {
     const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
-    // Shrink the solar chamber from 6 to 4 tiles by donating its last row to the neighboring gallery.
+    // Shrink the solar chamber from 6 to 4 tiles by donating part of its second row to guardroom.
     for (const cell of malformed.cells) {
-      if (cell.position.row === 2 && (cell.position.column === 0 || cell.position.column === 1)) {
-        cell.chamberId = 'west-gallery';
+      if (cell.position.row === 1 && (cell.position.column === 0 || cell.position.column === 1)) {
+        cell.chamberId = 'guardroom';
       }
     }
 
@@ -84,13 +84,14 @@ describe('Blackwood Keep definition', () => {
     );
   });
 
-  it('rejects a prop placed on a cell that is not blocked', () => {
-    const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
-    const solarCell = malformed.cells.find((cell) => cell.chamberId === 'solar' && cell.blocked)!;
-    solarCell.blocked = false;
+  it('allows a seat prop on an unblocked, legal cell (a character can be placed there)', () => {
+    const seatCell = blackwoodKeep.cells.find(
+      (cell) => cell.position.row === 1 && cell.position.column === 0,
+    )!;
 
-    expect(validateInquestDefinition(malformed)).toContain(
-      'Prop "throne" must be placed on a blocked cell.',
-    );
+    expect(seatCell.propId).toBe('formal-chair');
+    expect(seatCell.blocked).toBe(false);
+    expect(seatCell.legalCharacterIds).toContain('aldric');
+    expect(validateInquestDefinition(blackwoodKeep)).toEqual([]);
   });
 });

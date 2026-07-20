@@ -41,11 +41,7 @@ describe('getCellTileUrl', () => {
 
 describe('getCellWalls', () => {
   it('marks a right wall between chambers in the same row', () => {
-    expect(getCellWalls(blackwoodKeep, cellAt(0, 1)).right).toBe(true);
-  });
-
-  it('marks the second vertical boundary too (previously missing from the hardcoded CSS)', () => {
-    expect(getCellWalls(blackwoodKeep, cellAt(0, 3)).right).toBe(true);
+    expect(getCellWalls(blackwoodKeep, cellAt(0, 2)).right).toBe(true);
   });
 
   it('does not mark a right wall within the same chamber', () => {
@@ -57,7 +53,7 @@ describe('getCellWalls', () => {
   });
 
   it('marks a bottom wall between chambers in the same column', () => {
-    expect(getCellWalls(blackwoodKeep, cellAt(2, 0)).bottom).toBe(true);
+    expect(getCellWalls(blackwoodKeep, cellAt(1, 0)).bottom).toBe(true);
   });
 
   it('does not mark a bottom wall where a chamber spans multiple rows', () => {
@@ -65,11 +61,11 @@ describe('getCellWalls', () => {
   });
 
   it('marks a bottom wall at the guardroom/chapel band boundary', () => {
-    expect(getCellWalls(blackwoodKeep, cellAt(5, 0)).bottom).toBe(true);
+    expect(getCellWalls(blackwoodKeep, cellAt(3, 0)).bottom).toBe(true);
   });
 
   it('does not mark a bottom wall at the board edge', () => {
-    expect(getCellWalls(blackwoodKeep, cellAt(8, 0)).bottom).toBe(false);
+    expect(getCellWalls(blackwoodKeep, cellAt(5, 0)).bottom).toBe(false);
   });
 });
 
