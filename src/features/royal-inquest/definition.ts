@@ -33,6 +33,18 @@ const chamberEnvironments: InquestDefinition['chamberEnvironments'] = {
   crypt: 'dungeon',
 };
 
+const chamberNames: InquestDefinition['chamberNames'] = {
+  solar: 'The Solar',
+  'west-gallery': 'West Gallery',
+  'east-gallery': 'East Gallery',
+  guardroom: 'Guardroom',
+  'great-hall': 'Great Hall',
+  gallery: 'The Gallery',
+  chapel: 'Chapel',
+  archives: 'Archives',
+  crypt: 'The Crypt',
+};
+
 const cells: InquestCell[] = chamberByPosition.flatMap((row, rowIndex) =>
   row.map((chamberId, columnIndex) => {
     const key = `${rowIndex}:${columnIndex}`;
@@ -73,6 +85,7 @@ export const blackwoodKeep: InquestDefinition = {
   ],
   cells,
   chamberEnvironments,
+  chamberNames,
   clues: [
     {
       id: 'envoy-first-row',
@@ -125,6 +138,20 @@ export const blackwoodKeep: InquestDefinition = {
         type: 'different-chamber',
         firstCharacterId: 'beatrice',
         secondCharacterId: 'cedric',
+      },
+    },
+    {
+      id: 'edmund-archives',
+      text: 'Edmund was seen among the Archives.',
+      predicate: { type: 'exact-chamber', characterId: 'edmund', chamberId: 'archives' },
+    },
+    {
+      id: 'aldric-not-beside-edmund',
+      text: 'Aldric was never seen beside Edmund.',
+      predicate: {
+        type: 'not-beside',
+        firstCharacterId: 'aldric',
+        secondCharacterId: 'edmund',
       },
     },
   ],

@@ -217,4 +217,14 @@ describe('puzzle play', () => {
     expect(placedCell.querySelector('img')).toHaveAttribute('src', expect.stringContaining('royal-envoy'));
     expect(screen.getByRole('button', { name: 'Check progress' })).toBeInTheDocument();
   });
+
+  it('renders a wall indicator at every real chamber boundary', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<App />);
+    await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
+    await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
+    await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
+    expect(container.querySelectorAll('.cell.wall-right')).toHaveLength(12);
+    expect(container.querySelectorAll('.cell.wall-bottom')).toHaveLength(16);
+  });
 });
