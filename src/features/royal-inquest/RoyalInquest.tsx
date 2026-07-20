@@ -18,6 +18,7 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
   const [hints, setHints] = useState(restored?.hintsUsed ?? 0);
   const [checks, setChecks] = useState(restored?.checksUsed ?? 0);
   const [characterIndex, setCharacterIndex] = useState(0);
+  const [conflictCellKey, setConflictCellKey] = useState<string | null>(null);
   const state = history.present;
   const complete = isInquestComplete(blackwoodKeep, state);
 
@@ -35,11 +36,28 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
     if (state.tool === 'cross') dispatch({ type: 'toggle-cross', characterId: selected, position: { row, column } });
     else {
       const next = reduceInquest(state, { type: 'place', characterId: selected, position: { row, column } }, blackwoodKeep);
-      if (next === state) return setStatus('That chamber cell is unavailable.');
+      if (next === state) {
+        const rowOrColumnTaken = Object.entries(state.placements).some(
+          ([placedCharacterId, position]) =>
+            placedCharacterId !== selected && position && (position.row === row || position.column === column),
+        );
+        if (rowOrColumnTaken) {
+          const key = positionKey({ row, column });
+          setConflictCellKey(key);
+          window.setTimeout(() => setConflictCellKey((current) => (current === key ? null : current)), 600);
+        }
+        return setStatus('That chamber cell is unavailable.');
+      }
+      setConflictCellKey(null);
       setHistory((value) => commitHistory(value, next));
     }
   }
   function reset() { if (window.confirm('Erase the current inquest and begin again?')) { setHistory(createHistory(createInitialInquestState())); setSeconds(0); setHints(0); setChecks(0); setStatus('The inquest has been reset.'); } }
+  function goToCharacter(index: number) {
+    const nextIndex = (index + blackwoodKeep.characters.length) % blackwoodKeep.characters.length;
+    setCharacterIndex(nextIndex);
+    dispatch({ type: 'select-character', characterId: blackwoodKeep.characters[nextIndex]!.id }, false);
+  }
 
   const visibleCharacter = blackwoodKeep.characters[characterIndex]!;
   const visibleCharacterClues = useMemo(
@@ -85,7 +103,9 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
             const propUrl = getCellPropUrl(cell);
             const walls = getCellWalls(blackwoodKeep, cell);
             const wallClasses = `${walls.right ? ' wall-right' : ''}${walls.bottom ? ' wall-bottom' : ''}`;
-            return <button key={positionKey(cell.position)} role="gridcell" className={`cell ${cellState}${wallClasses}`} style={{ backgroundImage: `var(--cell-tint), url(${tileUrl})` }} disabled={cell.blocked} aria-label={label} onClick={() => activate(cell.position.row, cell.position.column)} onKeyDown={(event) => { if (event.key.toLowerCase() === 'x') { event.preventDefault(); if (selected) dispatch({ type: 'toggle-cross', characterId: selected, position: cell.position }); } }}>{propUrl && <img className="cell-prop" src={propUrl} alt="" />}{character ? <img className="cell-avatar" src={getCharacterAvatarUrl(character)} alt="" /> : !propUrl && (cell.blocked ? '◆' : cellState === 'manual-cross' ? '×' : cellState === 'derived-unavailable' ? '·' : '')}{chamberAnchorKeys.has(positionKey(cell.position)) && <span className="chamber-label" aria-hidden="true">{chamberName}</span>}<span className="sr-only">{label}</span></button>;
+            const isConflict = conflictCellKey === positionKey(cell.position);
+            const conflictClass = isConflict ? ' conflict' : '';
+            return <button key={positionKey(cell.position)} role="gridcell" className={`cell ${cellState}${wallClasses}${conflictClass}`} style={{ backgroundImage: `var(--cell-tint), url(${tileUrl})` }} disabled={cell.blocked} aria-label={label} onClick={() => activate(cell.position.row, cell.position.column)} onKeyDown={(event) => { if (event.key.toLowerCase() === 'x') { event.preventDefault(); if (selected) dispatch({ type: 'toggle-cross', characterId: selected, position: cell.position }); } }}>{propUrl && <img className="cell-prop" src={propUrl} alt="" />}{character && <img className="cell-avatar" src={getCharacterAvatarUrl(character)} alt="" />}{!character && !propUrl && (cell.blocked ? '◆' : cellState === 'manual-cross' ? '×' : cellState === 'auto-cross' ? '·' : '')}{chamberAnchorKeys.has(positionKey(cell.position)) && <span className="chamber-label" aria-hidden="true">{chamberName}</span>}<span className="sr-only">{label}</span></button>;
           })}
         </div></div>
         <div className="toolbar" role="toolbar" aria-label="Puzzle actions">
@@ -99,9 +119,9 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
       <aside className="dossier context-tray">
         <section className="character-carousel" aria-label="Persons of interest">
           <div className="carousel-controls">
-            <button aria-label="Previous character" onClick={() => setCharacterIndex((characterIndex - 1 + blackwoodKeep.characters.length) % blackwoodKeep.characters.length)}>←</button>
+            <button aria-label="Previous character" onClick={() => goToCharacter(characterIndex - 1)}>←</button>
             <span aria-live="polite">{characterIndex + 1} / {blackwoodKeep.characters.length}</span>
-            <button aria-label="Next character" onClick={() => setCharacterIndex((characterIndex + 1) % blackwoodKeep.characters.length)}>→</button>
+            <button aria-label="Next character" onClick={() => goToCharacter(characterIndex + 1)}>→</button>
           </div>
           <button className="portrait featured-portrait" aria-pressed={state.selectedCharacterId === visibleCharacter.id} onClick={() => dispatch({ type: 'select-character', characterId: visibleCharacter.id }, false)}><img className="carousel-avatar" src={getCharacterAvatarUrl(visibleCharacter)} alt="" />{visibleCharacter.name}{visibleCharacter.isVictim && <small>Slain envoy</small>}</button>
           <section className="character-clue-brief internal-scroll" role="region" aria-live="polite" aria-label={`Clues about ${visibleCharacter.name}`}>
