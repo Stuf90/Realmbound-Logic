@@ -17,7 +17,6 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
   const [seconds, setSeconds] = useState(restored?.elapsedSeconds ?? 0);
   const [hints, setHints] = useState(restored?.hintsUsed ?? 0);
   const [checks, setChecks] = useState(restored?.checksUsed ?? 0);
-  const [activeTray, setActiveTray] = useState<'characters' | 'clues'>('characters');
   const [characterIndex, setCharacterIndex] = useState(0);
   const state = history.present;
   const complete = isInquestComplete(blackwoodKeep, state);
@@ -72,7 +71,7 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
             gridTemplateColumns: `repeat(${blackwoodKeep.columns}, minmax(44px, 1fr))`,
             gridTemplateRows: `repeat(${blackwoodKeep.rows}, minmax(44px, 1fr))`,
             aspectRatio: `${blackwoodKeep.columns} / ${blackwoodKeep.rows}`,
-            width: `min(100%, calc(100cqh * ${blackwoodKeep.columns} / ${blackwoodKeep.rows}))`,
+            width: `min(100%, calc(100cqh * ${blackwoodKeep.columns} / ${blackwoodKeep.rows}), 34rem)`,
           }}
         >
           {blackwoodKeep.cells.map((cell) => {
@@ -86,7 +85,7 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
             const propUrl = getCellPropUrl(cell);
             const walls = getCellWalls(blackwoodKeep, cell);
             const wallClasses = `${walls.right ? ' wall-right' : ''}${walls.bottom ? ' wall-bottom' : ''}`;
-            return <button key={positionKey(cell.position)} role="gridcell" className={`cell ${cellState}${wallClasses}`} style={{ backgroundImage: `var(--cell-tint), url(${tileUrl})` }} disabled={cell.blocked} aria-label={label} onClick={() => activate(cell.position.row, cell.position.column)} onKeyDown={(event) => { if (event.key.toLowerCase() === 'x') { event.preventDefault(); if (selected) dispatch({ type: 'toggle-cross', characterId: selected, position: cell.position }); } }}>{character ? <img className="cell-avatar" src={getCharacterAvatarUrl(character)} alt="" /> : propUrl ? <img className="cell-prop" src={propUrl} alt="" /> : cell.blocked ? '◆' : cellState === 'manual-cross' ? '×' : cellState === 'derived-unavailable' ? '·' : ''}{chamberAnchorKeys.has(positionKey(cell.position)) && <span className="chamber-label" aria-hidden="true">{chamberName}</span>}<span className="sr-only">{label}</span></button>;
+            return <button key={positionKey(cell.position)} role="gridcell" className={`cell ${cellState}${wallClasses}`} style={{ backgroundImage: `var(--cell-tint), url(${tileUrl})` }} disabled={cell.blocked} aria-label={label} onClick={() => activate(cell.position.row, cell.position.column)} onKeyDown={(event) => { if (event.key.toLowerCase() === 'x') { event.preventDefault(); if (selected) dispatch({ type: 'toggle-cross', characterId: selected, position: cell.position }); } }}>{propUrl && <img className="cell-prop" src={propUrl} alt="" />}{character ? <img className="cell-avatar" src={getCharacterAvatarUrl(character)} alt="" /> : !propUrl && (cell.blocked ? '◆' : cellState === 'manual-cross' ? '×' : cellState === 'derived-unavailable' ? '·' : '')}{chamberAnchorKeys.has(positionKey(cell.position)) && <span className="chamber-label" aria-hidden="true">{chamberName}</span>}<span className="sr-only">{label}</span></button>;
           })}
         </div></div>
         <div className="toolbar" role="toolbar" aria-label="Puzzle actions">
@@ -98,11 +97,7 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
         <p className="status internal-scroll" role="status">{status}</p><p className="metrics puzzle-metrics">Hints {hints} · Checks {checks}</p>
       </section>
       <aside className="dossier context-tray">
-        <nav className="tray-tabs" aria-label="Inquest reference">
-          <button aria-pressed={activeTray === 'characters'} onClick={() => setActiveTray('characters')}>Characters</button>
-          <button aria-pressed={activeTray === 'clues'} onClick={() => setActiveTray('clues')}>Clues</button>
-        </nav>
-        {activeTray === 'characters' ? <section className="character-carousel" aria-label="Persons of interest">
+        <section className="character-carousel" aria-label="Persons of interest">
           <div className="carousel-controls">
             <button aria-label="Previous character" onClick={() => setCharacterIndex((characterIndex - 1 + blackwoodKeep.characters.length) % blackwoodKeep.characters.length)}>←</button>
             <span aria-live="polite">{characterIndex + 1} / {blackwoodKeep.characters.length}</span>
@@ -112,7 +107,7 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
           <section className="character-clue-brief internal-scroll" role="region" aria-live="polite" aria-label={`Clues about ${visibleCharacter.name}`}>
             {visibleCharacterClues.length ? <ol>{visibleCharacterClues.map((clue) => <li key={clue.id}>{clue.text}</li>)}</ol> : <p>No witness statement names {visibleCharacter.name} directly.</p>}
           </section>
-        </section> : <section className="internal-scroll clue-list" role="region" aria-label="Witness statements"><ol>{blackwoodKeep.clues.map((clue) => <li key={clue.id}>{clue.text}</li>)}</ol></section>}
+        </section>
       </aside>
     </div>
   </main>;

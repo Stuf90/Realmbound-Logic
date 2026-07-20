@@ -46,7 +46,7 @@ describe('evaluatePredicate', () => {
     expect(
       evaluatePredicate(
         predicate,
-        { envoy: { row: 0, column: 1 }, aldric: { row: 0, column: 2 } },
+        { envoy: { row: 0, column: 2 }, aldric: { row: 0, column: 3 } },
         blackwoodKeep,
       ),
     ).toBe(false);
@@ -80,14 +80,14 @@ describe('evaluatePredicate', () => {
     expect(
       evaluatePredicate(
         { type: 'exact-chamber', characterId: 'edmund', chamberId: 'archives' },
-        { edmund: { row: 6, column: 2 } },
+        { edmund: { row: 3, column: 4 } },
         blackwoodKeep,
       ),
     ).toBe(true);
     expect(
       evaluatePredicate(
         { type: 'exact-chamber', characterId: 'edmund', chamberId: 'crypt' },
-        { edmund: { row: 6, column: 2 } },
+        { edmund: { row: 3, column: 4 } },
         blackwoodKeep,
       ),
     ).toBe(false);
