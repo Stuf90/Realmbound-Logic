@@ -113,8 +113,6 @@ export function validateInquestDefinition(definition: unknown): string[] {
     const environment = chamberEnvironments[cell.chamberId];
     if (!PROP_IDS.has(cell.propId)) {
       issues.push(`Prop "${cell.propId}" is not a known prop asset.`);
-    } else if (!cell.blocked) {
-      issues.push(`Prop "${cell.propId}" must be placed on a blocked cell.`);
     } else if (
       typeof environment !== 'string' ||
       !propsByEnvironment[environment as keyof typeof propsByEnvironment]?.includes(cell.propId as PropAssetId)
