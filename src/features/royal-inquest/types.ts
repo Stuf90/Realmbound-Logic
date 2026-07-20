@@ -21,10 +21,17 @@ export interface InquestCell {
 export type InquestPredicate =
   | { type: 'exact-row'; characterId: CharacterId; row: number }
   | { type: 'exact-column'; characterId: CharacterId; column: number }
+  | { type: 'exact-chamber'; characterId: CharacterId; chamberId: string }
   | { type: 'same-chamber'; firstCharacterId: CharacterId; secondCharacterId: CharacterId }
   | { type: 'different-chamber'; firstCharacterId: CharacterId; secondCharacterId: CharacterId }
-  | { type: 'north-of'; subjectCharacterId: CharacterId; referenceCharacterId: CharacterId }
-  | { type: 'beside'; firstCharacterId: CharacterId; secondCharacterId: CharacterId };
+  | {
+      type: 'direction-from';
+      subjectCharacterId: CharacterId;
+      referenceCharacterId: CharacterId;
+      direction: 'north' | 'east' | 'south' | 'west';
+    }
+  | { type: 'beside'; firstCharacterId: CharacterId; secondCharacterId: CharacterId }
+  | { type: 'not-beside'; firstCharacterId: CharacterId; secondCharacterId: CharacterId };
 
 export interface InquestClue {
   id: string;
@@ -44,6 +51,7 @@ export interface InquestDefinition {
   traitorId: CharacterId;
   solution: Record<CharacterId, GridPosition>;
   chamberEnvironments: Record<string, TileEnvironment>;
+  chamberNames: Record<string, string>;
 }
 
 export interface InquestState {

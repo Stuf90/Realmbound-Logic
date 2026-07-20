@@ -7,7 +7,7 @@ import { getInquestHint } from './hints';
 import { createInitialInquestState, reduceInquest } from './reducer';
 import { getCellState } from './selectors';
 import { checkInquestProgress, isInquestComplete } from './validation';
-import { getCellTileUrl, getCharacterAvatarUrl } from './visuals';
+import { getCellTileUrl, getCellWalls, getCharacterAvatarUrl } from './visuals';
 import type { InquestState } from './types';
 
 export function RoyalInquest({ onBack }: { onBack: () => void }) {
@@ -56,9 +56,11 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
             const selected = state.selectedCharacterId;
             const cellState = selected ? getCellState(blackwoodKeep, state, selected, cell.position) : cell.blocked ? 'blocked' : occupant ? 'occupied' : 'available';
             const character = blackwoodKeep.characters.find(({ id }) => id === occupant);
-            const label = `Row ${cell.position.row + 1}, column ${cell.position.column + 1}, ${cell.chamberId.replace('-', ' ')}, ${character?.name ?? cellState.replace('-', ' ')}`;
+            const label = `Row ${cell.position.row + 1}, column ${cell.position.column + 1}, ${blackwoodKeep.chamberNames[cell.chamberId]}, ${character?.name ?? cellState.replace('-', ' ')}`;
             const tileUrl = getCellTileUrl(blackwoodKeep, cell);
-            return <button key={positionKey(cell.position)} role="gridcell" className={`cell ${cellState}`} style={{ backgroundImage: `var(--cell-tint), url(${tileUrl})` }} disabled={cell.blocked} aria-label={label} onClick={() => activate(cell.position.row, cell.position.column)} onKeyDown={(event) => { if (event.key.toLowerCase() === 'x') { event.preventDefault(); if (selected) dispatch({ type: 'toggle-cross', characterId: selected, position: cell.position }); } }}>{character ? <img className="cell-avatar" src={getCharacterAvatarUrl(character)} alt="" /> : cell.blocked ? '◆' : cellState === 'manual-cross' ? '×' : cellState === 'derived-unavailable' ? '·' : ''}<span className="sr-only">{label}</span></button>;
+            const walls = getCellWalls(blackwoodKeep, cell);
+            const wallClasses = `${walls.right ? ' wall-right' : ''}${walls.bottom ? ' wall-bottom' : ''}`;
+            return <button key={positionKey(cell.position)} role="gridcell" className={`cell ${cellState}${wallClasses}`} style={{ backgroundImage: `var(--cell-tint), url(${tileUrl})` }} disabled={cell.blocked} aria-label={label} onClick={() => activate(cell.position.row, cell.position.column)} onKeyDown={(event) => { if (event.key.toLowerCase() === 'x') { event.preventDefault(); if (selected) dispatch({ type: 'toggle-cross', characterId: selected, position: cell.position }); } }}>{character ? <img className="cell-avatar" src={getCharacterAvatarUrl(character)} alt="" /> : cell.blocked ? '◆' : cellState === 'manual-cross' ? '×' : cellState === 'derived-unavailable' ? '·' : ''}<span className="sr-only">{label}</span></button>;
           })}
         </div></div>
         <div className="toolbar" role="toolbar" aria-label="Puzzle actions">
