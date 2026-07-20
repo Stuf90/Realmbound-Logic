@@ -132,6 +132,33 @@ export const propsByEnvironment: Record<TileEnvironment, readonly PropAssetId[]>
   hallway: [],
 };
 
+// A "seat" prop sits on an unblocked, legal cell — a character may be placed there, with the prop
+// rendering under their avatar. A "decorative" prop stays on a permanently blocked/impassable cell.
+export const propKindByAsset: Record<PropAssetId, 'seat' | 'decorative'> = {
+  throne: 'seat',
+  'formal-chair': 'seat',
+  'simple-chair': 'seat',
+  'wooden-bench': 'seat',
+  'wooden-bench-left': 'seat',
+  'wooden-bench-right': 'seat',
+  'church-pew': 'seat',
+  'church-pew-left': 'seat',
+  'church-pew-right': 'seat',
+  'stone-planter': 'decorative',
+  'wooden-planter': 'decorative',
+  'dining-table': 'decorative',
+  'dining-table-left': 'decorative',
+  'dining-table-right': 'decorative',
+  'kitchen-worktable': 'decorative',
+  'kitchen-worktable-left': 'decorative',
+  'kitchen-worktable-right': 'decorative',
+  'barrel-cluster': 'decorative',
+  bookshelf: 'decorative',
+  'bookshelf-left': 'decorative',
+  'bookshelf-right': 'decorative',
+  'dungeon-cage': 'decorative',
+};
+
 export const royalInquestAssets = {
   avatars: {
     monarch,
