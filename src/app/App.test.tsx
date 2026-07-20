@@ -218,13 +218,29 @@ describe('puzzle play', () => {
     expect(screen.getByRole('button', { name: 'Check progress' })).toBeInTheDocument();
   });
 
+  it('renders visible chamber name labels and prop art on blocked cells', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<App />);
+    await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
+    await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
+    await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
+
+    const chamberLabels = [...container.querySelectorAll('.chamber-label')].map((el) => el.textContent);
+    expect(chamberLabels).toEqual(
+      expect.arrayContaining(['The Solar', 'Guardroom', 'Great Hall', 'Chapel', 'Archives', 'The Crypt']),
+    );
+
+    const throneCell = screen.getByRole('gridcell', { name: /Row 1, column 1,/ });
+    expect(throneCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('throne'));
+  });
+
   it('renders a wall indicator at every real chamber boundary', async () => {
     const user = userEvent.setup();
     const { container } = render(<App />);
     await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
-    expect(container.querySelectorAll('.cell.wall-right')).toHaveLength(12);
-    expect(container.querySelectorAll('.cell.wall-bottom')).toHaveLength(16);
+    expect(container.querySelectorAll('.cell.wall-right')).toHaveLength(18);
+    expect(container.querySelectorAll('.cell.wall-bottom')).toHaveLength(12);
   });
 });
