@@ -1,5 +1,8 @@
 import { positionKey, type GridPosition } from '../../shared/geometry';
+import { propsByEnvironment, type PropAssetId } from '../../assets/royal-inquest/manifest';
 import type { InquestCell, InquestCharacter, InquestDefinition } from './types';
+
+const PROP_IDS = new Set<string>(Object.values(propsByEnvironment).flat());
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -86,6 +89,38 @@ export function validateInquestDefinition(definition: unknown): string[] {
     )
   ) {
     issues.push('Cell positions must be within the board.');
+  }
+
+  const chamberNames = isRecord(definition.chamberNames) ? definition.chamberNames : {};
+  const chamberEnvironments = isRecord(definition.chamberEnvironments) ? definition.chamberEnvironments : {};
+  const chamberIds = new Set(cells.map(({ chamberId }) => chamberId));
+  for (const chamberId of chamberIds) {
+    if (typeof chamberNames[chamberId] !== 'string' || typeof chamberEnvironments[chamberId] !== 'string') {
+      issues.push(`Chamber "${chamberId}" must have a name and an environment.`);
+    }
+  }
+
+  const chamberSizes = new Map<string, number>();
+  for (const { chamberId } of cells) {
+    chamberSizes.set(chamberId, (chamberSizes.get(chamberId) ?? 0) + 1);
+  }
+  for (const [chamberId, size] of chamberSizes) {
+    if (size < 5) issues.push(`Chamber "${chamberId}" must contain at least 5 tiles.`);
+  }
+
+  for (const cell of cells) {
+    if (cell.propId === undefined) continue;
+    const environment = chamberEnvironments[cell.chamberId];
+    if (!PROP_IDS.has(cell.propId)) {
+      issues.push(`Prop "${cell.propId}" is not a known prop asset.`);
+    } else if (!cell.blocked) {
+      issues.push(`Prop "${cell.propId}" must be placed on a blocked cell.`);
+    } else if (
+      typeof environment !== 'string' ||
+      !propsByEnvironment[environment as keyof typeof propsByEnvironment]?.includes(cell.propId as PropAssetId)
+    ) {
+      issues.push(`Prop "${cell.propId}" is not permitted in a "${environment}" chamber.`);
+    }
   }
 
   const characterIds = new Set(characters.map(({ id }) => id));

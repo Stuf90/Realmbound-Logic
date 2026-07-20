@@ -80,14 +80,14 @@ describe('evaluatePredicate', () => {
     expect(
       evaluatePredicate(
         { type: 'exact-chamber', characterId: 'edmund', chamberId: 'archives' },
-        { edmund: { row: 5, column: 2 } },
+        { edmund: { row: 6, column: 2 } },
         blackwoodKeep,
       ),
     ).toBe(true);
     expect(
       evaluatePredicate(
         { type: 'exact-chamber', characterId: 'edmund', chamberId: 'crypt' },
-        { edmund: { row: 5, column: 2 } },
+        { edmund: { row: 6, column: 2 } },
         blackwoodKeep,
       ),
     ).toBe(false);

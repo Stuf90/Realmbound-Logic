@@ -7,7 +7,7 @@ import type { InquestDefinition } from './types';
 describe('Blackwood Keep definition', () => {
   it('contains a structurally valid six-character inquest', () => {
     expect(validateInquestDefinition(blackwoodKeep)).toEqual([]);
-    expect(blackwoodKeep.cells).toHaveLength(36);
+    expect(blackwoodKeep.cells).toHaveLength(54);
     expect(blackwoodKeep.characters).toHaveLength(6);
 
     const solutionPositions = Object.values(blackwoodKeep.solution);
@@ -58,6 +58,39 @@ describe('Blackwood Keep definition', () => {
 
     expect(validateInquestDefinition(malformed)).toContain(
       'Solution for envoy must use a legal, unblocked cell.',
+    );
+  });
+
+  it('rejects a chamber with fewer than 5 tiles', () => {
+    const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
+    // Shrink the solar chamber from 6 to 4 tiles by donating its last row to the neighboring gallery.
+    for (const cell of malformed.cells) {
+      if (cell.position.row === 2 && (cell.position.column === 0 || cell.position.column === 1)) {
+        cell.chamberId = 'west-gallery';
+      }
+    }
+
+    expect(validateInquestDefinition(malformed)).toContain('Chamber "solar" must contain at least 5 tiles.');
+  });
+
+  it('rejects a prop placed in a chamber environment it is not permitted in', () => {
+    const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
+    // solar is a royalRoom; a bookshelf belongs in a study/archive room, not a throne room.
+    const solarCell = malformed.cells.find((cell) => cell.chamberId === 'solar' && cell.blocked)!;
+    solarCell.propId = 'bookshelf';
+
+    expect(validateInquestDefinition(malformed)).toContain(
+      'Prop "bookshelf" is not permitted in a "royalRoom" chamber.',
+    );
+  });
+
+  it('rejects a prop placed on a cell that is not blocked', () => {
+    const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
+    const solarCell = malformed.cells.find((cell) => cell.chamberId === 'solar' && cell.blocked)!;
+    solarCell.blocked = false;
+
+    expect(validateInquestDefinition(malformed)).toContain(
+      'Prop "throne" must be placed on a blocked cell.',
     );
   });
 });

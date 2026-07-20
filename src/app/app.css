@@ -79,7 +79,7 @@ h2 { font-size: clamp(1.15rem, 4vw, 1.8rem); line-height: 1.05; }
 .board-panel, .dossier { border: 2px solid var(--ink); background: rgba(255,249,225,.75); }
 .board-panel { display: grid; grid-template-rows: minmax(0, 1fr) auto minmax(1.8rem, auto); gap: .25rem; padding: .3rem; }
 .board-scroll { display: grid; min-width: 0; min-height: 0; overflow: auto; place-items: center; overscroll-behavior: contain; }
-.inquest-board { display: grid; width: min(100%, 45dvh); min-width: 0; max-height: 100%; aspect-ratio: 1; grid-template-columns: repeat(6, minmax(44px, 1fr)); margin: auto; border: 3px solid var(--ink); }
+.inquest-board { display: grid; width: min(100%, 45dvh); min-width: 0; max-height: 100%; margin: auto; border: 3px solid var(--ink); }
 .cell { display: grid; place-items: center; min-width: 0; min-height: 0; padding: 0; border: 1px solid #765c3a; background-color: #f7e9c6; background-size: cover; background-position: center; color: var(--ink); font-size: clamp(.62rem, 3vmin, 1.25rem); font-weight: 800; text-shadow: 0 0 3px rgba(0,0,0,.85); --cell-tint: linear-gradient(rgba(0,0,0,.15), rgba(0,0,0,.15)); }
 .cell > * { grid-area: 1 / 1; }
 .cell.wall-right { border-right: 3px solid var(--ink); }
@@ -89,6 +89,8 @@ h2 { font-size: clamp(1.15rem, 4vw, 1.8rem); line-height: 1.05; }
 .cell.derived-unavailable { color: #6c604f; }
 .cell.occupied { background-color: #f0c26c; --cell-tint: linear-gradient(rgba(0,0,0,.08), rgba(0,0,0,.08)); }
 .cell-avatar { width: 78%; height: 78%; object-fit: contain; filter: drop-shadow(0 0 3px rgba(0,0,0,.85)); }
+.cell-prop { width: 60%; height: 60%; object-fit: contain; filter: drop-shadow(0 0 3px rgba(0,0,0,.85)); }
+.chamber-label { justify-self: start; align-self: start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .48rem; font-weight: 700; letter-spacing: .02em; color: #fff; background: rgba(0,0,0,.55); padding: 1px 3px; pointer-events: none; z-index: 2; }
 .toolbar { display: grid; grid-template-columns: repeat(4, minmax(44px, 1fr)); gap: .3rem; max-height: 5.5rem; overflow-y: auto; padding: 2px; }
 .toolbar button { min-height: 44px; padding: .35rem .2rem; font: 700 clamp(.65rem, 2.5vw, .82rem) system-ui, sans-serif; }
 .status { max-height: 3.2rem; padding: .38rem .5rem; border-left: 4px solid var(--gold); background: #fff4d2; font-size: clamp(.72rem, 2.7vw, .88rem); line-height: 1.15; white-space: normal; }
