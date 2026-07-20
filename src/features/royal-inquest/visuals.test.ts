@@ -41,7 +41,7 @@ describe('getCellTileUrl', () => {
 
 describe('getCellWalls', () => {
   it('marks a right wall between chambers in the same row', () => {
-    expect(getCellWalls(blackwoodKeep, cellAt(0, 2)).right).toBe(true);
+    expect(getCellWalls(blackwoodKeep, cellAt(2, 3)).right).toBe(true);
   });
 
   it('does not mark a right wall within the same chamber', () => {

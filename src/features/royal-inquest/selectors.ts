@@ -4,7 +4,7 @@ import type { CharacterId, InquestClue, InquestDefinition, InquestState } from '
 export type CellState =
   | 'blocked'
   | 'manual-cross'
-  | 'derived-unavailable'
+  | 'auto-cross'
   | 'occupied'
   | 'available';
 
@@ -26,9 +26,6 @@ export function getCellState(
     return 'occupied';
   }
   if ((state.manualCrosses[characterId] ?? []).includes(key)) return 'manual-cross';
-  if (cell.legalCharacterIds !== undefined && !cell.legalCharacterIds.includes(characterId)) {
-    return 'derived-unavailable';
-  }
   if (
     Object.entries(state.placements).some(
       ([placedCharacterId, placedPosition]) =>
@@ -37,7 +34,7 @@ export function getCellState(
         (placedPosition.row === position.row || placedPosition.column === position.column),
     )
   ) {
-    return 'derived-unavailable';
+    return 'auto-cross';
   }
   return 'available';
 }
@@ -54,6 +51,7 @@ function predicateMentions(predicate: InquestClue['predicate'], characterId: Cha
     case 'exact-row':
     case 'exact-column':
     case 'exact-chamber':
+    case 'on-prop':
       return predicate.characterId === characterId;
     case 'same-chamber':
     case 'different-chamber':
