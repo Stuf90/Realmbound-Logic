@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { royalInquestAssets } from '../../assets/royal-inquest/manifest';
+import { propsByEnvironment, royalInquestAssets } from '../../assets/royal-inquest/manifest';
 import { blackwoodKeep } from './definition';
-import { getCellTileUrl, getCellWalls, getCharacterAvatarUrl } from './visuals';
+import { getCellPropUrl, getCellTileUrl, getCellWalls, getCharacterAvatarUrl } from './visuals';
 
 function cellAt(row: number, column: number) {
   return blackwoodKeep.cells.find(
@@ -57,19 +57,31 @@ describe('getCellWalls', () => {
   });
 
   it('marks a bottom wall between chambers in the same column', () => {
-    expect(getCellWalls(blackwoodKeep, cellAt(1, 0)).bottom).toBe(true);
+    expect(getCellWalls(blackwoodKeep, cellAt(2, 0)).bottom).toBe(true);
   });
 
-  it('does not mark a bottom wall where a chamber spans both rows', () => {
+  it('does not mark a bottom wall where a chamber spans multiple rows', () => {
     expect(getCellWalls(blackwoodKeep, cellAt(4, 2)).bottom).toBe(false);
   });
 
-  it('marks a bottom wall at the row 4-5 boundary outside the shared archives span', () => {
-    expect(getCellWalls(blackwoodKeep, cellAt(4, 0)).bottom).toBe(true);
+  it('marks a bottom wall at the guardroom/chapel band boundary', () => {
+    expect(getCellWalls(blackwoodKeep, cellAt(5, 0)).bottom).toBe(true);
   });
 
   it('does not mark a bottom wall at the board edge', () => {
-    expect(getCellWalls(blackwoodKeep, cellAt(5, 0)).bottom).toBe(false);
+    expect(getCellWalls(blackwoodKeep, cellAt(8, 0)).bottom).toBe(false);
+  });
+});
+
+describe('getCellPropUrl', () => {
+  it('resolves a cell with a propId to its manifest prop image', () => {
+    const cell = blackwoodKeep.cells.find(({ chamberId, propId }) => chamberId === 'archives' && propId)!;
+    expect(getCellPropUrl(cell)).toBe(royalInquestAssets.props['bookshelf']);
+  });
+
+  it('returns undefined for a cell without a propId', () => {
+    const cell = blackwoodKeep.cells.find(({ chamberId, propId }) => chamberId === 'solar' && !propId)!;
+    expect(getCellPropUrl(cell)).toBeUndefined();
   });
 });
 
@@ -86,6 +98,14 @@ describe('blackwoodKeep asset wiring', () => {
       const environment = blackwoodKeep.chamberEnvironments[chamberId];
       expect(environment).toBeDefined();
       expect(royalInquestAssets.tiles[environment]).toBeDefined();
+    }
+  });
+
+  it('only places props that are logical for their chamber environment', () => {
+    for (const cell of blackwoodKeep.cells) {
+      if (!cell.propId) continue;
+      const environment = blackwoodKeep.chamberEnvironments[cell.chamberId]!;
+      expect(propsByEnvironment[environment]).toContain(cell.propId);
     }
   });
 });

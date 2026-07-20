@@ -21,6 +21,10 @@ export function getCellTileUrl(definition: InquestDefinition, cell: InquestCell)
   return variants[variantIndex];
 }
 
+export function getCellPropUrl(cell: InquestCell): string | undefined {
+  return cell.propId ? royalInquestAssets.props[cell.propId] : undefined;
+}
+
 export interface CellWalls {
   right: boolean;
   bottom: boolean;

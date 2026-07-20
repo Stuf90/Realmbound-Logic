@@ -1,5 +1,5 @@
 import type { GridPosition } from '../../shared/geometry';
-import type { AvatarAssetId, TileEnvironment } from '../../assets/royal-inquest/manifest';
+import type { AvatarAssetId, PropAssetId, TileEnvironment } from '../../assets/royal-inquest/manifest';
 
 export type CharacterId = string;
 
@@ -16,6 +16,7 @@ export interface InquestCell {
   chamberId: string;
   blocked: boolean;
   legalCharacterIds?: CharacterId[];
+  propId?: PropAssetId;
 }
 
 export type InquestPredicate =

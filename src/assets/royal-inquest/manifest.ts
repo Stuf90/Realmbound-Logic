@@ -102,6 +102,36 @@ export type PropAssetId =
 
 export type TileEnvironment = 'room' | 'garden' | 'church' | 'kitchen' | 'hallway' | 'dungeon' | 'royalRoom';
 
+export const propsByEnvironment: Record<TileEnvironment, readonly PropAssetId[]> = {
+  royalRoom: ['throne', 'formal-chair'],
+  room: [
+    'bookshelf',
+    'bookshelf-left',
+    'bookshelf-right',
+    'simple-chair',
+    'wooden-bench',
+    'wooden-bench-left',
+    'wooden-bench-right',
+    'barrel-cluster',
+    'dining-table',
+    'dining-table-left',
+    'dining-table-right',
+  ],
+  church: ['church-pew', 'church-pew-left', 'church-pew-right'],
+  dungeon: ['dungeon-cage', 'barrel-cluster'],
+  garden: ['stone-planter', 'wooden-planter'],
+  kitchen: [
+    'kitchen-worktable',
+    'kitchen-worktable-left',
+    'kitchen-worktable-right',
+    'barrel-cluster',
+    'dining-table',
+    'dining-table-left',
+    'dining-table-right',
+  ],
+  hallway: [],
+};
+
 export const royalInquestAssets = {
   avatars: {
     monarch,

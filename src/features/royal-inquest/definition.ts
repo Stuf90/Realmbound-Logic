@@ -1,15 +1,30 @@
 import type { GridPosition } from '../../shared/geometry';
+import type { PropAssetId } from '../../assets/royal-inquest/manifest';
 import type { CharacterId, InquestCell, InquestDefinition } from './types';
 
-const blockedCells = new Set(['0:5', '1:4', '2:2', '3:4', '4:1', '5:4']);
+// Every chamber below is a 3-row x 2-column block (>= 5-tile minimum), so blocked cells double as
+// prop anchors without ever colliding with a solution/legal cell.
+const propsByPosition: Record<string, PropAssetId> = {
+  '0:0': 'throne',
+  '3:2': 'formal-chair',
+  '5:0': 'barrel-cluster',
+  '7:0': 'church-pew',
+  '8:3': 'bookshelf',
+  '6:4': 'dungeon-cage',
+};
+
+const blockedCells = new Set(Object.keys(propsByPosition));
 
 const chamberByPosition = [
   ['solar', 'solar', 'west-gallery', 'west-gallery', 'east-gallery', 'east-gallery'],
   ['solar', 'solar', 'west-gallery', 'west-gallery', 'east-gallery', 'east-gallery'],
+  ['solar', 'solar', 'west-gallery', 'west-gallery', 'east-gallery', 'east-gallery'],
   ['guardroom', 'guardroom', 'great-hall', 'great-hall', 'gallery', 'gallery'],
   ['guardroom', 'guardroom', 'great-hall', 'great-hall', 'gallery', 'gallery'],
-  ['chapel', 'chapel', 'archives', 'archives', 'chapel', 'chapel'],
-  ['crypt', 'crypt', 'archives', 'archives', 'crypt', 'crypt'],
+  ['guardroom', 'guardroom', 'great-hall', 'great-hall', 'gallery', 'gallery'],
+  ['chapel', 'chapel', 'archives', 'archives', 'crypt', 'crypt'],
+  ['chapel', 'chapel', 'archives', 'archives', 'crypt', 'crypt'],
+  ['chapel', 'chapel', 'archives', 'archives', 'crypt', 'crypt'],
 ] as const;
 
 const legalCharacterIdsByPosition: Record<string, CharacterId[]> = {
@@ -18,7 +33,7 @@ const legalCharacterIdsByPosition: Record<string, CharacterId[]> = {
   '2:4': ['beatrice'],
   '3:3': ['cedric'],
   '4:5': ['daria'],
-  '5:2': ['edmund'],
+  '6:2': ['edmund'],
 };
 
 const chamberEnvironments: InquestDefinition['chamberEnvironments'] = {
@@ -55,6 +70,7 @@ const cells: InquestCell[] = chamberByPosition.flatMap((row, rowIndex) =>
       ...(legalCharacterIdsByPosition[key]
         ? { legalCharacterIds: legalCharacterIdsByPosition[key] }
         : {}),
+      ...(propsByPosition[key] ? { propId: propsByPosition[key] } : {}),
     };
   }),
 );
@@ -65,14 +81,14 @@ const solution: Record<CharacterId, GridPosition> = {
   beatrice: { row: 2, column: 4 },
   cedric: { row: 3, column: 3 },
   daria: { row: 4, column: 5 },
-  edmund: { row: 5, column: 2 },
+  edmund: { row: 6, column: 2 },
 };
 
 export const blackwoodKeep: InquestDefinition = {
   id: 'blackwood-keep',
   title: 'The Treason at Blackwood Keep',
   definitionVersion: 1,
-  rows: 6,
+  rows: 9,
   columns: 6,
   characters: [
     { id: 'envoy', name: 'The Royal Envoy', portraitLabel: 'Royal Envoy', avatarId: 'royal-envoy', isVictim: true },
@@ -118,9 +134,9 @@ export const blackwoodKeep: InquestDefinition = {
       predicate: { type: 'exact-row', characterId: 'daria', row: 4 },
     },
     {
-      id: 'edmund-sixth-row',
-      text: 'Edmund descended to the sixth row.',
-      predicate: { type: 'exact-row', characterId: 'edmund', row: 5 },
+      id: 'edmund-seventh-row',
+      text: 'Edmund descended to the seventh row.',
+      predicate: { type: 'exact-row', characterId: 'edmund', row: 6 },
     },
     {
       id: 'solar-witnesses',
