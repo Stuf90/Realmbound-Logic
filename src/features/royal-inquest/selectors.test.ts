@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { blackwoodKeep } from './definition';
 import { createInitialInquestState, reduceInquest } from './reducer';
-import { getCellState } from './selectors';
+import { getCellState, getCluesForCharacter } from './selectors';
 
 describe('getCellState', () => {
   it('keeps manual crosses distinct from derived row and column exclusions', () => {
@@ -32,5 +32,22 @@ describe('getCellState', () => {
     expect(getCellState(blackwoodKeep, placed, 'beatrice', { row: 0, column: 1 })).toBe(
       'occupied',
     );
+  });
+});
+
+describe('getCluesForCharacter', () => {
+  it('includes solo predicates that name the character directly', () => {
+    const ids = getCluesForCharacter(blackwoodKeep, 'daria').map((clue) => clue.id);
+    expect(ids).toEqual(['daria-fifth-row']);
+  });
+
+  it('includes paired predicates that name the character as either participant, in clue order', () => {
+    const ids = getCluesForCharacter(blackwoodKeep, 'envoy').map((clue) => clue.id);
+    expect(ids).toEqual(['envoy-first-row', 'envoy-second-column', 'solar-witnesses']);
+  });
+
+  it('matches a character referenced only as the second participant in a pair', () => {
+    const ids = getCluesForCharacter(blackwoodKeep, 'aldric').map((clue) => clue.id);
+    expect(ids).toEqual(['aldric-first-column', 'solar-witnesses', 'aldric-not-beside-edmund']);
   });
 });

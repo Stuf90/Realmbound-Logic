@@ -5,7 +5,7 @@ import { positionKey } from '../../shared/geometry';
 import { blackwoodKeep } from './definition';
 import { getInquestHint } from './hints';
 import { createInitialInquestState, reduceInquest } from './reducer';
-import { getCellState } from './selectors';
+import { getCellState, getCluesForCharacter } from './selectors';
 import { checkInquestProgress, isInquestComplete } from './validation';
 import { getCellPropUrl, getCellTileUrl, getCellWalls, getCharacterAvatarUrl } from './visuals';
 import type { InquestState } from './types';
@@ -43,6 +43,10 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
   function reset() { if (window.confirm('Erase the current inquest and begin again?')) { setHistory(createHistory(createInitialInquestState())); setSeconds(0); setHints(0); setChecks(0); setStatus('The inquest has been reset.'); } }
 
   const visibleCharacter = blackwoodKeep.characters[characterIndex]!;
+  const visibleCharacterClues = useMemo(
+    () => getCluesForCharacter(blackwoodKeep, visibleCharacter.id),
+    [visibleCharacter.id],
+  );
   const chamberAnchorKeys = useMemo(() => {
     const seenChambers = new Set<string>();
     const anchors = new Set<string>();
@@ -64,7 +68,12 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
           className="inquest-board"
           role="grid"
           aria-label={`Blackwood Keep, ${blackwoodKeep.rows} by ${blackwoodKeep.columns}`}
-          style={{ gridTemplateColumns: `repeat(${blackwoodKeep.columns}, minmax(44px, 1fr))`, aspectRatio: `${blackwoodKeep.columns} / ${blackwoodKeep.rows}` }}
+          style={{
+            gridTemplateColumns: `repeat(${blackwoodKeep.columns}, minmax(44px, 1fr))`,
+            gridTemplateRows: `repeat(${blackwoodKeep.rows}, minmax(44px, 1fr))`,
+            aspectRatio: `${blackwoodKeep.columns} / ${blackwoodKeep.rows}`,
+            width: `min(100%, calc(100cqh * ${blackwoodKeep.columns} / ${blackwoodKeep.rows}))`,
+          }}
         >
           {blackwoodKeep.cells.map((cell) => {
             const occupant = Object.entries(state.placements).find(([, position]) => position && positionKey(position) === positionKey(cell.position))?.[0];
@@ -100,6 +109,9 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
             <button aria-label="Next character" onClick={() => setCharacterIndex((characterIndex + 1) % blackwoodKeep.characters.length)}>→</button>
           </div>
           <button className="portrait featured-portrait" aria-pressed={state.selectedCharacterId === visibleCharacter.id} onClick={() => dispatch({ type: 'select-character', characterId: visibleCharacter.id }, false)}><img className="carousel-avatar" src={getCharacterAvatarUrl(visibleCharacter)} alt="" />{visibleCharacter.name}{visibleCharacter.isVictim && <small>Slain envoy</small>}</button>
+          <section className="character-clue-brief internal-scroll" role="region" aria-live="polite" aria-label={`Clues about ${visibleCharacter.name}`}>
+            {visibleCharacterClues.length ? <ol>{visibleCharacterClues.map((clue) => <li key={clue.id}>{clue.text}</li>)}</ol> : <p>No witness statement names {visibleCharacter.name} directly.</p>}
+          </section>
         </section> : <section className="internal-scroll clue-list" role="region" aria-label="Witness statements"><ol>{blackwoodKeep.clues.map((clue) => <li key={clue.id}>{clue.text}</li>)}</ol></section>}
       </aside>
     </div>
