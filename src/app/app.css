@@ -80,13 +80,15 @@ h2 { font-size: clamp(1.15rem, 4vw, 1.8rem); line-height: 1.05; }
 .board-panel { display: grid; grid-template-rows: minmax(0, 1fr) auto minmax(1.8rem, auto); gap: .25rem; padding: .3rem; }
 .board-scroll { display: grid; min-width: 0; min-height: 0; overflow: auto; place-items: center; overscroll-behavior: contain; }
 .inquest-board { display: grid; width: min(100%, 45dvh); min-width: 0; max-height: 100%; aspect-ratio: 1; grid-template-columns: repeat(6, minmax(44px, 1fr)); margin: auto; border: 3px solid var(--ink); }
-.cell { min-width: 0; min-height: 0; padding: 0; border: 1px solid #765c3a; background: #f7e9c6; color: var(--ink); font-size: clamp(.62rem, 3vmin, 1.25rem); font-weight: 800; }
+.cell { display: grid; place-items: center; min-width: 0; min-height: 0; padding: 0; border: 1px solid #765c3a; background-color: #f7e9c6; background-size: cover; background-position: center; color: var(--ink); font-size: clamp(.62rem, 3vmin, 1.25rem); font-weight: 800; text-shadow: 0 0 3px rgba(0,0,0,.85); --cell-tint: linear-gradient(rgba(0,0,0,.15), rgba(0,0,0,.15)); }
+.cell > * { grid-area: 1 / 1; }
 .cell:nth-child(6n+3) { border-left-width: 3px; }
 .cell:nth-child(n+13):nth-child(-n+18), .cell:nth-child(n+25):nth-child(-n+30) { border-top-width: 3px; }
-.cell.blocked { background: #5b4938; color: #fff; }
+.cell.blocked { background-color: #5b4938; color: #fff; --cell-tint: linear-gradient(rgba(30,20,15,.72), rgba(30,20,15,.72)); }
 .cell.manual-cross { color: var(--crimson); font-size: 1.6rem; }
 .cell.derived-unavailable { color: #6c604f; }
-.cell.occupied { background: #f0c26c; }
+.cell.occupied { background-color: #f0c26c; --cell-tint: linear-gradient(rgba(0,0,0,.08), rgba(0,0,0,.08)); }
+.cell-avatar { width: 78%; height: 78%; object-fit: contain; filter: drop-shadow(0 0 3px rgba(0,0,0,.85)); }
 .toolbar { display: grid; grid-template-columns: repeat(4, minmax(44px, 1fr)); gap: .3rem; max-height: 5.5rem; overflow-y: auto; padding: 2px; }
 .toolbar button { min-height: 44px; padding: .35rem .2rem; font: 700 clamp(.65rem, 2.5vw, .82rem) system-ui, sans-serif; }
 .status { max-height: 3.2rem; padding: .38rem .5rem; border-left: 4px solid var(--gold); background: #fff4d2; font-size: clamp(.72rem, 2.7vw, .88rem); line-height: 1.15; white-space: normal; }
@@ -100,7 +102,7 @@ h2 { font-size: clamp(1.15rem, 4vw, 1.8rem); line-height: 1.05; }
 .character-carousel .carousel-controls { flex-direction: row; gap: .4rem; }
 .character-carousel .carousel-controls button { min-height: 44px; height: 44px; }
 .featured-portrait { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .4rem; height: 100%; min-height: 0; text-align: left; }
-.featured-portrait span { grid-row: 1 / span 2; font-size: 1.5rem; }
+.carousel-avatar { grid-row: 1 / span 2; width: clamp(2.2rem, 8vmin, 3.6rem); height: clamp(2.2rem, 8vmin, 3.6rem); object-fit: contain; }
 .featured-portrait small { font-style: italic; }
 .clue-list, .rule-list, .tray-content { padding: .5rem; }
 .clue-list ol, .rule-list ol { margin: 0; padding-left: 1.3rem; }
@@ -170,7 +172,7 @@ h2 { font-size: clamp(1.15rem, 4vw, 1.8rem); line-height: 1.05; }
   .puzzle-topbar h1 { font-size: 1rem; }
   .status { max-height: 2.4rem; font-size: .72rem; }
   .featured-portrait { grid-template-columns: auto 1fr; }
-  .featured-portrait span { grid-row: auto; }
+  .carousel-avatar { grid-row: auto; }
   .featured-portrait small { display: none; }
 }
 

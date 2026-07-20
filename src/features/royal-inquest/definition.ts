@@ -21,6 +21,18 @@ const legalCharacterIdsByPosition: Record<string, CharacterId[]> = {
   '5:2': ['edmund'],
 };
 
+const chamberEnvironments: InquestDefinition['chamberEnvironments'] = {
+  solar: 'royalRoom',
+  'great-hall': 'royalRoom',
+  'west-gallery': 'hallway',
+  'east-gallery': 'hallway',
+  gallery: 'hallway',
+  guardroom: 'room',
+  archives: 'room',
+  chapel: 'church',
+  crypt: 'dungeon',
+};
+
 const cells: InquestCell[] = chamberByPosition.flatMap((row, rowIndex) =>
   row.map((chamberId, columnIndex) => {
     const key = `${rowIndex}:${columnIndex}`;
@@ -51,14 +63,16 @@ export const blackwoodKeep: InquestDefinition = {
   rows: 6,
   columns: 6,
   characters: [
-    { id: 'envoy', name: 'The Royal Envoy', portraitLabel: 'Royal Envoy', isVictim: true },
-    { id: 'aldric', name: 'Lord Aldric', portraitLabel: 'Aldric' },
-    { id: 'beatrice', name: 'Lady Beatrice', portraitLabel: 'Beatrice' },
-    { id: 'cedric', name: 'Sir Cedric', portraitLabel: 'Cedric' },
-    { id: 'daria', name: 'Dame Daria', portraitLabel: 'Daria' },
-    { id: 'edmund', name: 'Brother Edmund', portraitLabel: 'Edmund' },
+    { id: 'envoy', name: 'The Royal Envoy', portraitLabel: 'Royal Envoy', avatarId: 'royal-envoy', isVictim: true },
+    { id: 'aldric', name: 'Lord Aldric', portraitLabel: 'Aldric', avatarId: 'nobleman' },
+    { id: 'beatrice', name: 'Lady Beatrice', portraitLabel: 'Beatrice', avatarId: 'noblewoman' },
+    { id: 'cedric', name: 'Sir Cedric', portraitLabel: 'Cedric', avatarId: 'knight' },
+    // No dedicated "Dame" avatar exists in the pack; guard-captain is the nearest fit for an authority figure who searched the keep.
+    { id: 'daria', name: 'Dame Daria', portraitLabel: 'Daria', avatarId: 'guard-captain' },
+    { id: 'edmund', name: 'Brother Edmund', portraitLabel: 'Edmund', avatarId: 'monk' },
   ],
   cells,
+  chamberEnvironments,
   clues: [
     {
       id: 'envoy-first-row',
