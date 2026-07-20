@@ -212,7 +212,9 @@ describe('puzzle play', () => {
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
     await user.click(screen.getByRole('button', { name: /The Royal Envoy/ }));
     await user.click(screen.getByRole('gridcell', { name: /Row 1, column 2/ }));
-    expect(screen.getByRole('gridcell', { name: /Royal Envoy/ })).toBeInTheDocument();
+    const placedCell = screen.getByRole('gridcell', { name: /Royal Envoy/ });
+    expect(placedCell).toBeInTheDocument();
+    expect(placedCell.querySelector('img')).toHaveAttribute('src', expect.stringContaining('royal-envoy'));
     expect(screen.getByRole('button', { name: 'Check progress' })).toBeInTheDocument();
   });
 });

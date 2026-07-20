@@ -7,6 +7,7 @@ import { getInquestHint } from './hints';
 import { createInitialInquestState, reduceInquest } from './reducer';
 import { getCellState } from './selectors';
 import { checkInquestProgress, isInquestComplete } from './validation';
+import { getCellTileUrl, getCharacterAvatarUrl } from './visuals';
 import type { InquestState } from './types';
 
 export function RoyalInquest({ onBack }: { onBack: () => void }) {
@@ -56,7 +57,8 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
             const cellState = selected ? getCellState(blackwoodKeep, state, selected, cell.position) : cell.blocked ? 'blocked' : occupant ? 'occupied' : 'available';
             const character = blackwoodKeep.characters.find(({ id }) => id === occupant);
             const label = `Row ${cell.position.row + 1}, column ${cell.position.column + 1}, ${cell.chamberId.replace('-', ' ')}, ${character?.name ?? cellState.replace('-', ' ')}`;
-            return <button key={positionKey(cell.position)} role="gridcell" className={`cell ${cellState}`} disabled={cell.blocked} aria-label={label} onClick={() => activate(cell.position.row, cell.position.column)} onKeyDown={(event) => { if (event.key.toLowerCase() === 'x') { event.preventDefault(); if (selected) dispatch({ type: 'toggle-cross', characterId: selected, position: cell.position }); } }}>{character ? character.portraitLabel.slice(0, 2) : cell.blocked ? '◆' : cellState === 'manual-cross' ? '×' : cellState === 'derived-unavailable' ? '·' : ''}<span className="sr-only">{label}</span></button>;
+            const tileUrl = getCellTileUrl(blackwoodKeep, cell);
+            return <button key={positionKey(cell.position)} role="gridcell" className={`cell ${cellState}`} style={{ backgroundImage: `var(--cell-tint), url(${tileUrl})` }} disabled={cell.blocked} aria-label={label} onClick={() => activate(cell.position.row, cell.position.column)} onKeyDown={(event) => { if (event.key.toLowerCase() === 'x') { event.preventDefault(); if (selected) dispatch({ type: 'toggle-cross', characterId: selected, position: cell.position }); } }}>{character ? <img className="cell-avatar" src={getCharacterAvatarUrl(character)} alt="" /> : cell.blocked ? '◆' : cellState === 'manual-cross' ? '×' : cellState === 'derived-unavailable' ? '·' : ''}<span className="sr-only">{label}</span></button>;
           })}
         </div></div>
         <div className="toolbar" role="toolbar" aria-label="Puzzle actions">
@@ -78,7 +80,7 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
             <span aria-live="polite">{characterIndex + 1} / {blackwoodKeep.characters.length}</span>
             <button aria-label="Next character" onClick={() => setCharacterIndex((characterIndex + 1) % blackwoodKeep.characters.length)}>→</button>
           </div>
-          <button className="portrait featured-portrait" aria-pressed={state.selectedCharacterId === visibleCharacter.id} onClick={() => dispatch({ type: 'select-character', characterId: visibleCharacter.id }, false)}><span aria-hidden="true">♙</span>{visibleCharacter.name}{visibleCharacter.isVictim && <small>Slain envoy</small>}</button>
+          <button className="portrait featured-portrait" aria-pressed={state.selectedCharacterId === visibleCharacter.id} onClick={() => dispatch({ type: 'select-character', characterId: visibleCharacter.id }, false)}><img className="carousel-avatar" src={getCharacterAvatarUrl(visibleCharacter)} alt="" />{visibleCharacter.name}{visibleCharacter.isVictim && <small>Slain envoy</small>}</button>
         </section> : <section className="internal-scroll clue-list" role="region" aria-label="Witness statements"><ol>{blackwoodKeep.clues.map((clue) => <li key={clue.id}>{clue.text}</li>)}</ol></section>}
       </aside>
     </div>
