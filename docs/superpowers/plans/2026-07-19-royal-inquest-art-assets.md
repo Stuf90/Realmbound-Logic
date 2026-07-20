@@ -4,6 +4,8 @@
 
 **Goal:** Produce 18 reusable avatar tokens, 12 transparent top-down props, and 21 mutually compatible seamless floor tiles for Royal Inquest, plus a typed manifest and visual review sheets.
 
+**Final delivered scope (see `docs/superpowers/specs/2026-07-19-royal-inquest-art-assets-design.md` for the authorized rationale):** the tasks and tables below record the plan as originally authored. During implementation, five props (`wooden-bench`, `church-pew`, `dining-table`, `kitchen-worktable`, `bookshelf`) were additionally split into left/right two-cell pairs, raising the prop file count from 12 to 22 while keeping the retained one-cell files. Tile scope was reduced from three variants across all seven environments (21 files) to 15 files — three variants for room, garden, church, and kitchen, and one each for hallway, dungeon, and royal room — with each tile made independently self-seamless rather than cross-variant edge-compatible. The final runtime pack is therefore 18 avatars + 22 props + 15 tiles = 55 files, matching `tools/royal_inquest_assets/test_image_contract.py`'s `CompletePackTests` and `src/assets/royal-inquest/manifest.ts`.
+
 **Architecture:** Generate one image per distinct asset with the built-in image generator, preserve raw outputs outside runtime directories, and normalize accepted outputs into deterministic 512x512 PNGs with small Python/Pillow utilities. Runtime code consumes stable Vite URL imports from a TypeScript manifest; Python tests validate file count, dimensions, opacity, transparency, and tile-edge compatibility.
 
 **Tech Stack:** Built-in `image_gen`, bundled Python 3 with Pillow, TypeScript, Vite asset imports, Vitest for manifest checks, Python `unittest` for image checks.
