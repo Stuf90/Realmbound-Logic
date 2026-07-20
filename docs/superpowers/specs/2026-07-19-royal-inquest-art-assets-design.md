@@ -66,6 +66,8 @@ Create 12 reusable objects:
 
 Each object must be centered, fully visible, directly overhead, and isolated on transparency. Scale should be internally consistent: seating fits one person, tables relate plausibly to chairs, and large props remain readable when constrained to one or two grid cells.
 
+**Final scope change:** five of these twelve objects — `wooden-bench`, `church-pew`, `dining-table`, `kitchen-worktable`, and `bookshelf` — are large enough that a single 512x512 cell compressed their footprint below the 96px readability bar. Each of those five was additionally reframed to a 1024x512 source and split into an exact left/right 512x512 pair, so it can span two adjacent grid cells at full scale. The original complete one-cell file is retained for placements where only one cell is available. This raises the prop file count from 12 to **22 files** (12 complete one-cell props + 10 left/right segment files) while the object count stays 12.
+
 ### Seamless Floor Tiles
 
 Create three interchangeable variants for each of seven environments, for 21 tiles total:
@@ -83,6 +85,8 @@ Create three interchangeable variants for each of seven environments, for 21 til
 Every tile is a square background for a grid cell. Each variant must tile seamlessly against itself and against the other two variants in the same environment. Opposite edges must connect without visible seams. Variants may change small internal texture details, but may not introduce borders, directional lighting changes, or singular central motifs that make repetition obvious.
 
 Tiles from different environments are not required to share seamless edges; room boundaries remain the responsibility of the map layout or a future transition-tile set.
+
+**Final scope change:** the original 21-tile target (three variants per environment) was reduced during implementation. The user requested keeping already-generated surplus variants rather than discarding them, but generating only the missing environment types rather than filling every environment back up to three. The final approved count is **15 tiles**: three variants each for general rooms, garden, church, and kitchen, and a single variant each for hallway, dungeon, and royal room. Each tile is individually self-seamless (its own opposite edges match); tiles are no longer required to share edges across variants or across environments — an earlier shared-edge-band treatment produced visible inner-frame artifacts and was replaced by per-tile self-seamless processing.
 
 ## File Contract
 
@@ -128,11 +132,12 @@ Automated validation will verify:
 - every image is PNG and exactly 512x512;
 - avatars and props contain an alpha channel and transparent corners;
 - tiles are fully opaque;
-- the expected counts are 18 avatars, 12 props, and 21 tiles;
-- filenames and manifest groups are unique.
+- the expected counts are 18 avatars, 22 prop files (12 complete one-cell props plus 10 left/right segment files for five two-cell props), and 15 tiles;
+- filenames and manifest groups are unique;
+- each tile is self-seamless (its own opposite edges match), and each two-cell prop pair recomposes exactly to its 1024x512 source.
 
-Tile validation will compare opposite edges and generate repeated 3x3 previews to expose seams. Visual review of the contact sheet and repeated previews will confirm consistent style, direct overhead perspective, plausible scale, unclipped subjects, clean transparency, and readability at representative grid-cell size.
+Tile validation will compare each tile's own opposite edges and generate repeated 3x3 previews to expose seams. Visual review of the contact sheet and repeated previews will confirm consistent style, direct overhead perspective, plausible scale, unclipped subjects, clean transparency, and readability at representative grid-cell size.
 
 ## Acceptance Criteria
 
-The pack is complete when all 51 individual assets satisfy the file contract and automated checks, the 21 tiles repeat without visible seams within their environment, the contact sheet presents a coherent illustrated board-game collection, and no gameplay code has been unintentionally changed.
+The pack is complete when all 55 individual runtime assets (18 avatars + 22 props + 15 tiles) satisfy the file contract and automated checks, every tile repeats without a visible seam against itself, every two-cell prop pair recomposes exactly, the contact sheet presents a coherent illustrated board-game collection, and no gameplay code has been unintentionally changed.
