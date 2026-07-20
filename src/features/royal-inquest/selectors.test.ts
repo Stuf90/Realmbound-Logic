@@ -26,7 +26,7 @@ describe('getCellState', () => {
     expect(getCellState(blackwoodKeep, placed, 'beatrice', { row: 2, column: 1 })).toBe(
       'derived-unavailable',
     );
-    expect(getCellState(blackwoodKeep, placed, 'beatrice', { row: 0, column: 5 })).toBe(
+    expect(getCellState(blackwoodKeep, placed, 'beatrice', { row: 0, column: 0 })).toBe(
       'blocked',
     );
     expect(getCellState(blackwoodKeep, placed, 'beatrice', { row: 0, column: 1 })).toBe(

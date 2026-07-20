@@ -13,7 +13,7 @@ describe('reduceInquest', () => {
     );
     const moved = reduceInquest(
       placed,
-      { type: 'place', characterId: 'envoy', position: { row: 0, column: 0 } },
+      { type: 'place', characterId: 'envoy', position: { row: 0, column: 2 } },
       blackwoodKeep,
     );
     const cleared = reduceInquest(
@@ -24,7 +24,7 @@ describe('reduceInquest', () => {
 
     expect(initial.placements).toEqual({});
     expect(placed.placements.envoy).toEqual({ row: 0, column: 1 });
-    expect(moved.placements.envoy).toEqual({ row: 0, column: 0 });
+    expect(moved.placements.envoy).toEqual({ row: 0, column: 2 });
     expect(cleared.placements.envoy).toBeUndefined();
   });
 
@@ -44,7 +44,7 @@ describe('reduceInquest', () => {
     expect(
       reduceInquest(
         initial,
-        { type: 'place', characterId: 'envoy', position: { row: 0, column: 5 } },
+        { type: 'place', characterId: 'envoy', position: { row: 0, column: 0 } },
         blackwoodKeep,
       ),
     ).toBe(initial);
