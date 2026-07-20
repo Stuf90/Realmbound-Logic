@@ -1,5 +1,5 @@
 import { positionKey, type GridPosition } from '../../shared/geometry';
-import type { CharacterId, InquestDefinition, InquestState } from './types';
+import type { CharacterId, InquestClue, InquestDefinition, InquestState } from './types';
 
 export type CellState =
   | 'blocked'
@@ -40,4 +40,27 @@ export function getCellState(
     return 'derived-unavailable';
   }
   return 'available';
+}
+
+export function getCluesForCharacter(
+  definition: InquestDefinition,
+  characterId: CharacterId,
+): InquestClue[] {
+  return definition.clues.filter((clue) => predicateMentions(clue.predicate, characterId));
+}
+
+function predicateMentions(predicate: InquestClue['predicate'], characterId: CharacterId): boolean {
+  switch (predicate.type) {
+    case 'exact-row':
+    case 'exact-column':
+    case 'exact-chamber':
+      return predicate.characterId === characterId;
+    case 'same-chamber':
+    case 'different-chamber':
+    case 'beside':
+    case 'not-beside':
+      return predicate.firstCharacterId === characterId || predicate.secondCharacterId === characterId;
+    case 'direction-from':
+      return predicate.subjectCharacterId === characterId || predicate.referenceCharacterId === characterId;
+  }
 }
