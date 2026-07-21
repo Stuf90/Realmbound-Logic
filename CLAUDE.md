@@ -7,6 +7,7 @@ Realmbound Logic is a local-only puzzle web app (React + TypeScript + Vite + Vit
 - Gameplay and MVP scope: [GAMEPLAY_SPECIFICATION.md](GAMEPLAY_SPECIFICATION.md) and [PUZZLE_IMPLEMENTATION.md](PUZZLE_IMPLEMENTATION.md).
 - Approved design docs and implementation plans: `docs/superpowers/specs/` and `docs/superpowers/plans/`. These are shared between Codex and Claude Code — check both for the newest file touching the area you're about to change before starting new work there.
 - Two puzzle families: **The Royal Inquest** (`src/features/royal-inquest/`, Murdoku-style placement) and **Siege Lines** (`src/features/siege-lines/`, Train Tracks mechanics).
+- Royal Inquest game rules and authoring rules (board/rooms/props, character placement, clues/predicates): [docs/royal-inquest/rules.human.md](docs/royal-inquest/rules.human.md).
 - Royal Inquest art pipeline: `tools/royal_inquest_assets/` (Python) generates and validates the 512x512 PNG assets in `src/assets/royal-inquest/`.
 
 ## Commands
