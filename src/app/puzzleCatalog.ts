@@ -1,3 +1,5 @@
+import { royalInquestLevels } from '../features/royal-inquest/levels';
+
 export type PuzzleFamilyId =
   | 'royal-inquest'
   | 'siege-lines'
@@ -12,10 +14,10 @@ export interface PuzzleFamily {
   description: string;
   available: boolean;
   accent: 'crimson' | 'blue' | 'gold';
-  levelOne?: {
+  levels: Array<{
     title: string;
     puzzleId: string;
-  };
+  }>;
 }
 
 export const PUZZLE_FAMILIES: PuzzleFamily[] = [
@@ -26,7 +28,7 @@ export const PUZZLE_FAMILIES: PuzzleFamily[] = [
     description: 'Place six persons within the keep and expose the traitor through spatial deduction.',
     available: true,
     accent: 'crimson',
-    levelOne: { title: 'The Treason at Blackwood Keep', puzzleId: 'blackwood-keep' },
+    levels: royalInquestLevels.map((level) => ({ title: level.title, puzzleId: level.id })),
   },
   {
     id: 'siege-lines',
@@ -35,7 +37,7 @@ export const PUZZLE_FAMILIES: PuzzleFamily[] = [
     description: 'Restore the King’s highway as one exact route through the besieged valley.',
     available: true,
     accent: 'blue',
-    levelOne: { title: 'The Highgate Passage', puzzleId: 'highgate-passage' },
+    levels: [{ title: 'The Highgate Passage', puzzleId: 'highgate-passage' }],
   },
   {
     id: 'leyline-weaving',
@@ -44,6 +46,7 @@ export const PUZZLE_FAMILIES: PuzzleFamily[] = [
     description: 'Rotate rune tiles to carry magic from its source through a connected field.',
     available: false,
     accent: 'gold',
+    levels: [],
   },
   {
     id: 'celestial-binding',
@@ -52,6 +55,7 @@ export const PUZZLE_FAMILIES: PuzzleFamily[] = [
     description: 'Trace every required bond between the stars in one continuous journey.',
     available: false,
     accent: 'blue',
+    levels: [],
   },
   {
     id: 'living-laws',
@@ -60,6 +64,7 @@ export const PUZZLE_FAMILIES: PuzzleFamily[] = [
     description: 'Rearrange magical laws to transform the rules governing the realm.',
     available: false,
     accent: 'crimson',
+    levels: [],
   },
 ];
 
