@@ -84,13 +84,12 @@ describe('Blackwood Keep definition', () => {
     );
   });
 
-  it('rejects a prop placed on a cell that is not blocked', () => {
+  it('allows a prop on an unblocked cell reserved for one character as their solution seat', () => {
     const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
     const solarCell = malformed.cells.find((cell) => cell.chamberId === 'solar' && cell.blocked)!;
     solarCell.blocked = false;
+    solarCell.legalCharacterIds = ['aldric'];
 
-    expect(validateInquestDefinition(malformed)).toContain(
-      'Prop "throne" must be placed on a blocked cell.',
-    );
+    expect(validateInquestDefinition(malformed).some((issue) => issue.includes('Prop "throne"'))).toBe(false);
   });
 });
