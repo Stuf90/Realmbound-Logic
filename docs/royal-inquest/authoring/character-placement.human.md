@@ -38,9 +38,17 @@ this reason.
   `cells.length === rows * columns`, unique `position`s, and every `position` inside the
   grid bounds.
 - `InquestCell.legalCharacterIds?: CharacterId[]` restricts a cell to specific
-  characters. Omit it to allow any character. This is how a puzzle can place, e.g.,
-  narrative "found here" hints directly into the board geometry rather than only as
-  clues.
+  characters. Omit it to allow any character. In `blackwoodKeep` this is used only to
+  pin each character's solution cell to that one character, ruling out an alternate
+  valid placement that would also satisfy every clue — it is not a general-purpose
+  narrative device.
+- **Never set `legalCharacterIds` on a cell that also has a `propId`.** A prop cell
+  (chair, bench, throne, ...) must always read as open to any character, not as a seat
+  reserved for one. In practice this is moot today since every prop cell is also
+  `blocked` and therefore already unusable by anyone — but the two fields are
+  independent, and validation does not currently reject the combination, so don't rely
+  on `blocked` alone to make the restriction harmless. Author prop cells as a plain
+  `blocked: true` cell with a `propId` and no `legalCharacterIds`.
 - `InquestCell.blocked: boolean` marks a cell no character can ever occupy (scenery,
   optionally with a prop — see [board, rooms, and props](board-rooms-props.human.md)).
 
