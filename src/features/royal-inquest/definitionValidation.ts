@@ -1,6 +1,8 @@
 import { positionKey, type GridPosition } from '../../shared/geometry';
-import { propsByEnvironment, type PropAssetId } from '../../assets/royal-inquest/manifest';
-import type { InquestCell, InquestCharacter, InquestDefinition } from './types';
+import { propKindByAsset, propsByEnvironment, type PropAssetId } from '../../assets/royal-inquest/manifest';
+import { getPredicateCharacterIds } from './predicates';
+import { solveInquestDefinition, checkVictimElimination } from './solver';
+import type { InquestCell, InquestCharacter, InquestClue, InquestDefinition } from './types';
 
 const PROP_IDS = new Set<string>(Object.values(propsByEnvironment).flat());
 
@@ -26,15 +28,30 @@ function isCharacter(value: unknown): value is InquestCharacter {
   );
 }
 
+const PREDICATE_TYPES = new Set([
+  'exact-row',
+  'exact-column',
+  'exact-chamber',
+  'same-chamber',
+  'different-chamber',
+  'direction-from',
+  'beside',
+  'not-beside',
+  'on-prop',
+]);
+
+function isClue(value: unknown): value is InquestClue {
+  if (!isRecord(value) || typeof value.id !== 'string' || typeof value.text !== 'string') return false;
+  const predicate = value.predicate;
+  return isRecord(predicate) && typeof predicate.type === 'string' && PREDICATE_TYPES.has(predicate.type);
+}
+
 function isCell(value: unknown): value is InquestCell {
   return (
     isRecord(value) &&
     isPosition(value.position) &&
     typeof value.chamberId === 'string' &&
-    typeof value.blocked === 'boolean' &&
-    (value.legalCharacterIds === undefined ||
-      (Array.isArray(value.legalCharacterIds) &&
-        value.legalCharacterIds.every((id) => typeof id === 'string')))
+    typeof value.blocked === 'boolean'
   );
 }
 
@@ -116,11 +133,41 @@ export function validateInquestDefinition(definition: unknown): string[] {
     const environment = chamberEnvironments[cell.chamberId];
     if (!PROP_IDS.has(cell.propId)) {
       issues.push(`Prop "${cell.propId}" is not a known prop asset.`);
-    } else if (
+      continue;
+    }
+    const kind = propKindByAsset[cell.propId as PropAssetId];
+    if (kind === 'seat' && cell.blocked) {
+      issues.push(`Seat prop "${cell.propId}" must be on an unblocked cell so a character can use it.`);
+    } else if (kind === 'decorative' && !cell.blocked) {
+      issues.push(`Decorative prop "${cell.propId}" must be placed on a blocked cell.`);
+    }
+    if (
       typeof environment !== 'string' ||
       !propsByEnvironment[environment as keyof typeof propsByEnvironment]?.includes(cell.propId as PropAssetId)
     ) {
       issues.push(`Prop "${cell.propId}" is not permitted in a "${environment}" chamber.`);
+    }
+  }
+
+  const clues = Array.isArray(definition.clues) ? definition.clues.filter(isClue) : [];
+  if (!Array.isArray(definition.clues) || clues.length !== definition.clues.length) {
+    issues.push('Every clue must be structurally valid.');
+  }
+  for (const clue of clues) {
+    if (clue.predicate.type === 'exact-row' || clue.predicate.type === 'exact-column') {
+      issues.push(
+        `Clue "${clue.id}" may not use exact-row/exact-column; use exact-chamber, direction-from, beside, not-beside, same-chamber, or different-chamber instead.`,
+      );
+    }
+  }
+  const victimId = characters.find(({ isVictim }) => isVictim)?.id;
+  if (victimId) {
+    for (const clue of clues) {
+      if (getPredicateCharacterIds(clue.predicate).includes(victimId)) {
+        issues.push(
+          `Clue "${clue.id}" names the victim directly; the victim's position must be derived only from other witnesses.`,
+        );
+      }
     }
   }
 
@@ -145,11 +192,7 @@ export function validateInquestDefinition(definition: unknown): string[] {
 
   for (const [characterId, position] of validSolutionEntries) {
     const cell = cells.find((candidate) => positionKey(candidate.position) === positionKey(position));
-    if (
-      !cell ||
-      cell.blocked ||
-      (cell.legalCharacterIds !== undefined && !cell.legalCharacterIds.includes(characterId))
-    ) {
+    if (!cell || cell.blocked) {
       issues.push(`Solution for ${characterId} must use a legal, unblocked cell.`);
     }
   }
@@ -175,6 +218,32 @@ export function validateInquestDefinition(definition: unknown): string[] {
       chamberOccupants.length !== 2
     ) {
       issues.push('Victim and traitor must be the only two solution occupants of their chamber.');
+    }
+  }
+
+  if (issues.length === 0) {
+    const solved = solveInquestDefinition(definition as unknown as InquestDefinition);
+    if (solved.solutions.length === 0) {
+      issues.push('The clue set has no valid solution.');
+    } else if (solved.solutions.length > 1) {
+      issues.push('The clue set does not narrow the puzzle to a unique solution.');
+    } else {
+      const [found] = solved.solutions;
+      const matches = characters.every(
+        ({ id }) => positionKey(found![id]!) === positionKey((definition as unknown as InquestDefinition).solution[id]!),
+      );
+      if (!matches) issues.push('The clue set\'s unique solution does not match the authored solution.');
+    }
+
+    const victim = characters.find(({ isVictim }) => isVictim);
+    const traitorId = typeof definition.traitorId === 'string' ? definition.traitorId : '';
+    if (victim && traitorId) {
+      const elimination = checkVictimElimination(definition as unknown as InquestDefinition);
+      if (!elimination.ok) {
+        issues.push(
+          `Victim ${victim.id} must have exactly one legal cell once every other character is placed, in a chamber occupied solely by the traitor.`,
+        );
+      }
     }
   }
 

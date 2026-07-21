@@ -8,7 +8,7 @@ export interface InquestIssue { kind: string; message: string; characterId?: Cha
 export function checkInquestProgress(definition: InquestDefinition, state: InquestState): InquestIssue | null {
   for (const [characterId, position] of Object.entries(state.placements)) {
     const cell = definition.cells.find((candidate) => positionKey(candidate.position) === positionKey(position!));
-    if (!cell || cell.blocked || (cell.legalCharacterIds && !cell.legalCharacterIds.includes(characterId)))
+    if (!cell || cell.blocked)
       return { kind: 'illegal', characterId, message: `${characterId} occupies an illegal cell.` };
   }
   const entries = Object.entries(state.placements).filter((entry): entry is [string, NonNullable<typeof entry[1]>] => !!entry[1]);

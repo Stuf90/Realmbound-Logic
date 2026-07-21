@@ -198,6 +198,23 @@ Canonical rules:
 This is a spatial placement puzzle, not a category-matching matrix, crest assignment, or
 transitive relationship grid.
 
+Authoring rules for clues (enforced by `definitionValidation.ts`, not just convention):
+
+- No clue may use `exact-row`/`exact-column` — those predicate types remain in the engine
+  for internal use, but a clue must be phrased in terms of a chamber name (`exact-chamber`),
+  a chamber relationship (`same-chamber`/`different-chamber`), an on-prop fact, or a
+  cardinal/adjacency fact — never a bare row or column index.
+- No clue may name the victim character as an operand of any predicate. The victim's cell
+  is never stated; it is the one cell forced by elimination once every other character is
+  placed, inside a chamber whose only other occupant is the traitor. `solveInquestDefinition`
+  and `checkVictimElimination` (`solver.ts`) prove this at validation time — a definition
+  that doesn't derive to a unique, victim-elimination-satisfying solution fails validation.
+- On a full row/column-permutation board, two distinct characters never share a row or a
+  column, so `beside`/`direction-from` between two different characters can never be
+  authored `true` (they're only meaningful as always-false negative flavor, e.g.
+  `not-beside`). Chamber-relationship clues and `on-prop` (a character is on the cell
+  bearing a specific prop, e.g. "seated in the chair") are the load-bearing predicates.
+
 ### 5.2 Definition model
 
 ```ts
@@ -217,23 +234,28 @@ export interface InquestCell {
   position: GridPosition;
   chamberId: string;
   blocked: boolean;
-  legalCharacterIds?: string[];
+  propId?: PropAssetId;
 }
 
+// Naming below matches the shipped engine (`types.ts`), not this illustrative sketch's
+// earlier camelCase draft. A prop's `propId` classifies as `seat` (character may occupy the
+// cell, `blocked` must be false) or `decorative` (impassable, `blocked` must be true) — see
+// `propKindByAsset` in `src/assets/royal-inquest/manifest.ts`.
 export type InquestPredicate =
-  | { type: "inChamber"; characterId: string; chamberId: string }
-  | { type: "inRow"; characterId: string; row: number }
-  | { type: "inColumn"; characterId: string; column: number }
-  | { type: "beside"; first: string; second: string }
-  | { type: "notBeside"; first: string; second: string }
-  | { type: "sameChamber"; first: string; second: string }
-  | { type: "differentChamber"; first: string; second: string }
+  | { type: "exact-row"; characterId: string; row: number } // engine-only; never authored on a clue
+  | { type: "exact-column"; characterId: string; column: number } // engine-only; never authored on a clue
+  | { type: "exact-chamber"; characterId: string; chamberId: string }
+  | { type: "same-chamber"; firstCharacterId: string; secondCharacterId: string }
+  | { type: "different-chamber"; firstCharacterId: string; secondCharacterId: string }
+  | { type: "beside"; firstCharacterId: string; secondCharacterId: string }
+  | { type: "not-beside"; firstCharacterId: string; secondCharacterId: string }
   | {
-      type: "directionFrom";
-      subject: string;
-      reference: string;
+      type: "direction-from";
+      subjectCharacterId: string;
+      referenceCharacterId: string;
       direction: "north" | "east" | "south" | "west";
-    };
+    }
+  | { type: "on-prop"; characterId: string; propId: PropAssetId };
 
 export interface InquestClue {
   id: string;
@@ -281,10 +303,16 @@ manual-cross changes do. Use canonical reversible cell keys such as `row:column`
 
 ### 5.4 Exclusions and predicates
 
-Derived unavailable cells are selectors, not persisted player marks. Derive them from
-blocked cells, character restrictions, and rows or columns occupied by another
-character. Manual crosses remain separate and are never erased when derived exclusions
-change.
+Auto-crossed cells (`CellState = 'auto-cross'`) are selectors, not persisted player marks.
+Derive them live from rows or columns already occupied by another character. Manual
+crosses remain a separate, persisted, per-character mark and are never erased when
+auto-crossed cells change; a manual cross may only be removed while its row and column
+both hold zero placed characters (`reducer.ts`'s `toggle-cross` enforces this).
+
+A `conflict` cell state is distinct from both: a brief, non-persisted highlight applied
+to the attempted cell when a placement is rejected specifically because its row or
+column is already taken by another character (as opposed to being blocked or otherwise
+illegal). It clears itself after a short timeout or on the next action.
 
 Every predicate returns:
 
@@ -324,11 +352,14 @@ uniqueness holds, all clues are satisfied, the traitor condition holds, and ever
 character occupies the authored solution cell. Structural rules are checked even though
 a stored solution exists.
 
-Interaction selects a portrait and then a legal cell. The cross tool toggles a manual
-impossible mark. Fixed scenery is not selectable. Selected, focused, occupied, manually
-crossed, derived-unavailable, and invalid states are distinct without color. Keyboard
-controls support portrait selection, cell navigation, placement, crossing, clearing,
-Undo, and Redo.
+Interaction selects a portrait and then a legal cell. Scrolling the character carousel
+(prev/next) immediately selects the newly-focused character for placement, without a
+separate portrait click. The cross tool toggles a manual impossible mark. Fixed scenery
+is not selectable unless it carries a seat prop, in which case a character may be placed
+there (the prop renders under the avatar). Selected, focused, occupied, manually
+crossed, auto-crossed, conflict, and invalid states are each visually distinct — conflict
+uses a red highlight, the rest are distinguished without color. Keyboard controls support
+portrait selection, cell navigation, placement, crossing, clearing, Undo, and Redo.
 
 Acceptance requires:
 

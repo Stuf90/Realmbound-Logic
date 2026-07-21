@@ -20,8 +20,8 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
   const [status, setStatus] = useState(restored ? 'Your inquest was restored.' : 'Select a character, then choose a chamber cell.');
   const [seconds, setSeconds] = useState(restored?.elapsedSeconds ?? 0);
   const [hints, setHints] = useState(restored?.hintsUsed ?? 0);
-  const [activeTray, setActiveTray] = useState<'characters' | 'clues'>('characters');
   const [characterIndex, setCharacterIndex] = useState(0);
+  const [conflictCellKey, setConflictCellKey] = useState<string | null>(null);
   const state = history.present;
   const complete = isInquestComplete(blackwoodKeep, state);
 
@@ -40,11 +40,28 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
     else if (state.tool === 'draft') dispatch({ type: 'toggle-draft', characterId: selected, position: { row, column } });
     else {
       const next = reduceInquest(state, { type: 'place', characterId: selected, position: { row, column } }, blackwoodKeep);
-      if (next === state) return setStatus('That chamber cell is unavailable.');
+      if (next === state) {
+        const rowOrColumnTaken = Object.entries(state.placements).some(
+          ([placedCharacterId, position]) =>
+            placedCharacterId !== selected && position && (position.row === row || position.column === column),
+        );
+        if (rowOrColumnTaken) {
+          const key = positionKey({ row, column });
+          setConflictCellKey(key);
+          window.setTimeout(() => setConflictCellKey((current) => (current === key ? null : current)), 600);
+        }
+        return setStatus('That chamber cell is unavailable.');
+      }
+      setConflictCellKey(null);
       setHistory((value) => commitHistory(value, next));
     }
   }
   function reset() { if (window.confirm('Erase the current inquest and begin again?')) { setHistory(createHistory(createInitialInquestState())); setSeconds(0); setHints(0); setStatus('The inquest has been reset.'); } }
+  function goToCharacter(index: number) {
+    const nextIndex = (index + blackwoodKeep.characters.length) % blackwoodKeep.characters.length;
+    setCharacterIndex(nextIndex);
+    dispatch({ type: 'select-character', characterId: blackwoodKeep.characters[nextIndex]!.id }, false);
+  }
 
   const visibleCharacter = blackwoodKeep.characters[characterIndex]!;
   const visibleCharacterClues = useMemo(
@@ -76,7 +93,7 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
             gridTemplateColumns: `repeat(${blackwoodKeep.columns}, minmax(44px, 1fr))`,
             gridTemplateRows: `repeat(${blackwoodKeep.rows}, minmax(44px, 1fr))`,
             aspectRatio: `${blackwoodKeep.columns} / ${blackwoodKeep.rows}`,
-            width: `min(100%, calc(100cqh * ${blackwoodKeep.columns} / ${blackwoodKeep.rows}))`,
+            width: `min(100%, calc(100cqh * ${blackwoodKeep.columns} / ${blackwoodKeep.rows}), 34rem)`,
           }}
         >
           {blackwoodKeep.cells.map((cell) => {
@@ -96,7 +113,9 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
             const propUrl = getCellPropUrl(cell);
             const walls = getCellWalls(blackwoodKeep, cell);
             const wallClasses = `${walls.right ? ' wall-right' : ''}${walls.bottom ? ' wall-bottom' : ''}`;
-            return <button key={positionKey(cell.position)} role="gridcell" className={`cell ${cellState}${wallClasses}`} style={{ backgroundImage: `var(--cell-tint), url(${tileUrl})` }} disabled={cell.blocked} aria-label={label} onClick={() => activate(cell.position.row, cell.position.column)} onKeyDown={(event) => { if (event.key.toLowerCase() === 'x') { event.preventDefault(); if (selected) dispatch({ type: 'toggle-cross', characterId: selected, position: cell.position }); } }}>{character ? <img className="cell-avatar" src={getCharacterAvatarUrl(character)} alt="" /> : draftCharacters.length ? <span className="cell-draft" aria-hidden="true">{draftCharacters.map(({ portraitLabel }) => portraitLabel[0]).join('')}</span> : propUrl ? <img className="cell-prop" src={propUrl} alt="" /> : cell.blocked ? '◆' : cellState === 'manual-cross' ? '×' : cellState === 'derived-unavailable' ? '·' : ''}{chamberAnchorKeys.has(positionKey(cell.position)) && <span className="chamber-label" aria-hidden="true">{chamberName}</span>}<span className="sr-only">{label}</span></button>;
+            const isConflict = conflictCellKey === positionKey(cell.position);
+            const conflictClass = isConflict ? ' conflict' : '';
+            return <button key={positionKey(cell.position)} role="gridcell" className={`cell ${cellState}${wallClasses}${conflictClass}`} style={{ backgroundImage: `var(--cell-tint), url(${tileUrl})` }} disabled={cell.blocked} aria-label={label} onClick={() => activate(cell.position.row, cell.position.column)} onKeyDown={(event) => { if (event.key.toLowerCase() === 'x') { event.preventDefault(); if (selected) dispatch({ type: 'toggle-cross', characterId: selected, position: cell.position }); } }}>{propUrl && <img className="cell-prop" src={propUrl} alt="" />}{character && <img className="cell-avatar" src={getCharacterAvatarUrl(character)} alt="" />}{!character && draftCharacters.length > 0 && <span className="cell-draft" aria-hidden="true">{draftCharacters.map(({ portraitLabel }) => portraitLabel[0]).join('')}</span>}{!character && !propUrl && draftCharacters.length === 0 && (cell.blocked ? '◆' : cellState === 'manual-cross' ? '×' : cellState === 'auto-cross' ? '·' : '')}{chamberAnchorKeys.has(positionKey(cell.position)) && <span className="chamber-label" aria-hidden="true">{chamberName}</span>}<span className="sr-only">{label}</span></button>;
           })}
         </div></div>
         <div className="toolbar" role="toolbar" aria-label="Puzzle actions">
@@ -107,21 +126,17 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
         <p className="status internal-scroll" role="status">{status}</p><p className="metrics puzzle-metrics">Hints {hints}</p>
       </section>
       <aside className="dossier context-tray">
-        <nav className="tray-tabs" aria-label="Inquest reference">
-          <button aria-pressed={activeTray === 'characters'} onClick={() => setActiveTray('characters')}>Characters</button>
-          <button aria-pressed={activeTray === 'clues'} onClick={() => setActiveTray('clues')}>Clues</button>
-        </nav>
-        {activeTray === 'characters' ? <section className="character-carousel" aria-label="Persons of interest">
+        <section className="character-carousel" aria-label="Persons of interest">
           <div className="carousel-controls">
-            <button aria-label="Previous character" onClick={() => setCharacterIndex((characterIndex - 1 + blackwoodKeep.characters.length) % blackwoodKeep.characters.length)}>←</button>
+            <button aria-label="Previous character" onClick={() => goToCharacter(characterIndex - 1)}>←</button>
             <span aria-live="polite">{characterIndex + 1} / {blackwoodKeep.characters.length}</span>
-            <button aria-label="Next character" onClick={() => setCharacterIndex((characterIndex + 1) % blackwoodKeep.characters.length)}>→</button>
+            <button aria-label="Next character" onClick={() => goToCharacter(characterIndex + 1)}>→</button>
           </div>
           <button className="portrait featured-portrait" aria-pressed={state.selectedCharacterId === visibleCharacter.id} onClick={() => dispatch({ type: 'select-character', characterId: visibleCharacter.id }, false)}><img className="carousel-avatar" src={getCharacterAvatarUrl(visibleCharacter)} alt="" />{visibleCharacter.name}{visibleCharacter.isVictim && <small>Slain envoy</small>}</button>
           <section className="character-clue-brief internal-scroll" role="region" aria-live="polite" aria-label={`Clues about ${visibleCharacter.name}`}>
             {visibleCharacterClues.length ? <ol>{visibleCharacterClues.map((clue) => <li key={clue.id}>{clue.text}</li>)}</ol> : <p>No witness statement names {visibleCharacter.name} directly.</p>}
           </section>
-        </section> : <section className="internal-scroll clue-list" role="region" aria-label="Witness statements"><ol>{blackwoodKeep.clues.map((clue) => <li key={clue.id}>{clue.text}</li>)}</ol></section>}
+        </section>
       </aside>
     </div>
   </main>;
