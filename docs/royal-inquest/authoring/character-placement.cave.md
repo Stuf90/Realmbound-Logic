@@ -1,0 +1,133 @@
+# AUTHOR CHARACTER PLACEMENT
+
+> AGENT FILE. CAVE SPEAK. HUMAN VERSION: `character-placement.human.md`.
+> BACK TO [ROYAL INQUEST RULES](../rules.cave.md).
+
+THIS DOC = HOW CASE CAST + AUTHOR SOLUTION BUILD, + HOW `definitionValidation.ts` PROVE
+CLUE SET ACTUAL NARROW TO THAT SOLUTION, NOT MERELY CONSISTENT WITH IT.
+
+## CAST
+
+`InquestDefinition.characters: InquestCharacter[]`:
+
+```ts
+interface InquestCharacter {
+  id: CharacterId;
+  name: string;
+  portraitLabel: string;
+  avatarId: AvatarAssetId;
+  isVictim?: boolean;
+}
+```
+
+VALIDATION REQUIRE:
+
+- **AT LEAST TWO CHARACTERS.** `Definition must contain at least two characters.`
+  (VICTIM + TRAITOR = FLOOR — CAST SIZE OTHERWISE NOT FIX.)
+- **NO MORE CHARACTERS THAN ROWS OR COLUMNS.** EVERY CHARACTER NEED UNIQUE ROW + UNIQUE
+  COLUMN IN SOLUTION, SO CAST NEVER OUTGROW SMALLER BOARD DIMENSION —
+  `Definition must not contain more characters than rows or columns, since every
+  character needs a unique row and column.` SHIP CASE SHIP SIX CHARACTER ON 6x6 BOARD —
+  CONTENT CHOICE, NOT STRUCTURAL LIMIT.
+- **UNIQUE IDS.** `Character IDs must be unique.`
+- **EXACTLY ONE VICTIM.** ONE CHARACTER `isVictim: true` —
+  `Definition must contain exactly one victim.`
+
+`avatarId` MUST BE ONE `AvatarAssetId` FROM `manifest.ts` (E.G. `nobleman`, `knight`,
+`monk`, `guard-captain`, ...). PICK NEAREST FIT IF EXACT ROLE NO DEDICATE PORTRAIT —
+SHIP CASE USE `guard-captain` FOR "DAME DARIA" THIS REASON.
+
+## CELLS
+
+EVERY BOARD POSITION GET EXACTLY ONE `InquestCell` — VALIDATION REQUIRE
+`cells.length === rows * columns`, UNIQUE `position`, EVERY `position` INSIDE GRID
+BOUND. NO PER-CELL CHARACTER RESTRICT: **EVERY UNBLOCKED CELL LEGAL FOR EVERY
+CHARACTER.** `InquestCell.blocked: boolean` = ONLY THING EVER KEEP CHARACTER OFF CELL
+(SCENERY, MAYBE WITH PROP — SEE [BOARD, ROOMS, PROPS](board-rooms-props.cave.md)).
+
+## SOLUTION
+
+`InquestDefinition.solution: Record<CharacterId, GridPosition>` = ONE AUTHOR CORRECT
+PLACEMENT. VALIDATION REQUIRE:
+
+- **EVERY CHARACTER PLACE EXACTLY ONCE.** SOLUTION KEY MUST MATCH CHARACTER ID ONE-TO-
+  ONE, EACH VALUE VALID `{ row, column }` —
+  `Solution must place every character exactly once.`
+- **UNIQUE ROWS.** `Solution rows must be unique.`
+- **UNIQUE COLUMNS.** `Solution columns must be unique.`
+- **UNBLOCKED CELL.** FOR EVERY CHARACTER, CELL AT SOLUTION POSITION MUST EXIST, NOT
+  `blocked` — `Solution for <characterId> must use a legal, unblocked cell.`
+
+ROW/COLUMN UNIQUE REQUIRE = WHAT MAKE SHIP CASE SOLUTION FULL PERMUTATION — NO TWO
+CHARACTERS SHARE ROW OR COLUMN IN AUTHOR SOLUTION. THIS ALSO WHY ROW/COLUMN-RELATIVE
+PREDICATE LIKE `beside` + `direction-from` NEVER USABLE AS *CLUE* AGAINST IT (SEE
+[CLUES + PREDICATES](clues-and-predicates.cave.md)): NEVER TRUE ANY PAIR. FUTURE CASE
+DELIBERATE NON-PERMUTATION SOLUTION COULD USE REAL.
+
+## VICTIM NEVER NAME DIRECT
+
+NO CLUE PREDICATE MAY REF VICTIM `id`, CHECK VIA `getPredicateCharacterIds`:
+
+> `Clue "<id>" names the victim directly; the victim's position must be derived only
+> from other witnesses.`
+
+VICTIM CELL MUST REACH ONLY BY ELIMINATION FROM CLUES ABOUT EVERYONE ELSE — SEE SOLVER
+CHECK BELOW.
+
+## VICTIM + TRAITOR
+
+`InquestDefinition.traitorId: CharacterId` AUTHOR EXPLICIT, BUT MUST CONSISTENT WITH
+SOLUTION:
+
+- **TRAITOR MUST BE NON-VICTIM CHARACTER.** `traitorId` MUST REF REAL CHARACTER, NOT
+  EQUAL VICTIM ID — `Traitor must be a non-victim character.`
+- **VICTIM CHAMBER MUST HOLD EXACTLY VICTIM + TRAITOR.** USE SOLUTION POSITIONS, FIND
+  VICTIM CHAMBER, THEN FIND EVERY CHARACTER SOLUTION POSITION SAME CHAMBER. SET MUST
+  = EXACTLY `{ victim, traitor }` — NO MORE, NO FEWER —
+  `Victim and traitor must be the only two solution occupants of their chamber.`
+
+## SOLVER-BACK UNIQUE CHECK
+
+BEYOND STRUCTURAL RULES ABOVE, `validateInquestDefinition` RUN REAL CONSTRAINT-SOLVE
+SOLVER (`solver.ts`, AUTHOR-TIME ONLY — NEVER CALL DURING PLAY) AGAINST CASE FULL CLUE
+SET:
+
+1. **`solveInquestDefinition`** BACKTRACK OVER EVERY CHARACTER + EVERY UNBLOCKED CELL,
+   REJECT PARTIAL PLACEMENT ALREADY VIOLATE CLUE OR REPEAT ROW/COLUMN, COLLECT UP TO
+   TWO FULL SOLUTION.
+   - **ZERO SOLUTION** — `The clue set has no valid solution.`
+   - **MORE THAN ONE SOLUTION** — `The clue set does not narrow the puzzle to a unique
+     solution.`
+   - **EXACTLY ONE SOLUTION, NOT MATCH AUTHOR `solution`** — `The clue set's unique
+     solution does not match the authored solution.`
+
+   THIS MAKE "CLUES ACTUAL NARROW PUZZLE" CHECK PROPERTY, NOT SOMETHING AUTHOR REASON
+   BY HAND.
+
+2. **`checkVictimElimination`** SOLVE PUZZLE AGAIN FOR EVERY CHARACTER *EXCEPT* VICTIM.
+   SUB-PUZZLE (ALL CLUE, MINUS VICTIM) MUST ITSELF HAVE EXACTLY ONE SOLUTION; ONCE
+   THOSE CHARACTER PLACE, EXACTLY ONE UNBLOCKED CELL MUST REMAIN SHARE NO ROW/COLUMN
+   WITH ANY OF THEM; THAT CELL CHAMBER MUST ALREADY HOLD EXACTLY ONE OTHER SOLVE
+   CHARACTER, MUST BE TRAITOR. FAIL ANY PART PRODUCE:
+
+   > `Victim <id> must have exactly one legal cell once every other character is
+   > placed, in a chamber occupied solely by the traitor.`
+
+   FORMALIZE "ONE LOGIC SPACE LEFT, CHAMBER WITH EXACTLY ONE OTHER PERSON" DEDUCTION AS
+   AUTHOR REQUIRE, NOT JUST DESCRIBE FINISH CASE.
+
+## AUTHOR CHECKLIST NEW CASE
+
+1. DEFINE AT LEAST TWO CHARACTERS (NO MORE THAN BOARD ROWS OR COLUMNS), ONE
+   `isVictim: true`, UNIQUE ID, VALID `avatarId`. VICTIM CLUE LAST IN OWN THINK —
+   NOTHING MAY NAME THEM.
+2. LAY OUT `cells` COVER FULL GRID, ASSIGN `chamberId`, `blocked`, OPTION `propId` PER
+   CELL (SEE BOARD DOC CHAMBER + PROP RULE).
+3. PICK `solution` = FULL ROW/COLUMN PERMUTATION ACROSS CAST, EVERY POSITION UNBLOCKED
+   CELL.
+4. PICK `traitorId` SO, IN SOLUTION, VICTIM CHAMBER HOLD EXACTLY VICTIM + TRAITOR.
+5. WRITE CLUES (SEE [CLUES + PREDICATES](clues-and-predicates.cave.md)) NEVER NAME
+   VICTIM, TOGETHER WITH STRUCTURAL RULES PIN DOWN SINGLE PLACEMENT.
+6. RUN `validateInquestDefinition` (OR TEST SUITE) — SOLVER TELL DIRECT IF CLUE SET
+   UNDER-CONSTRAIN, OVER-CONSTRAIN, OR INCONSISTENT WITH AUTHOR SOLUTION, + WHETHER
+   VICTIM CELL GENUINE FORCE BY ELIMINATION.

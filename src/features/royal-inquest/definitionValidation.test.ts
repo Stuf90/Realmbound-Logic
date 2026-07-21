@@ -85,6 +85,28 @@ describe('Blackwood Keep definition', () => {
     );
   });
 
+  it('rejects fewer than two characters', () => {
+    const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
+    malformed.characters = malformed.characters.slice(0, 1);
+
+    expect(validateInquestDefinition(malformed)).toContain(
+      'Definition must contain at least two characters.',
+    );
+  });
+
+  it('rejects more characters than the board has rows or columns', () => {
+    const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
+    malformed.characters = [
+      ...malformed.characters,
+      { id: 'extra', name: 'Extra', portraitLabel: 'Extra', avatarId: 'merchant' },
+      { id: 'extra-2', name: 'Extra Two', portraitLabel: 'Extra Two', avatarId: 'scholar' },
+    ];
+
+    expect(validateInquestDefinition(malformed)).toContain(
+      'Definition must not contain more characters than rows or columns, since every character needs a unique row and column.',
+    );
+  });
+
   it('rejects a seat prop placed on a blocked cell', () => {
     const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
     const seatCell = malformed.cells.find((cell) => cell.propId === 'formal-chair')!;

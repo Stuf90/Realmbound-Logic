@@ -92,6 +92,7 @@ h2 { font-size: clamp(1.15rem, 4vw, 1.8rem); line-height: 1.05; }
 .cell:disabled { opacity: 1; }
 .cell-avatar { width: 78%; height: 78%; object-fit: contain; filter: drop-shadow(0 0 3px rgba(0,0,0,.85)); z-index: 1; }
 .cell-prop { width: 96%; height: 96%; object-fit: contain; filter: drop-shadow(0 0 3px rgba(0,0,0,.85)); z-index: 0; }
+.cell-draft { font: 700 clamp(.6rem, 2.2vw, .7rem) system-ui, sans-serif; color: var(--ink); letter-spacing: .05em; z-index: 1; }
 .chamber-label { justify-self: start; align-self: start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .48rem; font-weight: 700; letter-spacing: .02em; color: #fff; background: rgba(0,0,0,.55); padding: 1px 3px; pointer-events: none; z-index: 2; }
 .toolbar { display: grid; grid-template-columns: repeat(4, minmax(44px, 1fr)); gap: .3rem; max-height: 5.5rem; overflow-y: auto; padding: 2px; }
 .toolbar button { min-height: 44px; padding: .35rem .2rem; font: 700 clamp(.65rem, 2.5vw, .82rem) system-ui, sans-serif; }

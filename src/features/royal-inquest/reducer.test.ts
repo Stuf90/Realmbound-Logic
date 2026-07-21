@@ -121,4 +121,43 @@ describe('reduceInquest', () => {
     );
     expect(uncrossed.manualCrosses.beatrice).toEqual([]);
   });
+
+  it('toggles character-specific drafts on and off, rejecting blocked cells', () => {
+    const initial = createInitialInquestState();
+    const drafted = reduceInquest(
+      initial,
+      { type: 'toggle-draft', characterId: 'beatrice', position: { row: 1, column: 2 } },
+      blackwoodKeep,
+    );
+    const undrafted = reduceInquest(
+      drafted,
+      { type: 'toggle-draft', characterId: 'beatrice', position: { row: 1, column: 2 } },
+      blackwoodKeep,
+    );
+
+    expect(drafted.drafts.beatrice).toEqual(['1:2']);
+    expect(undrafted.drafts.beatrice).toEqual([]);
+
+    // (3,0) is a blocked prop cell (barrel-cluster).
+    expect(
+      reduceInquest(initial, { type: 'toggle-draft', characterId: 'beatrice', position: { row: 3, column: 0 } }, blackwoodKeep),
+    ).toBe(initial);
+  });
+
+  it('drops the draft mark for a tile once a character is placed there', () => {
+    const initial = createInitialInquestState();
+    const drafted = reduceInquest(
+      initial,
+      { type: 'toggle-draft', characterId: 'envoy', position: { row: 0, column: 1 } },
+      blackwoodKeep,
+    );
+    const placed = reduceInquest(
+      drafted,
+      { type: 'place', characterId: 'envoy', position: { row: 0, column: 1 } },
+      blackwoodKeep,
+    );
+
+    expect(drafted.drafts.envoy).toEqual(['0:1']);
+    expect(placed.drafts.envoy).toEqual([]);
+  });
 });
