@@ -38,17 +38,17 @@ this reason.
   `cells.length === rows * columns`, unique `position`s, and every `position` inside the
   grid bounds.
 - `InquestCell.legalCharacterIds?: CharacterId[]` restricts a cell to specific
-  characters. Omit it to allow any character. In `blackwoodKeep` this is used only to
-  pin each character's solution cell to that one character, ruling out an alternate
-  valid placement that would also satisfy every clue — it is not a general-purpose
-  narrative device.
-- **Never set `legalCharacterIds` on a cell that also has a `propId`.** A prop cell
-  (chair, bench, throne, ...) must always read as open to any character, not as a seat
-  reserved for one. In practice this is moot today since every prop cell is also
-  `blocked` and therefore already unusable by anyone — but the two fields are
-  independent, and validation does not currently reject the combination, so don't rely
-  on `blocked` alone to make the restriction harmless. Author prop cells as a plain
-  `blocked: true` cell with a `propId` and no `legalCharacterIds`.
+  characters. Omit it to allow any character. In `blackwoodKeep` this is used to pin
+  each character's solution cell to that one character, ruling out an alternate valid
+  placement that would also satisfy every clue — it is not a general-purpose narrative
+  device for arbitrary "found here" hints.
+- **`legalCharacterIds` and `propId` can combine, but only on an unblocked cell.** A
+  prop like a chair or bench can be the specific piece of furniture one character's
+  solution cell sits at — set `propId`, leave `blocked: false`, and restrict
+  `legalCharacterIds` to that one character. A **blocked** prop cell (pure impassable
+  scenery — a throne no one actually sits in, a bookshelf) should never carry
+  `legalCharacterIds`: no character can ever occupy a blocked cell, so a restriction
+  there is dead data that only misleads whoever reads the definition next.
 - `InquestCell.blocked: boolean` marks a cell no character can ever occupy (scenery,
   optionally with a prop — see [board, rooms, and props](board-rooms-props.human.md)).
 

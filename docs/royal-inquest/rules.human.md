@@ -14,11 +14,13 @@ how to author new content; that logic lives in the sub-docs linked at the bottom
   visible boundary and label. Chambers group cells; they are not a separate grid.
 - Some cells are **blocked** — impassable scenery (a prop, or otherwise unusable). No
   character can ever occupy a blocked cell.
-- Some plain (unblocked, prop-free) cells carry a **legal-character restriction**
-  (`legalCharacterIds`): only the listed character(s) may occupy that cell. A cell with
-  no restriction — including every cell that holds a prop — is legal for any character.
-  A prop cell is never restricted to specific characters: it either allows everyone
-  (before accounting for it being blocked) or, being blocked, allows no one.
+- Some cells carry a **legal-character restriction** (`legalCharacterIds`): only the
+  listed character(s) may occupy that cell. A cell with no restriction is legal for any
+  character. A prop doesn't change this: an unblocked cell can hold a prop (a chair, a
+  bench) *and* a restriction — that's how a specific piece of furniture becomes the one
+  correct seat for a specific character to solve on. A blocked prop cell (pure impassable
+  scenery, like a throne no one actually sits in) has no reason to carry a restriction,
+  since no character can occupy it regardless.
 
 ## Characters
 

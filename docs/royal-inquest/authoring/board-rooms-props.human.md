@@ -79,39 +79,59 @@ bookshelf, a dungeon cage, and so on.
 A bookshelf can never end up in a `royalRoom` (court) or a `garden`, and nothing at all
 can be placed in a `hallway` chamber — that's enforced by validation, not just convention.
 
+### Two kinds of prop cell
+
+A prop cell can be blocked or unblocked, and the two mean different things:
+
+- **Decorative (blocked).** Pure impassable scenery — a throne no one actually sits in,
+  a bookshelf, a dungeon cage. No character can ever occupy the cell. Don't add
+  `legalCharacterIds` here; it would be dead data with no effect, since nobody can reach
+  the cell regardless.
+- **A specific seat (unblocked).** The prop is the literal piece of furniture a
+  character's solution cell sits at — a chair, a bench. Set `legalCharacterIds` to the
+  one character (or characters) who may sit there; combined with the puzzle's row/column
+  uniqueness, this is how a chair becomes *the* correct seat for exactly one character to
+  solve on, not an open cell any of the six could occupy.
+
 ### Validation
 
 For every cell with `propId` set, `validateInquestDefinition` requires all of:
 
 1. **Known asset.** `propId` must be a real `PropAssetId` — otherwise
    `Prop "<propId>" is not a known prop asset.`
-2. **Blocked cell.** `cell.blocked` must be `true` — otherwise
-   `Prop "<propId>" must be placed on a blocked cell.`
-3. **Environment-legal.** `propId` must appear in
+2. **Environment-legal.** `propId` must appear in
    `propsByEnvironment[chamberEnvironments[cell.chamberId]]` — otherwise
    `Prop "<propId>" is not permitted in a "<environment>" chamber.`
 
+There is no structural requirement that a prop cell be blocked — that choice is up to
+the author, per the two kinds above. Validation does not (yet) reject
+`legalCharacterIds` on a blocked prop cell, so don't rely on it to catch that mistake;
+just don't author it that way.
+
 ### Rendering
 
-- `getCellPropUrl(definition, cell)` (`visuals.ts`) resolves a cell's `propId` to
+- `getCellPropUrl(cell)` (`visuals.ts`) resolves a cell's `propId` to
   `royalInquestAssets.props[propId]`, mirroring `getCellTileUrl` for chamber floor tiles.
-- A blocked cell with a `propId` renders a `.cell-prop` `<img>` in place of the plain `◆`
-  glyph used for blocked cells with no prop.
+- In `RoyalInquest.tsx`, a cell renders (in priority order): the placed character's
+  avatar if occupied, else the cell's prop image if it has one, else — only for a
+  blocked cell with no prop — the plain `◆` glyph. An unblocked seat prop is fully
+  visible until a character is placed there, then the character's avatar takes over.
 
 ### Authoring checklist for a new prop placement
 
-1. Pick a cell that should be impassable scenery; set `blocked: true`.
+1. Decide which kind of prop cell you're authoring (decorative vs. a specific seat —
+   see above).
 2. Confirm the cell's `chamberEnvironments[chamberId]` allows the prop you want (check
    the table above, or `propsByEnvironment` directly).
 3. Set `propId` to that asset's ID.
-4. Make sure the cell isn't a solution cell or a `legalCharacterIds` target for any
-   character — a blocked cell can never be a placement destination, so it must not
-   collide with the puzzle's authored `solution` or any character's legal-cell list.
-5. Never add `legalCharacterIds` to the prop cell itself. A prop like a chair or bench
-   must read as open to any character, never as a seat reserved for one — even though
-   the cell being `blocked` already makes the restriction moot in practice, don't rely
-   on that; author the cell without `legalCharacterIds` at all. See
-   [character placement](character-placement.human.md#legal-cells) for the full rule.
+4. **Decorative:** set `blocked: true`, no `legalCharacterIds`. Make sure the cell isn't
+   a solution cell or a `legalCharacterIds` target for any character — a blocked cell
+   can never be a placement destination, so it must not collide with the puzzle's
+   authored `solution` or any character's legal-cell list.
+5. **Seat:** set `blocked: false` and `legalCharacterIds` to the character(s) who may
+   occupy it. If it's meant to be *the* solution cell for one character, make sure the
+   puzzle's authored `solution` actually places that character there — see
+   [character placement](character-placement.human.md#legal-cells).
 
-Non-goal: props are decorative only. There is no interactivity, and a prop's presence
-does not itself feed any clue predicate.
+Non-goal: props are otherwise decorative. There is no interactivity beyond the seat
+mechanic above, and a prop's presence does not itself feed any clue predicate.
