@@ -41,7 +41,7 @@ describe('puzzle navigation', () => {
     expect(screen.getByRole('list', { name: 'Royal Inquest levels' })).toBeInTheDocument();
   });
 
-  it('shows forty levels with only the authored level enabled', async () => {
+  it('shows forty levels with only the authored levels enabled', async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -51,7 +51,9 @@ describe('puzzle navigation', () => {
     const levels = within(levelGrid).getAllByRole('button');
     expect(levels).toHaveLength(40);
     expect(within(levelGrid).getByRole('button', { name: /^Level 1\b/ })).toBeEnabled();
-    expect(within(levelGrid).getByRole('button', { name: /^Level 2\b/ })).toBeDisabled();
+    expect(within(levelGrid).getByRole('button', { name: /^Level 2\b/ })).toBeEnabled();
+    expect(within(levelGrid).getByRole('button', { name: /^Level 3\b/ })).toBeEnabled();
+    expect(within(levelGrid).getByRole('button', { name: /^Level 4\b/ })).toBeDisabled();
     expect(within(levelGrid).getByRole('button', { name: /^Level 40\b/ })).toBeDisabled();
   });
 
@@ -162,6 +164,24 @@ describe('puzzle navigation', () => {
 
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
     expect(screen.getByRole('button', { name: 'Apply hint' })).toBeInTheDocument();
+  });
+
+  it('opens Level 2 and Level 3 as their own distinct, playable Royal Inquest cases', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
+    const levelGrid = screen.getByRole('list', { name: 'Royal Inquest levels' });
+    await user.click(within(levelGrid).getByRole('button', { name: /^Level 2\b/ }));
+    expect(screen.getByRole('heading', { name: 'The Vanishing at Thornfield Manor' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
+    expect(screen.getByRole('grid', { name: /The Vanishing at Thornfield Manor/ })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Back to Royal Inquest levels' }));
+
+    await user.click(within(screen.getByRole('list', { name: 'Royal Inquest levels' })).getByRole('button', { name: /^Level 3\b/ }));
+    expect(screen.getByRole('heading', { name: 'The Reckoning at Ravensholt Abbey' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
+    expect(screen.getByRole('grid', { name: /The Reckoning at Ravensholt Abbey/ })).toBeInTheDocument();
   });
 
   it('returns through the puzzle navigation hierarchy', async () => {
