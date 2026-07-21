@@ -135,7 +135,7 @@ describe('puzzle navigation', () => {
     });
     expect(localStorage.getItem('realmbound:highgate-passage')).not.toBeNull();
     expect(screen.queryByRole('button', { name: 'Begin the inquest' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Check progress' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Apply hint' })).toBeInTheDocument();
   });
 
   it('uses the completed replay flow for Siege Lines', async () => {
@@ -161,7 +161,7 @@ describe('puzzle navigation', () => {
     expect(screen.getByRole('button', { name: 'Begin the inquest' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
-    expect(screen.getByRole('button', { name: 'Check progress' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Apply hint' })).toBeInTheDocument();
   });
 
   it('returns through the puzzle navigation hierarchy', async () => {
@@ -216,7 +216,35 @@ describe('puzzle play', () => {
     const placedCell = screen.getByRole('gridcell', { name: /Royal Envoy/ });
     expect(placedCell).toBeInTheDocument();
     expect(placedCell.querySelector('img')).toHaveAttribute('src', expect.stringContaining('royal-envoy'));
-    expect(screen.getByRole('button', { name: 'Check progress' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Apply hint' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Check progress' })).not.toBeInTheDocument();
+  });
+
+  it('drafts a character onto multiple candidate tiles without committing, then places over a draft', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
+    await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
+    await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
+    await user.click(screen.getByRole('button', { name: 'Previous character' }));
+    await user.click(screen.getByRole('button', { name: /The Royal Envoy/ }));
+
+    await user.click(screen.getByRole('button', { name: 'Note' }));
+    await user.click(screen.getByRole('gridcell', { name: /Row 1, column 2/ }));
+    await user.click(screen.getByRole('gridcell', { name: /Row 1, column 3/ }));
+
+    const firstDraftCell = screen.getByRole('gridcell', { name: /Row 1, column 2.*noted for The Royal Envoy/ });
+    expect(firstDraftCell).toBeInTheDocument();
+    expect(firstDraftCell.querySelector('.cell-draft')).toHaveTextContent('R');
+    expect(screen.getByRole('gridcell', { name: /Row 1, column 3.*noted for The Royal Envoy/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Note' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Place' }));
+    await user.click(screen.getByRole('gridcell', { name: /Row 1, column 2/ }));
+
+    const placedCell = screen.getByRole('gridcell', { name: /^Row 1, column 2, The Solar, The Royal Envoy$/ });
+    expect(placedCell).not.toHaveAccessibleName(/noted for/);
+    expect(screen.getByRole('gridcell', { name: /Row 1, column 3.*noted for The Royal Envoy/ })).toBeInTheDocument();
   });
 
   it('renders visible chamber name labels and prop art on blocked cells', async () => {
