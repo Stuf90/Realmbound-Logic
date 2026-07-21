@@ -5,7 +5,8 @@
 > Back to [Royal Inquest rules](../rules.human.md).
 
 This document covers every `InquestPredicate` variant, its exact evaluation semantics
-(`predicates.ts`, `evaluatePredicate`), and how to write a `InquestClue` against them.
+(`predicates.ts`, `evaluatePredicate`), which predicates a *clue* is actually allowed to
+use, and how to write an `InquestClue` against them.
 
 ## Structured predicates are the source of truth
 
@@ -29,25 +30,20 @@ type PredicateResult = true | false | 'unknown';
 ```
 
 `'unknown'` means at least one referenced character isn't placed yet — the predicate is
-withheld from Check Progress until it can be decided one way or the other.
+withheld from Check Progress/Hint until it can be decided one way or the other.
 
 ## Predicate reference
 
-### `exact-row`
+### `exact-row` / `exact-column`
 
 ```ts
 { type: 'exact-row'; characterId: CharacterId; row: number }
-```
-
-True when `characterId`'s placed row equals `row`. `'unknown'` if not yet placed.
-
-### `exact-column`
-
-```ts
 { type: 'exact-column'; characterId: CharacterId; column: number }
 ```
 
-Same as `exact-row`, for columns.
+True when `characterId`'s placed row/column equals the given value; `'unknown'` if not
+yet placed. **These two exist in the type system and are evaluated normally, but no
+clue may use either one** — see "What a clue may not do" below.
 
 ### `exact-chamber`
 
@@ -56,6 +52,18 @@ Same as `exact-row`, for columns.
 ```
 
 True when `characterId`'s placed cell's `chamberId` equals `chamberId`.
+
+### `on-prop`
+
+```ts
+{ type: 'on-prop'; characterId: CharacterId; propId: PropAssetId }
+```
+
+True when `characterId` is placed on the (single) cell in the definition whose `propId`
+equals `propId`. `'unknown'` until that character is placed. This is what lets a clue
+say "seated in the chair" without ever stating a coordinate or chamber — see
+[board, rooms, and props](board-rooms-props.human.md) for the seat-prop model this
+pairs with.
 
 ### `same-chamber` / `different-chamber`
 
@@ -88,9 +96,8 @@ True when `characterId`'s placed cell's `chamberId` equals `chamberId`.
 Because these all require the subject and reference to share a row or column, a
 solution that is a full row/column permutation (see
 [character placement](character-placement.human.md)) can never make a `direction-from`
-clue true for any pair — `blackwoodKeep` never uses it as a real clue for exactly this
-reason; it's exercised only by synthetic placements in unit tests. A future case with a
-non-permutation solution could use it for real.
+clue true for any pair — the shipped case never uses it as a real clue for exactly this
+reason. A future case with a non-permutation solution could use it for real.
 
 ### `beside` / `not-beside`
 
@@ -103,31 +110,51 @@ non-permutation solution could use it for real.
 exactly 1 **and** the same chamber — crossing a chamber wall does not count as adjacent
 even if the cells are physically next to each other. `not-beside` is the exact negation.
 
-Same permutation caveat as `direction-from`: a full row/column permutation solution means
-no two characters are ever adjacent, so `beside`/`not-beside` are only meaningfully
-usable as clues against a non-permutation solution.
+`not-beside` *is* usable against a permutation solution (unlike `beside`, which never
+fires there) — the shipped case uses `aldric-not-beside-edmund` exactly this way,
+since "not adjacent" is trivially true whenever two characters don't even share a row or
+column, and can still be a meaningful clue combined with same/different-chamber facts.
+
+## What a clue may not do
+
+`validateInquestDefinition` rejects two shapes of clue outright, independent of the
+predicate reference above:
+
+1. **No `exact-row`/`exact-column` clue.**
+   > `Clue "<id>" may not use exact-row/exact-column; use exact-chamber, direction-from,
+   > beside, not-beside, same-chamber, or different-chamber instead.`
+
+   Stating a literal coordinate is a giveaway, not a deduction — chamber membership,
+   relative direction, and adjacency are the vocabulary the game is built around.
+2. **No clue may name the victim.** Checked via `getPredicateCharacterIds(clue.predicate)`
+   against the victim's `id`:
+   > `Clue "<id>" names the victim directly; the victim's position must be derived only
+   > from other witnesses.`
+
+   See [character placement](character-placement.human.md) for the solver-backed check
+   that makes sure the victim's cell is still uniquely forced by elimination despite
+   never being named.
 
 ## Which characters a predicate touches
 
 `getPredicateCharacterIds(predicate)` returns every `CharacterId` a predicate references,
-exhaustively over all variants. This is what hint text uses to find "the clue relevant to
-this character" — use it (don't hand-roll a check against only `characterId`, which
-misses every pairwise predicate).
+exhaustively over all variants. This is what both the victim-naming check above and hint
+text use to find "the clue relevant to this character" — use it (don't hand-roll a check
+against only `characterId`, which misses every pairwise predicate).
 
 ## Writing a clue
 
 1. Decide which fact about the solution the clue should reveal.
-2. Pick the predicate variant that expresses it exactly — prefer the most specific one
-   (`exact-chamber` over a `same-chamber` clue with an already-placed character, if the
-   chamber itself is the fact).
-3. Confirm the predicate evaluates to `true` against `InquestDefinition.solution` — there
-   is no automated check for this; a clue that's false against the authored solution is
-   an unsolvable puzzle.
-4. Write `text` as in-world flavor that matches the predicate's meaning. Keep row/column
-   references 1-indexed in text even though the data is 0-indexed (row index `0` reads as
-   "the first row").
-5. As a set, the case's clues plus the structural rules (row/column uniqueness, legal
-   cells, victim/traitor chamber) must together pin down exactly one placement — the
-   authored `solution`. There's no solver bundled in this repo to verify uniqueness
-   automatically; check it by reasoning through the clue set by hand, or by confirming no
-   other permutation of the six characters onto legal cells also satisfies every clue.
+2. Pick the predicate variant that expresses it exactly, from the allowed set
+   (`exact-chamber`, `on-prop`, `same-chamber`, `different-chamber`, `direction-from`,
+   `beside`, `not-beside`) — never `exact-row`/`exact-column`, and never referencing the
+   victim.
+3. Write `text` as in-world flavor that matches the predicate's meaning.
+4. Run `validateInquestDefinition` (or the test suite). Unlike before, you don't have to
+   manually reason through whether the clue set pins down a unique placement — the
+   bundled solver (`solver.ts`) backtracks the full clue set and tells you directly if
+   it's under-constrained (no solution), ambiguous (more than one solution), or
+   inconsistent with the authored `solution`. It also verifies the victim's cell is
+   forced by elimination once everyone else is placed. See
+   [character placement](character-placement.human.md) for exactly what those checks
+   require.
