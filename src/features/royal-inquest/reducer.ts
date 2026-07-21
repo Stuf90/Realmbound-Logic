@@ -9,10 +9,27 @@ import type {
 export function createInitialInquestState(): InquestState {
   return {
     placements: {},
+    drafts: {},
     manualCrosses: {},
     selectedCharacterId: null,
     tool: 'place',
   };
+}
+
+function isDraftableCell(
+  definition: InquestDefinition,
+  characterId: CharacterId,
+  position: GridPosition,
+): boolean {
+  if (!definition.characters.some(({ id }) => id === characterId)) return false;
+  const cell = definition.cells.find(
+    (candidate) => positionKey(candidate.position) === positionKey(position),
+  );
+  return (
+    cell !== undefined &&
+    !cell.blocked &&
+    (cell.legalCharacterIds === undefined || cell.legalCharacterIds.includes(characterId))
+  );
 }
 
 export function isLegalDestination(
@@ -66,9 +83,27 @@ export function reduceInquest(
       if (!isLegalDestination(definition, state, action.characterId, action.position)) return state;
       const current = state.placements[action.characterId];
       if (current && positionKey(current) === positionKey(action.position)) return state;
+      const key = positionKey(action.position);
+      const existingDrafts = state.drafts[action.characterId] ?? [];
+      const drafts = existingDrafts.includes(key)
+        ? { ...state.drafts, [action.characterId]: existingDrafts.filter((candidate) => candidate !== key) }
+        : state.drafts;
       return {
         ...state,
         placements: { ...state.placements, [action.characterId]: action.position },
+        drafts,
+      };
+    }
+    case 'toggle-draft': {
+      if (!isDraftableCell(definition, action.characterId, action.position)) return state;
+      const key = positionKey(action.position);
+      const existing = state.drafts[action.characterId] ?? [];
+      const next = existing.includes(key)
+        ? existing.filter((candidate) => candidate !== key)
+        : [...existing, key];
+      return {
+        ...state,
+        drafts: { ...state.drafts, [action.characterId]: next },
       };
     }
     case 'toggle-cross': {

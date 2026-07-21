@@ -6,24 +6,27 @@ import { blackwoodKeep } from './definition';
 import { getInquestHint } from './hints';
 import { createInitialInquestState, reduceInquest } from './reducer';
 import { getCellState, getCluesForCharacter } from './selectors';
-import { checkInquestProgress, isInquestComplete } from './validation';
+import { isInquestComplete } from './validation';
 import { getCellPropUrl, getCellTileUrl, getCellWalls, getCharacterAvatarUrl } from './visuals';
 import type { InquestState } from './types';
 
 export function RoyalInquest({ onBack }: { onBack: () => void }) {
   const restored = useMemo(() => loadPuzzle<InquestState>(blackwoodKeep.id), []);
-  const [history, setHistory] = useState(() => createHistory(restored?.state ?? createInitialInquestState()));
+  const [history, setHistory] = useState(() => {
+    if (!restored?.state) return createHistory(createInitialInquestState());
+    const { drafts, ...rest } = restored.state;
+    return createHistory({ ...rest, drafts: drafts ?? {} });
+  });
   const [status, setStatus] = useState(restored ? 'Your inquest was restored.' : 'Select a character, then choose a chamber cell.');
   const [seconds, setSeconds] = useState(restored?.elapsedSeconds ?? 0);
   const [hints, setHints] = useState(restored?.hintsUsed ?? 0);
-  const [checks, setChecks] = useState(restored?.checksUsed ?? 0);
   const [activeTray, setActiveTray] = useState<'characters' | 'clues'>('characters');
   const [characterIndex, setCharacterIndex] = useState(0);
   const state = history.present;
   const complete = isInquestComplete(blackwoodKeep, state);
 
   useEffect(() => { if (complete) return; const id = window.setInterval(() => setSeconds((value) => value + 1), 1000); return () => clearInterval(id); }, [complete]);
-  useEffect(() => savePuzzle({ schemaVersion: 1, puzzleId: blackwoodKeep.id, state, elapsedSeconds: seconds, completed: complete, hintsUsed: hints, checksUsed: checks }), [state, seconds, complete, hints, checks]);
+  useEffect(() => savePuzzle({ schemaVersion: 1, puzzleId: blackwoodKeep.id, state, elapsedSeconds: seconds, completed: complete, hintsUsed: hints, checksUsed: 0 }), [state, seconds, complete, hints]);
 
   function dispatch(action: Parameters<typeof reduceInquest>[1], meaningful = true) {
     const next = reduceInquest(state, action, blackwoodKeep);
@@ -34,13 +37,14 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
     const selected = state.selectedCharacterId;
     if (!selected) return setStatus('Select a character first.');
     if (state.tool === 'cross') dispatch({ type: 'toggle-cross', characterId: selected, position: { row, column } });
+    else if (state.tool === 'draft') dispatch({ type: 'toggle-draft', characterId: selected, position: { row, column } });
     else {
       const next = reduceInquest(state, { type: 'place', characterId: selected, position: { row, column } }, blackwoodKeep);
       if (next === state) return setStatus('That chamber cell is unavailable.');
       setHistory((value) => commitHistory(value, next));
     }
   }
-  function reset() { if (window.confirm('Erase the current inquest and begin again?')) { setHistory(createHistory(createInitialInquestState())); setSeconds(0); setHints(0); setChecks(0); setStatus('The inquest has been reset.'); } }
+  function reset() { if (window.confirm('Erase the current inquest and begin again?')) { setHistory(createHistory(createInitialInquestState())); setSeconds(0); setHints(0); setStatus('The inquest has been reset.'); } }
 
   const visibleCharacter = blackwoodKeep.characters[characterIndex]!;
   const visibleCharacterClues = useMemo(
@@ -80,22 +84,27 @@ export function RoyalInquest({ onBack }: { onBack: () => void }) {
             const selected = state.selectedCharacterId;
             const cellState = selected ? getCellState(blackwoodKeep, state, selected, cell.position) : cell.blocked ? 'blocked' : occupant ? 'occupied' : 'available';
             const character = blackwoodKeep.characters.find(({ id }) => id === occupant);
+            const draftCharacters = blackwoodKeep.characters.filter((candidate) =>
+              (state.drafts?.[candidate.id] ?? []).includes(positionKey(cell.position)),
+            );
             const chamberName = blackwoodKeep.chamberNames[cell.chamberId];
-            const label = `Row ${cell.position.row + 1}, column ${cell.position.column + 1}, ${chamberName}, ${character?.name ?? cellState.replace('-', ' ')}`;
+            const draftLabel = draftCharacters.length
+              ? `, noted for ${draftCharacters.map(({ name }) => name).join(' and ')}`
+              : '';
+            const label = `Row ${cell.position.row + 1}, column ${cell.position.column + 1}, ${chamberName}, ${character?.name ?? cellState.replace('-', ' ')}${draftLabel}`;
             const tileUrl = getCellTileUrl(blackwoodKeep, cell);
             const propUrl = getCellPropUrl(cell);
             const walls = getCellWalls(blackwoodKeep, cell);
             const wallClasses = `${walls.right ? ' wall-right' : ''}${walls.bottom ? ' wall-bottom' : ''}`;
-            return <button key={positionKey(cell.position)} role="gridcell" className={`cell ${cellState}${wallClasses}`} style={{ backgroundImage: `var(--cell-tint), url(${tileUrl})` }} disabled={cell.blocked} aria-label={label} onClick={() => activate(cell.position.row, cell.position.column)} onKeyDown={(event) => { if (event.key.toLowerCase() === 'x') { event.preventDefault(); if (selected) dispatch({ type: 'toggle-cross', characterId: selected, position: cell.position }); } }}>{character ? <img className="cell-avatar" src={getCharacterAvatarUrl(character)} alt="" /> : propUrl ? <img className="cell-prop" src={propUrl} alt="" /> : cell.blocked ? '◆' : cellState === 'manual-cross' ? '×' : cellState === 'derived-unavailable' ? '·' : ''}{chamberAnchorKeys.has(positionKey(cell.position)) && <span className="chamber-label" aria-hidden="true">{chamberName}</span>}<span className="sr-only">{label}</span></button>;
+            return <button key={positionKey(cell.position)} role="gridcell" className={`cell ${cellState}${wallClasses}`} style={{ backgroundImage: `var(--cell-tint), url(${tileUrl})` }} disabled={cell.blocked} aria-label={label} onClick={() => activate(cell.position.row, cell.position.column)} onKeyDown={(event) => { if (event.key.toLowerCase() === 'x') { event.preventDefault(); if (selected) dispatch({ type: 'toggle-cross', characterId: selected, position: cell.position }); } }}>{character ? <img className="cell-avatar" src={getCharacterAvatarUrl(character)} alt="" /> : draftCharacters.length ? <span className="cell-draft" aria-hidden="true">{draftCharacters.map(({ portraitLabel }) => portraitLabel[0]).join('')}</span> : propUrl ? <img className="cell-prop" src={propUrl} alt="" /> : cell.blocked ? '◆' : cellState === 'manual-cross' ? '×' : cellState === 'derived-unavailable' ? '·' : ''}{chamberAnchorKeys.has(positionKey(cell.position)) && <span className="chamber-label" aria-hidden="true">{chamberName}</span>}<span className="sr-only">{label}</span></button>;
           })}
         </div></div>
         <div className="toolbar" role="toolbar" aria-label="Puzzle actions">
           <button disabled={!history.past.length} onClick={() => setHistory(undoHistory)}>Undo</button><button disabled={!history.future.length} onClick={() => setHistory(redoHistory)}>Redo</button>
-          <button aria-pressed={state.tool === 'place'} onClick={() => dispatch({ type: 'set-tool', tool: 'place' }, false)}>Place</button><button aria-pressed={state.tool === 'cross'} onClick={() => dispatch({ type: 'set-tool', tool: 'cross' }, false)}>Ink cross</button>
-          <button onClick={() => { setChecks((n) => n + 1); setStatus(checkInquestProgress(blackwoodKeep, state)?.message ?? 'No contradictions found.'); }}>Check progress</button>
+          <button aria-pressed={state.tool === 'draft'} onClick={() => dispatch({ type: 'set-tool', tool: state.tool === 'place' ? 'draft' : 'place' }, false)}>{state.tool === 'place' ? 'Note' : 'Place'}</button><button aria-pressed={state.tool === 'cross'} onClick={() => dispatch({ type: 'set-tool', tool: 'cross' }, false)}>Ink cross</button>
           <button onClick={() => { const hint = getInquestHint(blackwoodKeep, state); setHints((n) => n + 1); if (!hint) return setStatus('No hint is needed.'); setStatus(hint.message); if (hint.characterId && hint.position) dispatch({ type: 'place', characterId: hint.characterId, position: hint.position }); }}>Apply hint</button><button onClick={reset}>Reset</button>
         </div>
-        <p className="status internal-scroll" role="status">{status}</p><p className="metrics puzzle-metrics">Hints {hints} · Checks {checks}</p>
+        <p className="status internal-scroll" role="status">{status}</p><p className="metrics puzzle-metrics">Hints {hints}</p>
       </section>
       <aside className="dossier context-tray">
         <nav className="tray-tabs" aria-label="Inquest reference">

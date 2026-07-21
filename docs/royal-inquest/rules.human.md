@@ -98,17 +98,28 @@ those coincide, but the implementation checks both).
 
 ## Tools available to the player
 
-- **Place** — put the selected character on a legal cell.
+- **Place** — put the selected character on a legal cell. This commits the character
+  there; placing over a tile removes any draft note left on that specific tile for that
+  character (see Note/Draft below), and satisfies/violates clues and row/column
+  uniqueness for real.
+- **Note/Draft** — mark a cell as a possible candidate for the selected character
+  without committing to it. Unlike Place, the same character can be drafted onto
+  multiple cells at once, as a scratchpad of "maybe here" hypotheses; each drafted cell
+  shows the character's first-name initial, smaller than the avatar/prop art. Note and
+  Place share one toolbar slot: while not drafting, that button reads "Note" and starts
+  a draft; while drafting, it reads "Place" and returns to placement mode.
 - **Cross** — manually mark a cell as impossible for the player's own bookkeeping. This
   is independent from the game's own derived exclusions (cells the game already knows
   are unavailable because of blocked/legal-cell/row/column conflicts) and is never
-  cleared automatically when those derived exclusions change.
-- **Check Progress** — reports the first definite problem only (illegal/blocked
-  placement, duplicate row, duplicate column, violated clue, a character with no legal
-  cell left, or an invalid victim/traitor chamber), without revealing an unrelated
-  correct destination.
-- **Hint** — reports an existing contradiction first; otherwise offers one deterministic
-  deduction with its reasoning, and optionally offers to apply it.
+  cleared automatically when those derived exclusions change. Clicking an already-marked
+  cell again removes the cross.
+- **Hint** — reports an existing contradiction first (the same checks Check Progress used
+  to report: illegal/blocked placement, duplicate row, duplicate column, violated clue, a
+  character with no legal cell left, or an invalid victim/traitor chamber); otherwise
+  offers one deterministic deduction with its reasoning, and optionally offers to apply
+  it.
+- **Reset** — erase all placements, drafts, and crosses and start the case over, after
+  confirming.
 
 ## Creating new content
 
