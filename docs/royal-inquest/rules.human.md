@@ -12,15 +12,12 @@ how to author new content; that logic lives in the sub-docs linked at the bottom
 - The board is a grid of `rows x columns` cells (`InquestDefinition.rows/columns`).
 - Every cell belongs to exactly one **chamber** (`chamberId`), a named room with a
   visible boundary and label. Chambers group cells; they are not a separate grid.
-- Some cells are **blocked** — impassable scenery (a prop, or otherwise unusable). No
-  character can ever occupy a blocked cell.
-- Some cells carry a **legal-character restriction** (`legalCharacterIds`): only the
-  listed character(s) may occupy that cell. A cell with no restriction is legal for any
-  character. A prop doesn't change this: an unblocked cell can hold a prop (a chair, a
-  bench) *and* a restriction — that's how a specific piece of furniture becomes the one
-  correct seat for a specific character to solve on. A blocked prop cell (pure impassable
-  scenery, like a throne no one actually sits in) has no reason to carry a restriction,
-  since no character can occupy it regardless.
+- Some cells are **blocked** — impassable. No character can ever occupy a blocked cell.
+  A blocked cell may hold a **decorative** prop (a bookshelf, a dungeon cage, ...).
+- Every unblocked cell is legal for **any** character — there is no per-cell character
+  restriction. An unblocked cell may hold a **seat** prop (a chair, a bench, a pew, a
+  throne); a character can be placed on a seat cell exactly like any other unblocked
+  cell, and the prop renders underneath their portrait.
 
 ## Characters
 
@@ -29,6 +26,8 @@ how to author new content; that logic lives in the sub-docs linked at the bottom
 - Exactly one character is the **traitor**, decided by where everyone ends up (see
   "Victim and traitor" below) — not authored as an independent fact for the player to
   place.
+- No clue ever names the victim directly. The victim's cell can only be reached by
+  elimination, from clues about everyone else.
 
 ## Placement rules
 
@@ -36,8 +35,7 @@ A finished placement is only valid when **all** of the following hold:
 
 1. **One character per row.** No two characters share a row.
 2. **One character per column.** No two characters share a column.
-3. **Legal cell only.** A character occupies only an unblocked cell it is permitted to
-   use (no restriction, or it's on that cell's restriction list).
+3. **Unblocked cell only.** A character occupies only an unblocked cell.
 4. **Every clue is satisfied.** See "Clues" below.
 5. **The victim/traitor condition holds** (see below).
 
@@ -58,8 +56,8 @@ Rows and columns increase top-to-bottom and left-to-right, 0-indexed internally
 Every clue is a structured predicate, not free text — the sentence shown to the player
 is flavor, and is never parsed to decide correctness. See
 [`authoring/clues-and-predicates.human.md`](authoring/clues-and-predicates.human.md) for
-the full predicate list and exact semantics of each one (exact row/column/chamber,
-same/different chamber, cardinal direction, beside/not-beside).
+the full predicate list, which predicates a clue is actually allowed to use, and the
+exact semantics of each one.
 
 A clue can be in one of three states while the player is still placing characters:
 
@@ -79,7 +77,10 @@ position:
 > third character is also present there.
 
 In other words: at completion, the victim's chamber must contain exactly two solved
-occupants — the victim and the traitor — and no one else.
+occupants — the victim and the traitor — and no one else. This is also enforced at
+authoring time by elimination: once every character but the victim is placed, exactly
+one unblocked cell must remain open to the victim, and its chamber's only other occupant
+must be the traitor. See [character placement](authoring/character-placement.human.md).
 
 ## Completion
 
@@ -94,14 +95,16 @@ A case is complete only when:
 The last point matters even though the structural rules above are also checked
 independently: a case can have exactly one authored solution, and completion requires
 reaching it, not merely satisfying every rule in the abstract (the puzzle is authored so
-those coincide, but the implementation checks both).
+those coincide, and authoring itself is verified to have exactly one valid solution —
+see "Creating new content" below).
 
 ## Tools available to the player
 
-- **Place** — put the selected character on a legal cell. This commits the character
-  there; placing over a tile removes any draft note left on that specific tile for that
-  character (see Note/Draft below), and satisfies/violates clues and row/column
-  uniqueness for real.
+- **Place** — put the selected character on an unblocked cell. This commits the
+  character there; placing over a tile removes any draft note left on that specific tile
+  for that character (see Note/Draft below), and satisfies/violates clues and row/column
+  uniqueness for real. Placing into a row or column another character already occupies
+  is rejected and briefly flashes the attempted cell red.
 - **Note/Draft** — mark a cell as a possible candidate for the selected character
   without committing to it. Unlike Place, the same character can be drafted onto
   multiple cells at once, as a scratchpad of "maybe here" hypotheses; each drafted cell
@@ -109,15 +112,16 @@ those coincide, but the implementation checks both).
   Place share one toolbar slot: while not drafting, that button reads "Note" and starts
   a draft; while drafting, it reads "Place" and returns to placement mode.
 - **Cross** — manually mark a cell as impossible for the player's own bookkeeping. This
-  is independent from the game's own derived exclusions (cells the game already knows
-  are unavailable because of blocked/legal-cell/row/column conflicts) and is never
-  cleared automatically when those derived exclusions change. Clicking an already-marked
-  cell again removes the cross.
-- **Hint** — reports an existing contradiction first (the same checks Check Progress used
-  to report: illegal/blocked placement, duplicate row, duplicate column, violated clue, a
-  character with no legal cell left, or an invalid victim/traitor chamber); otherwise
-  offers one deterministic deduction with its reasoning, and optionally offers to apply
-  it.
+  is independent from the game's own auto-crossed cells (cells the game already marks
+  unavailable because another placed character shares their row or column) and is never
+  cleared automatically when those auto-crossed cells change. Clicking an already-marked
+  cell again removes the cross — except a manual cross cannot be removed while its row
+  or column still holds a placed character, since the game's own auto-cross would
+  immediately re-mark it anyway.
+- **Hint** — reports an existing contradiction first (illegal placement, duplicate row,
+  duplicate column, violated clue, a character with no legal cell left, or an invalid
+  victim/traitor chamber); otherwise offers one deterministic deduction with its
+  reasoning, and optionally offers to apply it.
 - **Reset** — erase all placements, drafts, and crosses and start the case over, after
   confirming.
 
@@ -128,7 +132,8 @@ author a **new** case (a new board, cast, chamber layout, prop set, or clue list
 
 - [Board, rooms, and props](authoring/board-rooms-props.human.md) — grid, chambers, room
   identity, and prop placement rules.
-- [Character placement](authoring/character-placement.human.md) — cast, legal-cell
-  restrictions, solution constraints, and the victim/traitor authoring rule.
+- [Character placement](authoring/character-placement.human.md) — cast, solution
+  constraints, the victim/traitor authoring rule, and the solver-backed uniqueness check
+  every case must pass.
 - [Clues and predicates](authoring/clues-and-predicates.human.md) — every predicate
-  type, its exact semantics, and how to write a clue against them.
+  type, which ones a clue may actually use, and how to write a clue against them.
