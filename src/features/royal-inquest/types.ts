@@ -57,14 +57,16 @@ export interface InquestDefinition {
 
 export interface InquestState {
   placements: Partial<Record<CharacterId, GridPosition>>;
+  drafts: Partial<Record<CharacterId, string[]>>;
   manualCrosses: Partial<Record<CharacterId, string[]>>;
   selectedCharacterId: CharacterId | null;
-  tool: 'place' | 'cross';
+  tool: 'place' | 'draft' | 'cross';
 }
 
 export type InquestAction =
   | { type: 'select-character'; characterId: CharacterId | null }
   | { type: 'set-tool'; tool: InquestState['tool'] }
   | { type: 'place'; characterId: CharacterId; position: GridPosition }
+  | { type: 'toggle-draft'; characterId: CharacterId; position: GridPosition }
   | { type: 'toggle-cross'; characterId: CharacterId; position: GridPosition }
   | { type: 'clear-placement'; characterId: CharacterId };
