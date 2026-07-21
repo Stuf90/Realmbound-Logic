@@ -84,6 +84,41 @@ describe('Blackwood Keep definition', () => {
     );
   });
 
+  it('rejects fewer than two characters', () => {
+    const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
+    malformed.characters = malformed.characters.slice(0, 1);
+
+    expect(validateInquestDefinition(malformed)).toContain(
+      'Definition must contain at least two characters.',
+    );
+  });
+
+  it('rejects more characters than the board has rows or columns', () => {
+    const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
+    malformed.characters = [
+      ...malformed.characters,
+      { id: 'extra', name: 'Extra', portraitLabel: 'Extra', avatarId: 'merchant' },
+      { id: 'extra-2', name: 'Extra Two', portraitLabel: 'Extra Two', avatarId: 'scholar' },
+    ];
+
+    expect(validateInquestDefinition(malformed)).toContain(
+      'Definition must not contain more characters than rows or columns, since every character needs a unique row and column.',
+    );
+  });
+
+  it('accepts a smaller cast than six characters, provided every other rule still holds', () => {
+    const smallerCast = structuredClone(blackwoodKeep) as InquestDefinition;
+    smallerCast.characters = smallerCast.characters.slice(0, 3);
+    smallerCast.solution = {
+      envoy: smallerCast.solution.envoy!,
+      aldric: smallerCast.solution.aldric!,
+      beatrice: smallerCast.solution.beatrice!,
+    };
+    smallerCast.traitorId = 'aldric';
+
+    expect(validateInquestDefinition(smallerCast)).toEqual([]);
+  });
+
   it('allows a prop on an unblocked cell reserved for one character as their solution seat', () => {
     const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
     const solarCell = malformed.cells.find((cell) => cell.chamberId === 'solar' && cell.blocked)!;

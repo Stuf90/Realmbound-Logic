@@ -65,7 +65,10 @@ export function validateInquestDefinition(definition: unknown): string[] {
   if (!Array.isArray(definition.characters) || characters.length !== definition.characters.length) {
     issues.push('Every character must be structurally valid.');
   }
-  if (characters.length !== 6) issues.push('Definition must contain six characters.');
+  if (characters.length < 2) issues.push('Definition must contain at least two characters.');
+  if (characters.length > rows || characters.length > columns) {
+    issues.push('Definition must not contain more characters than rows or columns, since every character needs a unique row and column.');
+  }
   if (new Set(characters.map(({ id }) => id)).size !== characters.length) {
     issues.push('Character IDs must be unique.');
   }

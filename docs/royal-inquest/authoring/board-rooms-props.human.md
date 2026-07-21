@@ -91,7 +91,7 @@ A prop cell can be blocked or unblocked, and the two mean different things:
   character's solution cell sits at — a chair, a bench. Set `legalCharacterIds` to the
   one character (or characters) who may sit there; combined with the puzzle's row/column
   uniqueness, this is how a chair becomes *the* correct seat for exactly one character to
-  solve on, not an open cell any of the six could occupy.
+  solve on, not an open cell anyone in the cast could occupy.
 
 ### Validation
 

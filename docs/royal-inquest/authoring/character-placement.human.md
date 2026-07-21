@@ -22,7 +22,14 @@ interface InquestCharacter {
 
 Validation requires:
 
-- **Exactly six characters.** `Definition must contain six characters.`
+- **At least two characters.** `Definition must contain at least two characters.` (a
+  victim and a traitor are the floor — the cast size is otherwise not fixed.)
+- **No more characters than rows or columns.** Every character needs a unique row and a
+  unique column in the solution, so the cast can never outgrow the smaller board
+  dimension — `Definition must not contain more characters than rows or columns, since
+  every character needs a unique row and column.` `blackwoodKeep` happens to ship six
+  characters on a 9x6 board, but that's a content choice, not a structural limit — a
+  larger board can ship a larger cast, and a smaller one a smaller cast.
 - **Unique IDs.** `Character IDs must be unique.`
 - **Exactly one victim.** Exactly one character has `isVictim: true` —
   `Definition must contain exactly one victim.`
@@ -94,12 +101,13 @@ different chamber.
 
 ## Authoring checklist for a new case
 
-1. Define six characters, one `isVictim: true`, unique IDs, valid `avatarId`s.
+1. Define at least two characters (no more than the board has rows or columns), one
+   `isVictim: true`, unique IDs, valid `avatarId`s.
 2. Lay out `cells` covering the full grid, assigning `chamberId`, `blocked`, and
    optional `legalCharacterIds`/`propId` per cell (see the board doc for chamber and
    prop rules).
-3. Pick a `solution` that is a full row/column permutation across the six characters,
-   with every position on a legal, unblocked cell.
+3. Pick a `solution` that is a full row/column permutation across the cast, with every
+   position on a legal, unblocked cell.
 4. Pick `traitorId` so that, in the solution, the victim's chamber contains exactly the
    victim and the traitor.
 5. Write clues (see [clues and predicates](clues-and-predicates.human.md)) that are true
