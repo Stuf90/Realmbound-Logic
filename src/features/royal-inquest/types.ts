@@ -15,7 +15,6 @@ export interface InquestCell {
   position: GridPosition;
   chamberId: string;
   blocked: boolean;
-  legalCharacterIds?: CharacterId[];
   propId?: PropAssetId;
 }
 
@@ -32,7 +31,8 @@ export type InquestPredicate =
       direction: 'north' | 'east' | 'south' | 'west';
     }
   | { type: 'beside'; firstCharacterId: CharacterId; secondCharacterId: CharacterId }
-  | { type: 'not-beside'; firstCharacterId: CharacterId; secondCharacterId: CharacterId };
+  | { type: 'not-beside'; firstCharacterId: CharacterId; secondCharacterId: CharacterId }
+  | { type: 'on-prop'; characterId: CharacterId; propId: PropAssetId };
 
 export interface InquestClue {
   id: string;

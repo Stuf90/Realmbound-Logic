@@ -25,11 +25,7 @@ function isDraftableCell(
   const cell = definition.cells.find(
     (candidate) => positionKey(candidate.position) === positionKey(position),
   );
-  return (
-    cell !== undefined &&
-    !cell.blocked &&
-    (cell.legalCharacterIds === undefined || cell.legalCharacterIds.includes(characterId))
-  );
+  return cell !== undefined && !cell.blocked;
 }
 
 export function isLegalDestination(
@@ -43,13 +39,7 @@ export function isLegalDestination(
   const cell = definition.cells.find(
     (candidate) => positionKey(candidate.position) === positionKey(position),
   );
-  if (
-    !cell ||
-    cell.blocked ||
-    (cell.legalCharacterIds !== undefined && !cell.legalCharacterIds.includes(characterId))
-  ) {
-    return false;
-  }
+  if (!cell || cell.blocked) return false;
 
   return !Object.entries(state.placements).some(
     ([placedCharacterId, placedPosition]) =>
@@ -115,7 +105,17 @@ export function reduceInquest(
 
       const key = positionKey(action.position);
       const existing = state.manualCrosses[action.characterId] ?? [];
-      const next = existing.includes(key)
+      const removing = existing.includes(key);
+      if (removing) {
+        const rowOrColumnOccupied = Object.values(state.placements).some(
+          (placedPosition) =>
+            placedPosition &&
+            (placedPosition.row === action.position.row ||
+              placedPosition.column === action.position.column),
+        );
+        if (rowOrColumnOccupied) return state;
+      }
+      const next = removing
         ? existing.filter((candidate) => candidate !== key)
         : [...existing, key];
       return {

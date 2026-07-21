@@ -210,6 +210,7 @@ describe('puzzle play', () => {
     await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
+    await user.click(screen.getByRole('button', { name: 'Previous character' }));
     await user.click(screen.getByRole('button', { name: /The Royal Envoy/ }));
     await user.click(screen.getByRole('gridcell', { name: /Row 1, column 2/ }));
     const placedCell = screen.getByRole('gridcell', { name: /Royal Envoy/ });
@@ -225,6 +226,7 @@ describe('puzzle play', () => {
     await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
+    await user.click(screen.getByRole('button', { name: 'Previous character' }));
     await user.click(screen.getByRole('button', { name: /The Royal Envoy/ }));
 
     await user.click(screen.getByRole('button', { name: 'Note' }));
@@ -254,11 +256,29 @@ describe('puzzle play', () => {
 
     const chamberLabels = [...container.querySelectorAll('.chamber-label')].map((el) => el.textContent);
     expect(chamberLabels).toEqual(
-      expect.arrayContaining(['The Solar', 'Guardroom', 'Great Hall', 'Chapel', 'Archives', 'The Crypt']),
+      expect.arrayContaining(['The Solar', 'Guardroom', 'Chapel', 'Archives', 'The Crypt']),
     );
 
-    const throneCell = screen.getByRole('gridcell', { name: /Row 1, column 1,/ });
-    expect(throneCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('throne'));
+    const decoratedCell = screen.getByRole('gridcell', { name: /Row 4, column 1,/ });
+    expect(decoratedCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('barrel-cluster'));
+  });
+
+  it('lets a character be seated in a chair: the prop and the avatar render together', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
+    await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
+    await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
+
+    const seatCell = screen.getByRole('gridcell', { name: /Row 2, column 1,/ });
+    expect(seatCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('formal-chair'));
+    expect(seatCell).not.toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: /Lord Aldric/ }));
+    await user.click(seatCell);
+
+    expect(seatCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('formal-chair'));
+    expect(seatCell.querySelector('.cell-avatar')).toHaveAttribute('src', expect.stringContaining('nobleman'));
   });
 
   it('shows the currently browsed character clues without switching tabs', async () => {
@@ -268,14 +288,13 @@ describe('puzzle play', () => {
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
 
-    const envoyBrief = screen.getByRole('region', { name: /Clues about The Royal Envoy/i });
-    expect(within(envoyBrief).getByText('The envoy was seen along the northern wall.')).toBeInTheDocument();
-    expect(within(envoyBrief).getByText('The envoy stood in the second column.')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Next character' }));
-
     const aldricBrief = screen.getByRole('region', { name: /Clues about Lord Aldric/i });
-    expect(within(aldricBrief).getByText('Aldric kept to the western edge of the Solar.')).toBeInTheDocument();
+    expect(within(aldricBrief).getByText('Aldric was seen in the Solar.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Previous character' }));
+
+    const envoyBrief = screen.getByRole('region', { name: /Clues about The Royal Envoy/i });
+    expect(within(envoyBrief).getByText('No witness statement names The Royal Envoy directly.')).toBeInTheDocument();
   });
 
   it('renders a wall indicator at every real chamber boundary', async () => {
@@ -284,7 +303,7 @@ describe('puzzle play', () => {
     await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
-    expect(container.querySelectorAll('.cell.wall-right')).toHaveLength(18);
-    expect(container.querySelectorAll('.cell.wall-bottom')).toHaveLength(12);
+    expect(container.querySelectorAll('.cell.wall-right')).toHaveLength(5);
+    expect(container.querySelectorAll('.cell.wall-bottom')).toHaveLength(13);
   });
 });

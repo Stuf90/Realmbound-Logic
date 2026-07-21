@@ -46,7 +46,7 @@ describe('evaluatePredicate', () => {
     expect(
       evaluatePredicate(
         predicate,
-        { envoy: { row: 0, column: 1 }, aldric: { row: 0, column: 2 } },
+        { envoy: { row: 2, column: 3 }, aldric: { row: 2, column: 4 } },
         blackwoodKeep,
       ),
     ).toBe(false);
@@ -80,14 +80,14 @@ describe('evaluatePredicate', () => {
     expect(
       evaluatePredicate(
         { type: 'exact-chamber', characterId: 'edmund', chamberId: 'archives' },
-        { edmund: { row: 6, column: 2 } },
+        { edmund: { row: 3, column: 4 } },
         blackwoodKeep,
       ),
     ).toBe(true);
     expect(
       evaluatePredicate(
         { type: 'exact-chamber', characterId: 'edmund', chamberId: 'crypt' },
-        { edmund: { row: 6, column: 2 } },
+        { edmund: { row: 3, column: 4 } },
         blackwoodKeep,
       ),
     ).toBe(false);
@@ -206,6 +206,14 @@ describe('evaluatePredicate', () => {
         blackwoodKeep,
       ),
     ).toBe('unknown');
+  });
+
+  it('evaluates on-prop against the cell bearing that propId', () => {
+    const predicate = { type: 'on-prop' as const, characterId: 'aldric', propId: 'formal-chair' as const };
+
+    expect(evaluatePredicate(predicate, { aldric: { row: 1, column: 0 } }, blackwoodKeep)).toBe(true);
+    expect(evaluatePredicate(predicate, { aldric: { row: 0, column: 0 } }, blackwoodKeep)).toBe(false);
+    expect(evaluatePredicate(predicate, {}, blackwoodKeep)).toBe('unknown');
   });
 });
 
