@@ -107,6 +107,11 @@ For every cell with `propId` set, `validateInquestDefinition` requires all of:
 4. Make sure the cell isn't a solution cell or a `legalCharacterIds` target for any
    character — a blocked cell can never be a placement destination, so it must not
    collide with the puzzle's authored `solution` or any character's legal-cell list.
+5. Never add `legalCharacterIds` to the prop cell itself. A prop like a chair or bench
+   must read as open to any character, never as a seat reserved for one — even though
+   the cell being `blocked` already makes the restriction moot in practice, don't rely
+   on that; author the cell without `legalCharacterIds` at all. See
+   [character placement](character-placement.human.md#legal-cells) for the full rule.
 
 Non-goal: props are decorative only. There is no interactivity, and a prop's presence
 does not itself feed any clue predicate.

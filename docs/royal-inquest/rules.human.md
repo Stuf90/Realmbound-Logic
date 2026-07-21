@@ -14,9 +14,11 @@ how to author new content; that logic lives in the sub-docs linked at the bottom
   visible boundary and label. Chambers group cells; they are not a separate grid.
 - Some cells are **blocked** — impassable scenery (a prop, or otherwise unusable). No
   character can ever occupy a blocked cell.
-- Some cells carry a **legal-character restriction** (`legalCharacterIds`): only the
-  listed character(s) may occupy that cell. A cell with no restriction is legal for any
-  character.
+- Some plain (unblocked, prop-free) cells carry a **legal-character restriction**
+  (`legalCharacterIds`): only the listed character(s) may occupy that cell. A cell with
+  no restriction — including every cell that holds a prop — is legal for any character.
+  A prop cell is never restricted to specific characters: it either allows everyone
+  (before accounting for it being blocked) or, being blocked, allows no one.
 
 ## Characters
 
