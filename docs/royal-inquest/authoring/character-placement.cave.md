@@ -1,0 +1,89 @@
+# AUTHOR CHARACTER PLACEMENT
+
+> AGENT FILE. CAVE SPEAK. HUMAN VERSION: `character-placement.human.md`.
+> BACK TO [ROYAL INQUEST RULES](../rules.cave.md).
+
+THIS DOC = HOW CASE CAST, LEGAL-CELL RESTRICT, AUTHOR SOLUTION BUILD. ENFORCE IN
+`definitionValidation.ts` (`validateInquestDefinition`).
+
+## CAST
+
+`InquestDefinition.characters: InquestCharacter[]`:
+
+```ts
+interface InquestCharacter {
+  id: CharacterId;
+  name: string;
+  portraitLabel: string;
+  avatarId: AvatarAssetId;
+  isVictim?: boolean;
+}
+```
+
+VALIDATION REQUIRE:
+
+- **EXACTLY SIX CHARACTERS.** `Definition must contain six characters.`
+- **UNIQUE IDS.** `Character IDs must be unique.`
+- **EXACTLY ONE VICTIM.** ONE CHARACTER `isVictim: true` —
+  `Definition must contain exactly one victim.`
+
+`avatarId` MUST BE ONE `AvatarAssetId` FROM `manifest.ts` (E.G. `nobleman`, `knight`,
+`monk`, `guard-captain`, ...). PICK NEAREST FIT IF EXACT ROLE NO DEDICATE PORTRAIT —
+`blackwoodKeep` USE `guard-captain` FOR "DAME DARIA" THIS REASON.
+
+## LEGAL CELLS
+
+- EVERY BOARD POSITION GET EXACTLY ONE `InquestCell` — VALIDATION REQUIRE
+  `cells.length === rows * columns`, UNIQUE `position`, EVERY `position` INSIDE GRID
+  BOUND.
+- `InquestCell.legalCharacterIds?: CharacterId[]` RESTRICT CELL TO SPECIFIC CHARACTERS.
+  OMIT = ALLOW ANY. THIS HOW PUZZLE PLACE E.G. NARRATIVE "FOUND HERE" HINT DIRECT INTO
+  BOARD GEOMETRY, NOT ONLY AS CLUE.
+- `InquestCell.blocked: boolean` MARK CELL NO CHARACTER EVER OCCUPY (SCENERY, MAYBE
+  WITH PROP — SEE [BOARD, ROOMS, PROPS](board-rooms-props.cave.md)).
+
+## SOLUTION
+
+`InquestDefinition.solution: Record<CharacterId, GridPosition>` = ONE AUTHOR CORRECT
+PLACEMENT. VALIDATION REQUIRE:
+
+- **EVERY CHARACTER PLACE EXACTLY ONCE.** SOLUTION KEY MUST MATCH CHARACTER ID ONE-TO-
+  ONE, EACH VALUE VALID `{ row, column }` —
+  `Solution must place every character exactly once.`
+- **UNIQUE ROWS.** `Solution rows must be unique.`
+- **UNIQUE COLUMNS.** `Solution columns must be unique.`
+- **LEGAL, UNBLOCKED CELL.** FOR EVERY CHARACTER, CELL AT SOLUTION POSITION MUST EXIST,
+  NOT `blocked`, AND IF HAVE `legalCharacterIds` RESTRICT — CHARACTER MUST BE ON LIST —
+  `Solution for <characterId> must use a legal, unblocked cell.`
+
+ROW/COLUMN UNIQUE REQUIRE = WHAT MAKE `blackwoodKeep` SOLUTION FULL PERMUTATION — NO
+TWO CHARACTERS SHARE ROW OR COLUMN IN AUTHOR SOLUTION. THIS ALSO WHY ROW/COLUMN-
+RELATIVE PREDICATE LIKE `beside` + `direction-from` NEVER USABLE AS *CLUE* THAT CASE
+(SEE [CLUES + PREDICATES](clues-and-predicates.cave.md)): NEVER TRUE ANY PAIR. FUTURE
+CASE DELIBERATE NON-PERMUTATION SOLUTION COULD USE REAL.
+
+## VICTIM + TRAITOR
+
+`InquestDefinition.traitorId: CharacterId` AUTHOR EXPLICIT, BUT MUST CONSISTENT WITH
+SOLUTION:
+
+- **TRAITOR MUST BE NON-VICTIM CHARACTER.** `traitorId` MUST REF REAL CHARACTER, NOT
+  EQUAL VICTIM ID — `Traitor must be a non-victim character.`
+- **VICTIM CHAMBER MUST HOLD EXACTLY VICTIM + TRAITOR.** USE SOLUTION POSITIONS, FIND
+  VICTIM CHAMBER, THEN FIND EVERY CHARACTER SOLUTION POSITION SAME CHAMBER. SET MUST
+  = EXACTLY `{ victim, traitor }` — NO MORE, NO FEWER —
+  `Victim and traitor must be the only two solution occupants of their chamber.`
+
+MEAN: VICTIM CHAMBER, AS AUTHOR, MUST SIZE + POPULATE SO EXACTLY TWO SOLVE CHARACTER
+LAND — EVERYONE ELSE MUST SOLVE DIFFERENT CHAMBER.
+
+## AUTHOR CHECKLIST NEW CASE
+
+1. DEFINE SIX CHARACTERS, ONE `isVictim: true`, UNIQUE ID, VALID `avatarId`.
+2. LAY OUT `cells` COVER FULL GRID, ASSIGN `chamberId`, `blocked`, OPTION
+   `legalCharacterIds`/`propId` PER CELL (SEE BOARD DOC CHAMBER + PROP RULE).
+3. PICK `solution` = FULL ROW/COLUMN PERMUTATION ACROSS SIX CHARACTERS, EVERY POSITION
+   LEGAL UNBLOCKED CELL.
+4. PICK `traitorId` SO, IN SOLUTION, VICTIM CHAMBER HOLD EXACTLY VICTIM + TRAITOR.
+5. WRITE CLUES (SEE [CLUES + PREDICATES](clues-and-predicates.cave.md)) TRUE AGAINST
+   THIS SOLUTION, TOGETHER PIN DOWN SINGLE PLACEMENT.
