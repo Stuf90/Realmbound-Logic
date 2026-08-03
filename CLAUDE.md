@@ -24,7 +24,7 @@ The shared rule imported above: implement each plan in a dedicated Git worktree,
 - Create the dedicated worktree with the `EnterWorktree` tool, or pass `isolation: "worktree"` to `Agent` when delegating implementation to a subagent, rather than running raw `git worktree` commands.
 - Use `TodoWrite` to track multi-step implementation work within a plan.
 - Prefer the `Explore` agent over manual multi-round `Grep`/`Glob` chains for broad codebase questions.
-- See [docs/claude/workflow.md](docs/claude/workflow.md) for the full mapping from this repo's plan/spec/worktree conventions to Claude Code tools.
+- The `realmbound-workflow` skill (`.claude/skills/realmbound-workflow/`) maps this repo's plan/spec/worktree conventions to Claude Code tools — it's auto-invoked when starting new work, no need to read it manually.
 
 ## Keep in sync
 
