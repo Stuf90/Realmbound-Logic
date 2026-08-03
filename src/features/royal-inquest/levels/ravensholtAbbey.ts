@@ -127,15 +127,6 @@ export const ravensholtAbbey: InquestDefinition = {
       predicate: { type: 'exact-chamber', characterId: 'captain', chamberId: 'cellar' },
     },
     {
-      id: 'scholar-apart-from-knight',
-      text: 'The Scholar and the Knight were in different chambers.',
-      predicate: {
-        type: 'different-chamber',
-        firstCharacterId: 'scholar',
-        secondCharacterId: 'knight',
-      },
-    },
-    {
       id: 'prior-not-beside-monk',
       text: 'The Prior was never seen beside the Monk.',
       predicate: {

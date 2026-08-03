@@ -127,15 +127,6 @@ export const thornfieldManor: InquestDefinition = {
       predicate: { type: 'exact-chamber', characterId: 'merchant', chamberId: 'larder' },
     },
     {
-      id: 'cook-apart-from-gardener',
-      text: 'The Cook and the Gardener were in different chambers.',
-      predicate: {
-        type: 'different-chamber',
-        firstCharacterId: 'cook',
-        secondCharacterId: 'gardener',
-      },
-    },
-    {
       id: 'steward-not-beside-maid',
       text: 'The Steward was never seen beside the Maid.',
       predicate: {

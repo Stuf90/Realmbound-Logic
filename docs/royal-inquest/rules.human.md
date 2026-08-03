@@ -7,6 +7,19 @@ character on a board of chambers so that all clues hold at once. This document i
 canonical **game rules** — how a finished case is played and judged. It does not cover
 how to author new content; that logic lives in the sub-docs linked at the bottom.
 
+## Relationship to Murdoku
+
+The Royal Inquest is a re-skin of the genre popularized by
+[Murdoku](https://murdoku.fans/en/how-to-play/) (a crime-scene, Cluedo-plus-sudoku logic
+puzzle by Manuel Garand): a grid where every suspect (here, character) occupies exactly
+one row and one column, clues are rules rather than hints, and the murderer (here, the
+traitor) is identified by being the only other person left alone with the victim in one
+area at the end. Our predicate vocabulary deliberately mirrors Murdoku's published clue
+categories one-for-one — see
+[clues and predicates](authoring/clues-and-predicates.human.md#relationship-to-murdokus-official-clue-types)
+for the exact mapping. Where the two diverge, it is a deliberate simplification (documented
+inline), not an oversight.
+
 ## Board
 
 - The board is a grid of `rows x columns` cells (`InquestDefinition.rows/columns`).

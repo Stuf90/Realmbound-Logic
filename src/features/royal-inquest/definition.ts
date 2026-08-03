@@ -131,15 +131,6 @@ export const blackwoodKeep: InquestDefinition = {
       predicate: { type: 'exact-chamber', characterId: 'daria', chamberId: 'crypt' },
     },
     {
-      id: 'beatrice-apart-from-cedric',
-      text: 'Beatrice and Cedric were in different chambers.',
-      predicate: {
-        type: 'different-chamber',
-        firstCharacterId: 'beatrice',
-        secondCharacterId: 'cedric',
-      },
-    },
-    {
       id: 'aldric-not-beside-edmund',
       text: 'Aldric was never seen beside Edmund.',
       predicate: {

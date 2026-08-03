@@ -135,6 +135,42 @@ predicate reference above:
    that makes sure the victim's cell is still uniquely forced by elimination despite
    never being named.
 
+## What a clue should not do (not enforced by the validator)
+
+Beyond the two shapes `validateInquestDefinition` rejects outright, there's a quality
+rule it can't check because a redundant clue doesn't break solvability or uniqueness —
+so it has to be caught by eye when authoring or reviewing a level:
+
+- **Don't author a `different-chamber` clue between two characters who each already
+  have their own `exact-chamber` clue naming a different chamber.** The pair is already
+  implied, so the clue adds zero information. For example, "The Cook was seen in the
+  Kitchen" plus "The Gardener tended alone in the Garden" already makes "The Cook and
+  the Gardener were in different chambers" redundant — a player who reads all three
+  gets nothing from the third that the first two didn't already give. `different-chamber`
+  only earns its place when at least one side of the pair is *not* independently pinned
+  by its own `exact-chamber` clue — i.e. it's doing real elimination work, not restating
+  two clues that already ran.
+
+## Relationship to Murdoku's official clue types
+
+[Murdoku](https://murdoku.fans/en/how-to-play/) publishes its clue vocabulary as a small
+set of categories. Our `InquestPredicate` variants map onto them one-for-one, so an
+author already familiar with Murdoku can write a Royal Inquest clue on sight:
+
+| Murdoku clue category | Our predicate | Notes |
+| --- | --- | --- |
+| Room/location clues | `exact-chamber` | Direct match — "seen in the Kitchen." |
+| Object/prop clues (a single chair, a single plant) | `on-prop` | Direct match — the prop is unique to one cell by construction, so this doubles as Murdoku's "uniqueness clue" (see below). |
+| Directional clues ("south of") | `direction-from` | Direct match in shape; see its own entry above for why the shipped cases never author it as a real (non-vacuous) clue. |
+| Adjacency/"beside" clues | `beside` / `not-beside` | Direct match, including Murdoku's rule that two cells can touch physically but belong to different regions and still not count as "beside" — see `beside`'s entry above. |
+| "Alone with" (victim/murderer) | The traitor rule (not a clue at all) | Direct match in meaning: the only other character left alone with the victim's chamber is the traitor. See [character placement](character-placement.human.md) and [rules.human.md](../rules.human.md#victim-and-traitor). |
+| Column/row clues ("fixed rows or columns") | `exact-row` / `exact-column` — **deliberately never authored** | This is the one intentional divergence: Murdoku permits a clue that fixes a suspect to a literal row or column, but the Royal Inquest's validator rejects any clue using either predicate (see "What a clue may not do" above). A raw coordinate reads as a giveaway rather than a deduction in our presentation; the predicates stay in the engine only so hints and hand-authored `solution` checks still have a coordinate-level primitive to reason with internally. |
+
+There is no Murdoku category for `same-chamber` (the positive form of `different-chamber`)
+as a standalone clue in the published guide, but it's the natural complement of
+`different-chamber` and is exercised the same way — same predicate machinery, opposite
+boolean.
+
 ## Which characters a predicate touches
 
 `getPredicateCharacterIds(predicate)` returns every `CharacterId` a predicate references,
