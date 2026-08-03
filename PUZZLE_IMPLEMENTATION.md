@@ -9,6 +9,9 @@
 - **Stack:** React, TypeScript, Vite, CSS, Vitest, and Testing Library
 - **Persistence:** browser localStorage; no backend
 - **Approved gameplay design:** [docs/superpowers/specs/2026-07-19-realmbound-logic-mvp-design.md](docs/superpowers/specs/2026-07-19-realmbound-logic-mvp-design.md)
+- **Royal Inquest authoring docs:** [docs/royal-inquest/](docs/royal-inquest/) — rules,
+  board/rooms/props, character placement, and clues/predicates in depth; this document
+  covers implementation, those cover authoring in detail.
 
 The Royal Inquest and Siege Lines are the main puzzles and the only puzzle families in
 the current MVP. Leyline Weaving, Celestial Binding, and Living Laws are retained in the
@@ -214,6 +217,11 @@ Authoring rules for clues (enforced by `definitionValidation.ts`, not just conve
   authored `true` (they're only meaningful as always-false negative flavor, e.g.
   `not-beside`). Chamber-relationship clues and `on-prop` (a character is on the cell
   bearing a specific prop, e.g. "seated in the chair") are the load-bearing predicates.
+- Redundant clues (e.g. a `different-chamber` clue between two characters who each
+  already have their own `exact-chamber` clue) aren't caught by `definitionValidation.ts`
+  — a redundant clue doesn't break solvability or uniqueness, so it has to be reviewed by
+  eye. See "What a clue should not do" in
+  [docs/royal-inquest/authoring/clues-and-predicates.human.md](docs/royal-inquest/authoring/clues-and-predicates.human.md).
 
 ### 5.2 Definition model
 
