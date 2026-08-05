@@ -7,13 +7,20 @@ import type { CharacterId, InquestCell, InquestDefinition } from './types';
 // four rows are split into four irregular chambers (not a uniform 2x2 grid) so that, combined with
 // the exact-chamber clues below and the one-per-row/one-per-column rule, each non-victim character's
 // cell is uniquely forced — verified by `solveInquestDefinition` in definitionValidation.test.ts.
+// Same-asset props are never placed in two orthogonally-adjacent cells — `5:3`/`5:4` and `2:3`/`3:3`
+// each use two different (but equally environment-legal) decorative assets instead of stamping the
+// same one twice in a row, without changing which cells are blocked (that shape is load-bearing for
+// `solveInquestDefinition`'s uniqueness proof — see the comment above).
 const decorativePropsByPosition: Record<string, PropAssetId> = {
   '3:0': 'barrel-cluster',
   '2:5': 'bookshelf',
   '5:4': 'dungeon-cage',
-  '5:3': 'dungeon-cage',
-  '3:3': 'barrel-cluster',
+  '5:3': 'barrel-cluster',
+  '3:3': 'dining-table',
   '2:3': 'barrel-cluster',
+  '4:1': 'candle-stand',
+  '5:1': 'offering-chest',
+  '5:2': 'candle-stand',
 };
 
 // Seat props sit on a legal/solution cell instead of a blocked one: a character can be placed on
@@ -23,16 +30,12 @@ const seatPropsByPosition: Record<string, PropAssetId> = {
   '1:0': 'formal-chair',
 };
 
-// Plain impassable cells with no prop art (the church environment has no decorative-only prop
-// asset in the manifest — pews are seat props — so these stay bare walls/rubble).
-const blockedNoPropCells = new Set(['5:2', '4:1', '5:1']);
-
 const propsByPosition: Record<string, PropAssetId> = {
   ...decorativePropsByPosition,
   ...seatPropsByPosition,
 };
 
-const blockedCells = new Set([...Object.keys(decorativePropsByPosition), ...blockedNoPropCells]);
+const blockedCells = new Set(Object.keys(decorativePropsByPosition));
 
 const chamberByPosition = [
   ['solar', 'solar', 'solar', 'solar', 'solar', 'solar'],

@@ -62,7 +62,7 @@ PROP = SCENERY SIT ONE CELL — THRONE, BOOKSHELF, DUNGEON CAGE, ETC.
   | KIND | PROPS | CELL REQUIRE |
   | --- | --- | --- |
   | `seat` | `throne`, `formal-chair`, `simple-chair`, `wooden-bench` (+ VARIANT), `church-pew` (+ VARIANT) | MUST BE **UNBLOCKED** — CHARACTER CAN PLACE THERE |
-  | `decorative` | `bookshelf` (+ VARIANT), `barrel-cluster`, `dungeon-cage`, `stone-planter`, `wooden-planter`, `dining-table` (+ VARIANT), `kitchen-worktable` (+ VARIANT) | MUST BE **BLOCKED** — PERMANENT IMPASSABLE |
+  | `decorative` | `bookshelf` (+ VARIANT), `barrel-cluster`, `dungeon-cage`, `stone-planter`, `wooden-planter`, `dining-table` (+ VARIANT), `kitchen-worktable` (+ VARIANT), `candle-stand`, `offering-chest` | MUST BE **BLOCKED** — PERMANENT IMPASSABLE |
 
   NO PER-CELL "RESERVE THIS SEAT ONE SPECIFIC CHARACTER" MECHANISM — SEAT CELL EXACT AS
   OPEN TO EVERY CHARACTER AS ANY OTHER UNBLOCKED CELL ONCE CHAIR/BENCH PLACE ON IT.
@@ -77,7 +77,7 @@ ABOVE:
 | --- | --- |
 | `royalRoom` | `throne`, `formal-chair` |
 | `room` | `bookshelf` (+ `-left`/`-right`), `simple-chair`, `wooden-bench` (+ VARIANT), `barrel-cluster`, `dining-table` (+ VARIANT) |
-| `church` | `church-pew` (+ VARIANT) |
+| `church` | `church-pew` (+ VARIANT), `candle-stand`, `offering-chest` |
 | `dungeon` | `dungeon-cage`, `barrel-cluster` |
 | `garden` | `stone-planter`, `wooden-planter` |
 | `kitchen` | `kitchen-worktable` (+ VARIANT), `barrel-cluster`, `dining-table` (+ VARIANT) |
@@ -85,6 +85,26 @@ ABOVE:
 
 BOOKSHELF NEVER END UP `royalRoom` (COURT) OR `garden`. NOTHING PLACE `hallway`
 CHAMBER AT ALL — ENFORCE BY VALIDATION, NOT JUST CONVENTION.
+
+`church` USE HAVE **NO DECORATIVE-ONLY PROP** AT ALL — ONLY `church-pew` + VARIANT, ALL
+`seat`-KIND. `candle-stand`/`offering-chest` CLOSE GAP. BEFORE FIX: BLOCK CELL IN
+`church` CHAMBER NO PROP → FALL BACK BARE `◆` GLYPH (SEE "RENDER" BELOW) — ONLY BECAUSE
+NO LEGAL DECORATIVE ASSET EXIST YET FOR THAT ENV. DON'T ASSUME EVERY ENV HAVE
+DECORATIVE COVER — CHECK `propsByEnvironment` FOR SPECIFIC ENV AUTHOR AGAINST, EVERY
+TIME. (SAME GAP COPY-PASTE INTO TWO OTHER LEVEL WHOSE ENV *DID* HAVE DECORATIVE COVER —
+SEE CHECKLIST ADD BELOW.)
+
+#### `-left`/`-right` VARIANT = TWO-CELL SPAN, NOT SINGLE-CELL FLAVOR
+
+`bookshelf-left`/`-right`, `dining-table-left`/`-right`, `kitchen-worktable-left`/`-right`,
+`wooden-bench-left`/`-right`, `church-pew-left`/`-right` NOT ALTERNATE SINGLE-CELL ART
+SAME OBJECT — EACH PAIR = ONE WIDE OBJECT SPLIT ACROSS EXACT TWO ADJACENT CELL SAME
+CHAMBER, MAKE BY `tools/royal_inquest_assets/split_prop.py` FROM ONE 2-CELL-WIDE SOURCE
+IMAGE. `-left` GO LEFT CELL, `-right` GO CELL RIGHT NEXT TO IT. `-left`/`-right` PLACE
+ALONE (NO MATCH HALF ADJACENT CELL) → RENDER OBJECT WITH ABRUPT CROP EDGE. ALWAYS PLACE
+PAIR TOGETHER. NO ADJACENT SAME-CHAMBER CELL FREE (NOT SOLUTION CELL, NOT ALREADY HOLD
+OTHER PROP) → USE PLAIN BASE ASSET (`bookshelf`, `dining-table`, `kitchen-worktable`, …)
+INSTEAD LONE HALF.
 
 ### VALIDATION
 
@@ -119,6 +139,14 @@ FOR EVERY CELL WITH `propId` SET, `validateInquestDefinition` REQUIRE ALL:
 4. SET `propId` TO THAT ASSET ID.
 5. IF DECORATIVE (BLOCKED) PROP, MAKE SURE CELL NOT SOLUTION CELL FOR ANY CHARACTER —
    BLOCKED CELL NEVER PLACEMENT DESTINATION, MUST NOT COLLIDE PUZZLE AUTHOR `solution`.
+6. NEVER COPY "THESE CELL NO PROP ART" LIST FROM EXIST LEVEL INTO NEW LEVEL WITHOUT
+   RE-CHECK `propsByEnvironment` FOR *NEW* LEVEL CHAMBER ENV AT THOSE EXACT CELL — GAP
+   REAL FOR ONE ENV MAY NOT EXIST OTHER ENV. COPY BLIND → DECORATABLE CELL RENDER BARE
+   `◆` GLYPH FOR NO REASON.
+7. DON'T PLACE SAME `PropAssetId` IN TWO CELL SHARE EDGE — READ AS STAMP-TWICE COPY-
+   PASTE. PREFER DIFFERENT ENV-LEGAL ASSET OVER RELOCATE ALREADY-BLOCKED CELL: MOVE
+   WHICH CELL BLOCKED CAN SILENT BREAK `solveInquestDefinition` UNIQUENESS PROOF, WHILE
+   SWAP ASSET AT ALREADY-BLOCKED CELL NEVER DOES.
 
 NON-GOAL: PROPS OTHERWISE DECOR ONLY. NO INTERACT BEYOND SEAT MECHANIC ABOVE, PROP MERE
 PRESENCE NOT FEED CLUE PREDICATE ON OWN — NEED EXPLICIT `on-prop` CLUE (SEE

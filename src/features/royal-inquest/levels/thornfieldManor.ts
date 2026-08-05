@@ -6,13 +6,23 @@ import type { CharacterId, InquestCell, InquestDefinition } from '../types';
 // hosting the victim + traitor, then four irregular chambers below sized so the
 // exact-chamber clues plus the one-per-row/one-per-column rule force every non-victim
 // character's cell uniquely — verified by `solveInquestDefinition` in levels.test.ts.
+// Same-asset props are never placed in two orthogonally-adjacent cells — `5:3`/`5:4` use two
+// different (but equally environment-legal) decorative assets instead of stamping `barrel-cluster`
+// twice in a row, without changing which cells are blocked (that shape is load-bearing for
+// `solveInquestDefinition`'s uniqueness proof). `kitchen-worktable-left`/`-right` at `2:2`/`2:3` are
+// one wide worktable split across two adjacent cells (see
+// docs/royal-inquest/authoring/board-rooms-props.human.md).
 const decorativePropsByPosition: Record<string, PropAssetId> = {
   '3:0': 'kitchen-worktable',
   '2:5': 'bookshelf',
   '5:4': 'barrel-cluster',
-  '5:3': 'barrel-cluster',
+  '5:3': 'dining-table',
   '3:3': 'dining-table',
+  '2:2': 'kitchen-worktable-left',
   '2:3': 'kitchen-worktable-right',
+  '4:1': 'stone-planter',
+  '5:1': 'wooden-planter',
+  '5:2': 'stone-planter',
 };
 
 // Seat prop sits on a legal/solution cell: a character can be placed on it (the prop
@@ -21,15 +31,12 @@ const seatPropsByPosition: Record<string, PropAssetId> = {
   '1:0': 'simple-chair',
 };
 
-// Plain impassable cells with no prop art.
-const blockedNoPropCells = new Set(['5:2', '4:1', '5:1']);
-
 const propsByPosition: Record<string, PropAssetId> = {
   ...decorativePropsByPosition,
   ...seatPropsByPosition,
 };
 
-const blockedCells = new Set([...Object.keys(decorativePropsByPosition), ...blockedNoPropCells]);
+const blockedCells = new Set(Object.keys(decorativePropsByPosition));
 
 const chamberByPosition = [
   ['hall', 'hall', 'hall', 'hall', 'hall', 'hall'],

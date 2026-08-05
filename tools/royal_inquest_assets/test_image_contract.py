@@ -185,7 +185,7 @@ class CompletePackTests(unittest.TestCase):
         props = sorted((root / "props").glob("*.png"))
         tiles = sorted((root / "tiles").glob("*.png"))
         self.assertEqual(len(avatars), 18)
-        self.assertEqual(len(props), 22)
+        self.assertEqual(len(props), 24)
         self.assertEqual(len(tiles), 15)
 
         for path in [*avatars, *props]:

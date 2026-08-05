@@ -66,7 +66,7 @@ dungeon cage, and so on.
   | Kind | Props | Cell requirement |
   | --- | --- | --- |
   | `seat` | `throne`, `formal-chair`, `simple-chair`, `wooden-bench` (+ variants), `church-pew` (+ variants) | must be **unblocked** — a character can be placed there |
-  | `decorative` | `bookshelf` (+ variants), `barrel-cluster`, `dungeon-cage`, `stone-planter`, `wooden-planter`, `dining-table` (+ variants), `kitchen-worktable` (+ variants) | must be **blocked** — permanently impassable |
+  | `decorative` | `bookshelf` (+ variants), `barrel-cluster`, `dungeon-cage`, `stone-planter`, `wooden-planter`, `dining-table` (+ variants), `kitchen-worktable` (+ variants), `candle-stand`, `offering-chest` | must be **blocked** — permanently impassable |
 
   There is no per-cell "reserve this seat for one specific character" mechanism — a seat
   cell is exactly as open to every character as any other unblocked cell once you
@@ -82,7 +82,7 @@ seat/decorative split above:
 | --- | --- |
 | `royalRoom` | `throne`, `formal-chair` |
 | `room` | `bookshelf` (+ `-left`/`-right`), `simple-chair`, `wooden-bench` (+ variants), `barrel-cluster`, `dining-table` (+ variants) |
-| `church` | `church-pew` (+ variants) |
+| `church` | `church-pew` (+ variants), `candle-stand`, `offering-chest` |
 | `dungeon` | `dungeon-cage`, `barrel-cluster` |
 | `garden` | `stone-planter`, `wooden-planter` |
 | `kitchen` | `kitchen-worktable` (+ variants), `barrel-cluster`, `dining-table` (+ variants) |
@@ -91,6 +91,26 @@ seat/decorative split above:
 A bookshelf can never end up in a `royalRoom` (court) or a `garden`, and nothing at all
 can be placed in a `hallway` chamber — that's enforced by validation, not just
 convention.
+
+`church` used to have **no decorative-only prop** at all — only `church-pew` and its variants,
+which are all `seat`-kind. `candle-stand`/`offering-chest` close that gap. Before this fix, a
+blocked cell in a `church` chamber with no prop fell back to the bare `◆` glyph (see "Rendering"
+below) purely because no legal decorative asset existed yet for that environment — don't assume
+every environment has decorative coverage; check `propsByEnvironment` for the specific environment
+you're authoring against, every time. (This exact gap was copy-pasted into two other levels whose
+environments *did* have decorative coverage — see the checklist addition below.)
+
+#### `-left`/`-right` variants are two-cell spans, not single-cell flavors
+
+`bookshelf-left`/`-right`, `dining-table-left`/`-right`, `kitchen-worktable-left`/`-right`,
+`wooden-bench-left`/`-right`, and `church-pew-left`/`-right` are **not** alternate single-cell art
+for the same object — each pair is one wide object split across exactly two horizontally-adjacent
+cells in the same chamber, produced by `tools/royal_inquest_assets/split_prop.py` from a single
+2-cell-wide source image. `-left` goes in the left cell, `-right` in the cell immediately to its
+right. A `-left`/`-right` variant placed alone, with no matching half in the adjacent cell, renders
+as an object with an abruptly cropped edge. Always place them as a pair. If no adjacent
+same-chamber cell is free — not a solution cell, not already holding another prop — use the plain
+base asset (`bookshelf`, `dining-table`, `kitchen-worktable`, …) instead of a lone half.
 
 ### Validation
 
@@ -127,6 +147,14 @@ For every cell with `propId` set, `validateInquestDefinition` requires all of:
 5. If it's a decorative (blocked) prop, make sure the cell isn't a solution cell for any
    character — a blocked cell can never be a placement destination, so it must not
    collide with the puzzle's authored `solution`.
+6. Never copy a "these cells have no prop art" list from an existing level into a new one without
+   re-checking `propsByEnvironment` for the *new* level's chamber environment at those exact cells —
+   a gap that's real for one environment may not exist for another, and copying it blind leaves
+   decoratable cells rendering the bare `◆` glyph for no reason.
+7. Don't place the same `PropAssetId` in two cells that share an edge — it reads as a stamped-twice
+   copy-paste. Prefer a different environment-legal asset over relocating an already-blocked cell:
+   moving which cells are blocked can silently break `solveInquestDefinition`'s uniqueness proof,
+   while swapping the asset at an already-blocked cell never does.
 
 Non-goal: props are otherwise decorative. There is no interactivity beyond the seat
 mechanic above, and a prop's mere presence doesn't feed a clue predicate on its own —

@@ -39,6 +39,8 @@ import bookshelf from './props/bookshelf.png';
 import bookshelfLeft from './props/bookshelf-left.png';
 import bookshelfRight from './props/bookshelf-right.png';
 import dungeonCage from './props/dungeon-cage.png';
+import candleStand from './props/candle-stand.png';
+import offeringChest from './props/offering-chest.png';
 
 import roomTimber1 from './tiles/room-timber-1.png';
 import roomTimber2 from './tiles/room-timber-2.png';
@@ -98,7 +100,9 @@ export type PropAssetId =
   | 'bookshelf'
   | 'bookshelf-left'
   | 'bookshelf-right'
-  | 'dungeon-cage';
+  | 'dungeon-cage'
+  | 'candle-stand'
+  | 'offering-chest';
 
 export type TileEnvironment = 'room' | 'garden' | 'church' | 'kitchen' | 'hallway' | 'dungeon' | 'royalRoom';
 
@@ -117,7 +121,7 @@ export const propsByEnvironment: Record<TileEnvironment, readonly PropAssetId[]>
     'dining-table-left',
     'dining-table-right',
   ],
-  church: ['church-pew', 'church-pew-left', 'church-pew-right'],
+  church: ['church-pew', 'church-pew-left', 'church-pew-right', 'candle-stand', 'offering-chest'],
   dungeon: ['dungeon-cage', 'barrel-cluster'],
   garden: ['stone-planter', 'wooden-planter'],
   kitchen: [
@@ -157,6 +161,8 @@ export const propKindByAsset: Record<PropAssetId, 'seat' | 'decorative'> = {
   'bookshelf-left': 'decorative',
   'bookshelf-right': 'decorative',
   'dungeon-cage': 'decorative',
+  'candle-stand': 'decorative',
+  'offering-chest': 'decorative',
 };
 
 export const royalInquestAssets = {
@@ -203,6 +209,8 @@ export const royalInquestAssets = {
     'bookshelf-left': bookshelfLeft,
     'bookshelf-right': bookshelfRight,
     'dungeon-cage': dungeonCage,
+    'candle-stand': candleStand,
+    'offering-chest': offeringChest,
   },
   tiles: {
     room: [roomTimber1, roomTimber2, roomTimber3],
