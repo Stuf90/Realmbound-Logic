@@ -113,6 +113,10 @@ see "Creating new content" below).
 
 ## Tools available to the player
 
+At case start, the first character in the carousel (page 1) is auto-selected, so the
+player can place/note/cross immediately without clicking a portrait first. Reset returns
+to this same state (page 1, auto-selected).
+
 - **Place** — put the selected character on an unblocked cell. This commits the
   character there; placing over a tile removes any draft note left on that specific tile
   for that character (see Note/Draft below), and satisfies/violates clues and row/column

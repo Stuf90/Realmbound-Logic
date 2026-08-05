@@ -12,11 +12,13 @@ import type { InquestDefinition, InquestState } from './types';
 export function RoyalInquest({ definition, onBack }: { definition: InquestDefinition; onBack: () => void }) {
   const restored = useMemo(() => loadPuzzle<InquestState>(definition.id), [definition.id]);
   const [history, setHistory] = useState(() => {
-    if (!restored?.state) return createHistory(createInitialInquestState());
+    if (!restored?.state) {
+      return createHistory({ ...createInitialInquestState(), selectedCharacterId: definition.characters[0]?.id ?? null });
+    }
     const { drafts, ...rest } = restored.state;
     return createHistory({ ...rest, drafts: drafts ?? {} });
   });
-  const [status, setStatus] = useState(restored ? 'Your inquest was restored.' : 'Select a character, then choose a chamber cell.');
+  const [status, setStatus] = useState(restored ? 'Your inquest was restored.' : 'A person of interest is highlighted. Choose a chamber cell, or pick someone else.');
   const [seconds, setSeconds] = useState(restored?.elapsedSeconds ?? 0);
   const [hints, setHints] = useState(restored?.hintsUsed ?? 0);
   const [characterIndex, setCharacterIndex] = useState(0);
@@ -55,7 +57,7 @@ export function RoyalInquest({ definition, onBack }: { definition: InquestDefini
       setHistory((value) => commitHistory(value, next));
     }
   }
-  function reset() { if (window.confirm('Erase the current inquest and begin again?')) { setHistory(createHistory(createInitialInquestState())); setSeconds(0); setHints(0); setStatus('The inquest has been reset.'); } }
+  function reset() { if (window.confirm('Erase the current inquest and begin again?')) { setHistory(createHistory({ ...createInitialInquestState(), selectedCharacterId: definition.characters[0]?.id ?? null })); setCharacterIndex(0); setSeconds(0); setHints(0); setStatus('The inquest has been reset.'); } }
   function goToCharacter(index: number) {
     const nextIndex = (index + definition.characters.length) % definition.characters.length;
     setCharacterIndex(nextIndex);
