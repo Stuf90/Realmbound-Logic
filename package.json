@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "inquest:solve": "vite-node tools/royal-inquest-solver/cli.ts --"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
@@ -20,10 +21,12 @@
     "@testing-library/jest-dom": "latest",
     "@testing-library/react": "latest",
     "@testing-library/user-event": "latest",
+    "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "jsdom": "latest",
     "typescript": "latest",
+    "vite-node": "latest",
     "vitest": "latest"
   }
 }
