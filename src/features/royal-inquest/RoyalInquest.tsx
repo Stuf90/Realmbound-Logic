@@ -8,6 +8,7 @@ import { getCellState, getCluesForCharacter } from './selectors';
 import { isInquestComplete } from './validation';
 import { getCellPropUrl, getCellTileUrl, getCellWalls, getCharacterAvatarUrl } from './visuals';
 import type { InquestDefinition, InquestState } from './types';
+import '../../app/puzzle.css';
 
 export function RoyalInquest({ definition, onBack }: { definition: InquestDefinition; onBack: () => void }) {
   const restored = useMemo(() => loadPuzzle<InquestState>(definition.id), [definition.id]);
@@ -23,6 +24,7 @@ export function RoyalInquest({ definition, onBack }: { definition: InquestDefini
   const [hints, setHints] = useState(restored?.hintsUsed ?? 0);
   const [characterIndex, setCharacterIndex] = useState(0);
   const [conflictCellKey, setConflictCellKey] = useState<string | null>(null);
+  const [dossierOpen, setDossierOpen] = useState(true);
   const state = history.present;
   const complete = isInquestComplete(definition, state);
 
@@ -91,7 +93,7 @@ export function RoyalInquest({ definition, onBack }: { definition: InquestDefini
     <header className="app-topbar puzzle-topbar"><button className="text-button" onClick={onBack} aria-label="Back to Royal Inquest levels">← Levels</button><div><p className="eyebrow">Royal Inquest</p><h1>{definition.title}</h1></div><p className="metrics">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</p></header>
     {complete && <section className="resolution" aria-labelledby="resolution-title"><p className="seal">Solved</p><h2 id="resolution-title">The traitor is unmasked</h2><p>{traitor.name} alone shared the {victimChamberName} with {victim.name}. The chamber arrangement proves the treason.</p></section>}
     <div className="puzzle-layout app-workspace">
-      <section className="board-panel puzzle-board-region" aria-label="Castle floor plan">
+      <section className="board-panel" aria-label="Castle floor plan">
         <div className="board-scroll">
         <div
           className="inquest-board"
@@ -131,20 +133,23 @@ export function RoyalInquest({ definition, onBack }: { definition: InquestDefini
           <button aria-pressed={state.tool === 'draft'} onClick={() => dispatch({ type: 'set-tool', tool: state.tool === 'place' ? 'draft' : 'place' }, false)}>{state.tool === 'place' ? 'Note' : 'Place'}</button><button aria-pressed={state.tool === 'cross'} onClick={() => dispatch({ type: 'set-tool', tool: 'cross' }, false)}>Ink cross</button>
           <button onClick={() => { const hint = getInquestHint(definition, state); setHints((n) => n + 1); if (!hint) return setStatus('No hint is needed.'); setStatus(hint.message); if (hint.characterId && hint.position) dispatch({ type: 'place', characterId: hint.characterId, position: hint.position }); }}>Apply hint</button><button onClick={reset}>Reset</button>
         </div>
-        <p className="status internal-scroll" role="status">{status}</p><p className="metrics puzzle-metrics">Hints {hints}</p>
+        <p className="status" role="status">{status}</p><p className="metrics puzzle-metrics">Hints {hints}</p>
       </section>
-      <aside className="dossier context-tray">
-        <section className="character-carousel" aria-label="Persons of interest">
-          <div className="carousel-controls">
-            <button aria-label="Previous character" onClick={() => goToCharacter(characterIndex - 1)}>←</button>
-            <span aria-live="polite">{characterIndex + 1} / {definition.characters.length}</span>
-            <button aria-label="Next character" onClick={() => goToCharacter(characterIndex + 1)}>→</button>
-          </div>
-          <button className="portrait featured-portrait" aria-pressed={state.selectedCharacterId === visibleCharacter.id} onClick={() => dispatch({ type: 'select-character', characterId: visibleCharacter.id }, false)}><img className="carousel-avatar" src={getCharacterAvatarUrl(visibleCharacter)} alt="" />{visibleCharacter.name}{visibleCharacter.isVictim && <small>Victim</small>}</button>
-          <section className="character-clue-brief internal-scroll" role="region" aria-live="polite" aria-label={`Clues about ${visibleCharacter.name}`}>
-            {visibleCharacterClues.length ? <ol>{visibleCharacterClues.map((clue) => <li key={clue.id}>{clue.text}</li>)}</ol> : <p>No witness statement names {visibleCharacter.name} directly.</p>}
+      <aside className="dossier">
+        <button className="text-button dossier-toggle" aria-expanded={dossierOpen} onClick={() => setDossierOpen((open) => !open)}>{dossierOpen ? '▾ Persons of interest' : '▸ Persons of interest'}</button>
+        <div className={`dossier-content${dossierOpen ? '' : ' collapsed'}`}>
+          <section className="character-carousel" aria-label="Persons of interest">
+            <div className="carousel-controls">
+              <button aria-label="Previous character" onClick={() => goToCharacter(characterIndex - 1)}>←</button>
+              <span aria-live="polite">{characterIndex + 1} / {definition.characters.length}</span>
+              <button aria-label="Next character" onClick={() => goToCharacter(characterIndex + 1)}>→</button>
+            </div>
+            <button className="portrait featured-portrait" aria-pressed={state.selectedCharacterId === visibleCharacter.id} onClick={() => dispatch({ type: 'select-character', characterId: visibleCharacter.id }, false)}><img className="carousel-avatar" src={getCharacterAvatarUrl(visibleCharacter)} alt="" />{visibleCharacter.name}{visibleCharacter.isVictim && <small>Victim</small>}</button>
+            <section className="character-clue-brief" role="region" aria-live="polite" aria-label={`Clues about ${visibleCharacter.name}`}>
+              {visibleCharacterClues.length ? <ol>{visibleCharacterClues.map((clue) => <li key={clue.id}>{clue.text}</li>)}</ol> : <p>No witness statement names {visibleCharacter.name} directly.</p>}
+            </section>
           </section>
-        </section>
+        </div>
       </aside>
     </div>
   </main>;
