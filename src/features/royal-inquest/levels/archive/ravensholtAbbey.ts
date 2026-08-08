@@ -1,6 +1,6 @@
-import type { GridPosition } from '../../../shared/geometry';
-import type { PropAssetId } from '../../../assets/royal-inquest/manifest';
-import type { CharacterId, InquestCell, InquestDefinition } from '../types';
+import type { GridPosition } from '../../../../shared/geometry';
+import type { PropAssetId } from '../../../../assets/royal-inquest/manifest';
+import type { CharacterId, InquestCell, InquestDefinition } from '../../types';
 
 // Same chamber shape as Blackwood Keep (see ../definition.ts): one full-width top chamber
 // hosting the victim + traitor, then four irregular chambers below sized so the

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'; import { blackwoodKeep } from './definition'; import { getInquestHint } from './hints'; import { createInitialInquestState } from './reducer';
+import { describe, expect, it } from 'vitest'; import { blackwoodKeep } from './levels/archive/blackwoodKeep'; import { getInquestHint } from './hints'; import { createInitialInquestState } from './reducer';
 describe('inquest hints',()=>{it('offers the first deterministic deduction',()=>{expect(getInquestHint(blackwoodKeep,createInitialInquestState())).toMatchObject({characterId:'aldric',position:{row:1,column:0}});});
 it('surfaces clue text for a pairwise-predicate clue, not just characterId-shaped ones',()=>{
 const definition={...blackwoodKeep,clues:[{id:'test-pairwise',text:'Beatrice was tied to Aldric alone.',predicate:{type:'same-chamber' as const,firstCharacterId:'aldric',secondCharacterId:'beatrice'}}]};
