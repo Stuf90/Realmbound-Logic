@@ -171,6 +171,14 @@ as a standalone clue in the published guide, but it's the natural complement of
 `different-chamber` and is exercised the same way — same predicate machinery, opposite
 boolean.
 
+A scan of a physical Murdoku puzzle book (photos plus notes) lives at
+[`reference/murdoku-book.human.md`](../reference/murdoku-book.human.md) — worked
+examples for every predicate above, plus a backlog list of clue shapes its advanced
+cases use that no current predicate models (diagonal, relative offset, occupancy count,
+attribute/category, shared-prop pairing, disjunctive corner sets, global uniqueness
+quantifiers, not-beside-a-wall). Check that doc before proposing a new predicate
+variant — it may already be scouted.
+
 ## Which characters a predicate touches
 
 `getPredicateCharacterIds(predicate)` returns every `CharacterId` a predicate references,
