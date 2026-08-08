@@ -19,6 +19,9 @@ export interface InquestCell {
   chamberId: string;
   blocked: boolean;
   propId?: PropAssetId;
+  // Optional finer-grained tag within a chamber (e.g. "stand") a predicate can scope to instead of
+  // the whole chamber — see `area-occupant-count`.
+  areaId?: string;
 }
 
 export type InquestPredicate =
@@ -61,7 +64,31 @@ export type InquestPredicate =
   // Existential pairing: true when `characterId` is orthogonally adjacent to the (single) cell
   // bearing `propId` AND at least one OTHER (unnamed) character is also adjacent to that same
   // cell — "someone else was beside the same prop" without saying who.
-  | { type: 'shares-prop-neighbor'; characterId: CharacterId; propId: PropAssetId };
+  | { type: 'shares-prop-neighbor'; characterId: CharacterId; propId: PropAssetId }
+  // Pure coordinate relationship, like `diagonal-from`, but an exact vector distance rather than a
+  // fixed shape — true when `subject.row - reference.row === rowOffset` AND
+  // `subject.column - reference.column === columnOffset` (south/east positive). No same-row/column
+  // requirement, so it stays satisfiable against a full row/column permutation solution whenever
+  // both offsets are nonzero.
+  | {
+      type: 'offset-from';
+      subjectCharacterId: CharacterId;
+      referenceCharacterId: CharacterId;
+      rowOffset: number;
+      columnOffset: number;
+    }
+  // Global (cast-wide) quantifier, like `seated-character-count`: true when exactly `count`
+  // characters, across the WHOLE cast, are orthogonally adjacent to the (single) cell bearing
+  // `propId` in the completed solution. Names no specific character.
+  | { type: 'prop-neighbor-count'; propId: PropAssetId; count: number }
+  // Generalizes `chamber-occupant-count`: true when exactly `count` OTHER characters share
+  // `characterId`'s combined chamber+area tag (see `InquestCell.areaId`). When no cell in a
+  // definition sets `areaId`, this collapses to plain chamber comparison.
+  | { type: 'area-occupant-count'; characterId: CharacterId; count: number }
+  // True when `characterId` is orthogonally adjacent to the (single) cell bearing `propId` —
+  // same adjacency check as `shares-prop-neighbor`'s first half, but without requiring a second
+  // (unnamed) character nearby. Intended for edge-anchored props like `window`.
+  | { type: 'by-window'; characterId: CharacterId; propId: PropAssetId };
 
 export interface InquestClue {
   id: string;

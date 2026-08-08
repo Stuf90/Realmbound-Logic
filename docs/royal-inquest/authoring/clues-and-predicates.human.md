@@ -207,6 +207,70 @@ adjacent to that same cell. "Someone else was beside the same prop" without sayi
 prop; otherwise `'unknown'` until every other character is placed (a nearby match found
 early decides `true` right away, with no need to wait).
 
+### `offset-from`
+
+```ts
+{
+  type: 'offset-from';
+  subjectCharacterId: CharacterId;
+  referenceCharacterId: CharacterId;
+  rowOffset: number;
+  columnOffset: number;
+}
+```
+
+`'unknown'` unless both characters are placed. Otherwise true when
+`subject.row - reference.row === rowOffset` **and**
+`subject.column - reference.column === columnOffset` (south/east positive, matching
+`direction-from`'s south/east sign convention). Unlike `direction-from`, this does
+**not** require the pair to share a row or column — like `diagonal-from`, it stays
+satisfiable against a full row/column permutation solution whenever both offsets are
+nonzero. It's the strongest positional predicate in the vocabulary: an exact vector
+distance, not just a direction or a fixed one-row-one-column shape.
+
+### `prop-neighbor-count`
+
+```ts
+{ type: 'prop-neighbor-count'; propId: PropAssetId; count: number }
+```
+
+A global (cast-wide) quantifier, in the same family as `seated-character-count` — names
+no specific character. True when exactly `count` characters, across the **whole cast**,
+are orthogonally adjacent to the (single) cell bearing `propId` in the completed
+solution. Same early-`false`/stay-`'unknown'`-until-everyone's-placed logic as
+`chamber-occupant-count`. This is what lets a clue say "exactly two people stood beside
+the table" without naming either of them — `shares-prop-neighbor` only proves "at least
+one other," not an exact count.
+
+### `area-occupant-count`
+
+```ts
+{ type: 'area-occupant-count'; characterId: CharacterId; count: number }
+```
+
+A direct generalization of `chamber-occupant-count`: same shape and the same
+early-`false`/`'unknown'`-until-everyone's-placed logic, but scoped to a combined
+chamber+area key instead of bare chamber — see `InquestCell.areaId`. When no cell in a
+definition sets `areaId`, every cell's key collapses to the same "no area" value, so this
+predicate behaves identically to `chamber-occupant-count` for every level that doesn't
+use area tags. This is what lets a clue say "alone on the stand" (a named sub-area of a
+chamber) instead of only "alone in the chamber."
+
+### `by-window`
+
+```ts
+{ type: 'by-window'; characterId: CharacterId; propId: PropAssetId }
+```
+
+`'unknown'` until `characterId` is placed. Otherwise true when `characterId` is
+orthogonally adjacent to the (single) cell bearing `propId` — the same adjacency check as
+the first half of `shares-prop-neighbor`, but without needing a second (unnamed)
+character nearby. Takes `propId` as a parameter (like `on-prop`,
+`category-not-beside-prop`, and `shares-prop-neighbor`) rather than hardcoding a single
+asset, so any edge-anchored prop could reuse this shape — not just `window`.
+`definitionValidation.ts` separately requires any cell whose `propId` is `window` to sit
+on the board's outer edge; see [board, rooms, and props](board-rooms-props.human.md).
+
 ## Predicate difficulty rating
 
 **The sole canonical source for every difficulty number in this doc set** — the table
@@ -221,8 +285,8 @@ any puzzle that declares rating N **or higher**. Fixed at authoring time, lives 
 | Rating | Meaning | Predicates |
 | --- | --- | --- |
 | 1 | Trivial/foundational fact | `exact-row`, `exact-column`, `exact-chamber`, `same-chamber`, `different-chamber`, `on-prop`, `beside`, `not-beside`, `seated-character-count` |
-| 2 | Moderate counting/positional reasoning | `direction-from`, `chamber-occupant-count`, `in-corner`, `not-beside-wall`, `shares-prop-neighbor` |
-| 3 | Hard multi-axis or existential reasoning | `category-not-beside-prop`, `diagonal-from`, `not-diagonal-from` |
+| 2 | Moderate counting/positional reasoning | `direction-from`, `chamber-occupant-count`, `in-corner`, `not-beside-wall`, `shares-prop-neighbor`, `area-occupant-count`, `by-window` |
+| 3 | Hard multi-axis or existential reasoning | `category-not-beside-prop`, `diagonal-from`, `not-diagonal-from`, `offset-from`, `prop-neighbor-count` |
 
 Ratings revised from the original, after a cross-check pass against the
 [Murdoku book glossary](#murdoku-book-glossary-source-vocab) — `beside`/`not-beside`/
@@ -333,22 +397,22 @@ each number from living in two places.
 | not beside a wall *(derived, case 4)* | Cell is fully interior to its room | `not-beside-wall` | — |
 | corner | Cell where two walls of the same room meet | `in-corner` | — |
 | one of the four corners *(derived, case 76)* | Disjunctive variant of "corner" — same predicate, already disjunctive by design | `in-corner` | — |
-| by a window | Cell touches a window (edge-only prop) — no window edge-adjacency concept exists yet, see [Board, rooms, props](board-rooms-props.human.md#asset-ideas-not-yet-built) | not implemented | 2 *(new)* |
+| by a window | Cell touches a window — MVP is a single-cell decorative prop validated to sit on the board's outer edge, not the book's literal two-cell span, see [Board, rooms, props](board-rooms-props.human.md#asset-ideas-not-yet-built) | `by-window` | — |
 | alone | Nobody else in the room, not even the victim | `chamber-occupant-count` (`count: 0`) | — |
 | alone with (b) | Only these two people in the room | `same-chamber(a,b)` + `chamber-occupant-count(a,1)` combined | — |
 | not alone *(derived, case 76)* | Negates "alone" — check the predicate supports a negated form (count != 0) before using it | `chamber-occupant-count` negated | — |
-| alone on [prop area] *(derived, case 38)* | "Alone" localized to a prop-tagged area — `chamber-occupant-count` only scopes the whole chamber today, not a prop subset | not implemented | 2 *(new)* |
+| alone on [prop area] *(derived, case 38)* | "Alone" localized to a prop-tagged area (an `InquestCell.areaId`), not the whole chamber | `area-occupant-count` (`count: 0`) | — |
 | empty | Nobody in the room at all, not even the victim | `chamber-occupant-count` (`count: 0`, everyone including the victim) | — |
 | no empty room *(derived, case 39)* | Global, every room at once — already an author-time invariant, see [Board, rooms, props](board-rooms-props.human.md) "no empty chamber at the solution" — not a clue predicate itself | not a clue | `n/a` |
 | only person on [prop] | Nobody else sat on the same prop type — prop is unique to one cell by construction, doubling as uniqueness | `on-prop` | — |
 | exactly one person on [prop-kind] *(derived, case 76)* | Global unique quantifier, cast-wide, whole prop-kind | `seated-character-count` (`count: 1`) | — |
 | room/chamber | Any enclosed area | `exact-chamber` | — |
-| two people stood beside a table | Exactly two adjacent to the same table, victim may be one — `shares-prop-neighbor` only does "at least one other", not an exact count of two | not implemented | 3 *(new)* |
+| two people stood beside a table | Exactly two adjacent to the same table, victim may be one — `shares-prop-neighbor` only does "at least one other", not an exact count of two | `prop-neighbor-count` (`count: 2`) | — |
 | beside the same [prop] *(derived, case 39)* | Existential pair, second character unnamed | `shares-prop-neighbor` | — |
 | room with exactly N other suspects *(derived, case 54)* | Room occupant-count, excludes self | `chamber-occupant-count` | — |
 | no [category] beside [prop] *(derived, case 54)* | Global, nobody matching a category adjacent to a prop | `category-not-beside-prop` | — |
 | same diagonal as (a) (or (b)) *(derived, case 38)* | One row plus one column apart — only the single-reference form is implemented, OR of two references isn't supported today | `diagonal-from` | — |
-| N columns and M rows ... (a) *(derived, case 38, 76)* | Relative offset, exact vector distance — no exact-distance predicate exists, only direction via `direction-from` | not implemented | 3 *(new, hardest — capped at 3)* |
+| N columns and M rows ... (a) *(derived, case 38, 76)* | Relative offset, exact vector distance — stronger than `direction-from` (direction only) | `offset-from` | — |
 
 ## Predicate ideas not yet in the engine
 
@@ -359,39 +423,34 @@ Inquest already deliberately simplifies from Murdoku's full rule set (see the
 `exact-row`/`exact-column` ban above) — expanding the vocabulary is a design decision,
 not an automatic "the genre does it so we should too."
 
-1. ~~**Diagonal**~~ — implemented as `diagonal-from`/`not-diagonal-from` (see the
-   predicate reference above); unlike `direction-from`, it doesn't require sharing a row
-   or column, so it stays satisfiable against a full row/column permutation solution.
-2. **Relative offset** — "one column and two rows up-left of X." Stronger than
-   `direction-from` (exact distance, not just direction) — likely has the same
-   permutation-solution caveat.
-3. **Occupancy count** — "a room with exactly two other suspects," "alone with
-   precisely two men" — counts how many other characters share a chamber, an exact
-   number. Needs to know **every** chamber occupant to evaluate (not just two named
-   characters like `same-chamber`) — a different evaluation shape from anything we have
-   today.
-4. **Attribute/category clue** — "no women beside the tables" — requires the cast to
-   carry gender (or another category) metadata, and a predicate over a **group**, not a
-   named individual. Royal Inquest's cast data has no such field today.
-5. **Shared-prop pairing (unnamed)** — "someone else was beside the same TV" — links
-   two characters via a shared prop without naming the second character directly
-   (existential, not pairwise). `on-prop` today only pins one named character to a
-   prop; there's no "someone else too" form.
-6. **Disjunctive corner set** — "in one of the four corners of the floor plan" — true
-   if the cell matches **any** of a set of positions, not one exact cell. Would need an
-   or-of-`exact-chamber`-like construct, or a new `in-corner` predicate.
-7. **Global uniqueness quantifier** — "exactly one person sat on a chair" — constrains
-   a count across the **entire cast**, not a pair/chamber scope. The biggest departure
-   from our current per-character/per-pair predicate shape.
-8. **"Not beside a wall"** — relates to the chamber boundary, not another character. No
-   equivalent today (`beside`/`not-beside` are both character-to-character only).
-9. **"By a window"** — ties placement to the board's outer edge (a window only sits on
-   the edge, spanning two cells) — no edge-adjacency concept in the engine today, and
-   no window prop asset either (see
-   [board, rooms, props](board-rooms-props.human.md)).
-10. **No-empty-room global constraint** — "no room stayed empty" as a puzzle-level fact
-    that helps solving, but isn't a clue predicate itself — more of an authoring-time
-    invariant (every chamber gets at least one occupant at the solution).
+As of this pass, every item this list used to track is either implemented or is not
+actually a clue predicate. Diagonal, occupancy count, attribute/category clues,
+shared-prop pairing, the disjunctive corner set, the global uniqueness quantifier, and
+"not beside a wall" were all built into `predicates.ts` in earlier passes and this list
+simply wasn't pruned to match — see `diagonal-from`/`not-diagonal-from`,
+`chamber-occupant-count`, `category-not-beside-prop`, `shares-prop-neighbor`,
+`in-corner`, `seated-character-count`, and `not-beside-wall` above. Relative offset,
+by-window, and alone-on-a-prop-area (the three genuine remaining gaps) are now
+`offset-from`, `by-window`, and `area-occupant-count` respectively — see "Predicate
+reference" above.
+
+Only one item never was a clue predicate at all and stays out of scope here:
+
+1. **No-empty-room global constraint** — "no room stayed empty" as a puzzle-level fact
+   that helps solving, but isn't a clue predicate itself — it's an author-time invariant
+   (every chamber gets at least one occupant at the solution), already enforced by
+   `validateInquestDefinition`'s "every chamber has no occupant in the solution" check.
+
+Two follow-ups remain open from this pass, both flagged as non-goals in
+`docs/superpowers/specs/2026-08-08-royal-inquest-predicate-expansion-design.md`:
+
+- **Real window art.** `by-window`'s `window` prop currently reuses the stone-planter
+  texture as a placeholder (see [board, rooms, props](board-rooms-props.human.md)) —
+  swap it once real source art exists.
+- **Literal two-cell window span.** The book's window spans two grid cells; the MVP here
+  is a normal single-cell decorative prop validated to sit on the board's outer edge.
+  Modeling a true multi-cell prop is a separate, larger design (rendering + validation +
+  authoring model changes) if it's ever worth doing.
 
 ## Which characters a predicate touches
 
@@ -412,8 +471,8 @@ generic "can now be placed" phrase since no clue matches a specific character.
    (`exact-chamber`, `on-prop`, `same-chamber`, `different-chamber`, `direction-from`,
    `beside`, `not-beside`, `diagonal-from`, `not-diagonal-from`, `chamber-occupant-count`,
    `in-corner`, `seated-character-count`, `not-beside-wall`, `category-not-beside-prop`,
-   `shares-prop-neighbor`) — never `exact-row`/`exact-column`, and never referencing the
-   victim.
+   `shares-prop-neighbor`, `offset-from`, `prop-neighbor-count`, `area-occupant-count`,
+   `by-window`) — never `exact-row`/`exact-column`, and never referencing the victim.
 3. Check the predicate's difficulty weight (see "Predicate difficulty" above) against the
    case's declared `difficulty` — `validateInquestDefinition` rejects the clue otherwise.
 4. Write `text` as in-world flavor that matches the predicate's meaning.

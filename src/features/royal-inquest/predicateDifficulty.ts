@@ -26,4 +26,8 @@ export const predicateDifficulty: Record<InquestPredicate['type'], number> = {
   'category-not-beside-prop': 3,
   'diagonal-from': 3,
   'not-diagonal-from': 3,
+  'area-occupant-count': 2,
+  'by-window': 2,
+  'offset-from': 3,
+  'prop-neighbor-count': 3,
 };
