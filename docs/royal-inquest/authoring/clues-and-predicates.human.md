@@ -171,6 +171,50 @@ as a standalone clue in the published guide, but it's the natural complement of
 `different-chamber` and is exercised the same way — same predicate machinery, opposite
 boolean.
 
+## Predicate ideas not yet in the engine
+
+Murdoku's full clue vocabulary is bigger than our current `InquestPredicate` set —
+captured here as future ideas, not a spec. None of these are implemented today. Discuss
+and spec it (under `docs/superpowers/specs/`) before touching `predicates.ts`. Royal
+Inquest already deliberately simplifies from Murdoku's full rule set (see the
+`exact-row`/`exact-column` ban above) — expanding the vocabulary is a design decision,
+not an automatic "the genre does it so we should too."
+
+1. **Diagonal** — "on the same diagonal as character X." Our solution model is a full
+   row/column permutation (see the `direction-from` entry above), so a diagonal
+   relation may never be satisfiable for the same reason `direction-from` never fires —
+   needs checking before adoption.
+2. **Relative offset** — "one column and two rows up-left of X." Stronger than
+   `direction-from` (exact distance, not just direction) — likely has the same
+   permutation-solution caveat.
+3. **Occupancy count** — "a room with exactly two other suspects," "alone with
+   precisely two men" — counts how many other characters share a chamber, an exact
+   number. Needs to know **every** chamber occupant to evaluate (not just two named
+   characters like `same-chamber`) — a different evaluation shape from anything we have
+   today.
+4. **Attribute/category clue** — "no women beside the tables" — requires the cast to
+   carry gender (or another category) metadata, and a predicate over a **group**, not a
+   named individual. Royal Inquest's cast data has no such field today.
+5. **Shared-prop pairing (unnamed)** — "someone else was beside the same TV" — links
+   two characters via a shared prop without naming the second character directly
+   (existential, not pairwise). `on-prop` today only pins one named character to a
+   prop; there's no "someone else too" form.
+6. **Disjunctive corner set** — "in one of the four corners of the floor plan" — true
+   if the cell matches **any** of a set of positions, not one exact cell. Would need an
+   or-of-`exact-chamber`-like construct, or a new `in-corner` predicate.
+7. **Global uniqueness quantifier** — "exactly one person sat on a chair" — constrains
+   a count across the **entire cast**, not a pair/chamber scope. The biggest departure
+   from our current per-character/per-pair predicate shape.
+8. **"Not beside a wall"** — relates to the chamber boundary, not another character. No
+   equivalent today (`beside`/`not-beside` are both character-to-character only).
+9. **"By a window"** — ties placement to the board's outer edge (a window only sits on
+   the edge, spanning two cells) — no edge-adjacency concept in the engine today, and
+   no window prop asset either (see
+   [board, rooms, props](board-rooms-props.human.md)).
+10. **No-empty-room global constraint** — "no room stayed empty" as a puzzle-level fact
+    that helps solving, but isn't a clue predicate itself — more of an authoring-time
+    invariant (every chamber gets at least one occupant at the solution).
+
 ## Which characters a predicate touches
 
 `getPredicateCharacterIds(predicate)` returns every `CharacterId` a predicate references,

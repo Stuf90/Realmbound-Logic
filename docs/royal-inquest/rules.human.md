@@ -20,6 +20,14 @@ categories one-for-one — see
 for the exact mapping. Where the two diverge, it is a deliberate simplification (documented
 inline), not an oversight.
 
+Our predicate vocabulary isn't feature-complete relative to Murdoku's full clue set —
+the gap list and backlog of ideas live in
+[clues and predicates](authoring/clues-and-predicates.human.md#predicate-ideas-not-yet-in-the-engine).
+
+Reference images (rule pages and worked puzzle examples from a physical Murdoku book)
+live at [`reference/murdoku-book/`](reference/murdoku-book.human.md) — cross-check
+against the source when authoring a new case or extending the predicate vocabulary.
+
 ## Board
 
 - The board is a grid of `rows x columns` cells (`InquestDefinition.rows/columns`).

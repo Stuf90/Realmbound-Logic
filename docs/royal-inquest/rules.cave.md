@@ -16,6 +16,14 @@ VOCAB DELIBERATE MIRROR MURDOKU PUBLISH CLUE CATEGORY ONE-FOR-ONE — SEE
 [CLUES + PREDICATES](authoring/clues-and-predicates.cave.md#relate-murdoku-official-clue-type)
 FOR EXACT MAP. WHERE TWO DIVERGE = DELIBERATE SIMPLIFY (DOCUMENT INLINE), NOT OVERSIGHT.
 
+OUR PREDICATE VOCAB NOT FEATURE-COMPLETE RELATE FULL MURDOKU CLUE SET — GAP LIST +
+BACKLOG IDEA LIVE IN
+[CLUES + PREDICATES](authoring/clues-and-predicates.cave.md#predicate-idea-not-yet-in-engine).
+
+REFERENCE IMAGE (RULE PAGE + WORKED PUZZLE EXAMPLE FROM PHYSICAL MURDOKU BOOK) LIVE
+[`reference/murdoku-book/`](reference/murdoku-book.cave.md) — CROSS-CHECK SOURCE WHEN
+AUTHOR NEW CASE OR EXTEND PREDICATE VOCAB.
+
 ## BOARD
 
 - GRID `rows x columns` CELLS (`InquestDefinition.rows/columns`).
