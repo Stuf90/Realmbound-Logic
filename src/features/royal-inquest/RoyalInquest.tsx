@@ -31,12 +31,14 @@ export function RoyalInquest({ definition, onBack }: { definition: InquestDefini
 
   useEffect(() => { if (complete) return; const id = window.setInterval(() => setSeconds((value) => value + 1), 1000); return () => clearInterval(id); }, [complete]);
   function persist() { savePuzzle({ schemaVersion: 1, puzzleId: definition.id, state, elapsedSeconds: seconds, completed: complete, hintsUsed: hints, checksUsed: 0 }); }
+  const persistRef = useRef(persist);
+  persistRef.current = persist;
   useEffect(persist, [state, seconds, complete, hints]);
   useEffect(() => {
-    function handleVisibilityChange() { if (document.visibilityState === 'hidden') persist(); }
+    function handleVisibilityChange() { if (document.visibilityState === 'hidden') persistRef.current(); }
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [state, seconds, complete, hints]);
+  }, []);
 
   function dispatch(action: Parameters<typeof reduceInquest>[1], meaningful = true) {
     const next = reduceInquest(state, action, definition);
