@@ -72,6 +72,14 @@ Rows and columns increase top-to-bottom and left-to-right, 0-indexed internally
 - **Not beside** — the negation of "beside": any placement that is not both adjacent and
   same-chamber.
 
+Because placement rules 1–2 above forbid any two characters from ever sharing a row or a
+column, two characters' Manhattan distance can never be exactly 1 (the minimum possible
+is 2, from being one row and one column apart). So **"beside" can never be true for any
+completed placement, and "not beside" is always true, unconditionally.** A `not-beside`
+clue between two characters conveys zero information — see the `beside`/`not-beside`
+entry in [clues and predicates](authoring/clues-and-predicates.human.md#beside--not-beside)
+for why it should not be authored as a real clue.
+
 ## Clues
 
 Every clue is a structured predicate, not free text — the sentence shown to the player

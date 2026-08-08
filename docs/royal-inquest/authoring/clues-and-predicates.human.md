@@ -110,10 +110,16 @@ reason. A future case with a non-permutation solution could use it for real.
 exactly 1 **and** the same chamber — crossing a chamber wall does not count as adjacent
 even if the cells are physically next to each other. `not-beside` is the exact negation.
 
-`not-beside` *is* usable against a permutation solution (unlike `beside`, which never
-fires there) — the shipped case uses `aldric-not-beside-edmund` exactly this way,
-since "not adjacent" is trivially true whenever two characters don't even share a row or
-column, and can still be a meaningful clue combined with same/different-chamber facts.
+`beside` and `not-beside` are both dead against a permutation solution (see
+[character placement](character-placement.human.md) — every shipped case is one): since
+placement rules forbid two characters from ever sharing a row or column, Manhattan
+distance can never be exactly 1, so `beside` is never satisfiable and `not-beside` is
+always trivially true, unconditionally, regardless of chamber. There is no combination
+with same/different-chamber facts that makes it meaningful — the OR resolves to "always
+true" before chamber is even considered. **Do not author a `not-beside` clue** — it
+conveys zero information. (An earlier version of this doc claimed `not-beside` could
+still be meaningful; that was wrong. The `aldric-not-beside-edmund` clue this claim was
+based on has been removed — see [rules.human.md](../rules.human.md#chambers-and-adjacency).)
 
 ### `diagonal-from` / `not-diagonal-from`
 

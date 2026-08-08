@@ -134,15 +134,6 @@ export const blackwoodKeep: InquestDefinition = {
       text: 'Daria searched the Crypt.',
       predicate: { type: 'exact-chamber', characterId: 'daria', chamberId: 'crypt' },
     },
-    {
-      id: 'aldric-not-beside-edmund',
-      text: 'Aldric was never seen beside Edmund.',
-      predicate: {
-        type: 'not-beside',
-        firstCharacterId: 'aldric',
-        secondCharacterId: 'edmund',
-      },
-    },
   ],
   traitorId: 'aldric',
   solution,
