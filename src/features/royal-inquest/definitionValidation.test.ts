@@ -175,9 +175,14 @@ describe('Blackwood Keep definition', () => {
   it('rejects a clue whose predicate exceeds the case\'s declared difficulty', () => {
     const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
     malformed.difficulty = 1;
+    malformed.clues.push({
+      id: 'aldric-in-corner',
+      text: 'Aldric was seen in a corner.',
+      predicate: { type: 'in-corner', characterId: 'aldric' },
+    });
 
     expect(validateInquestDefinition(malformed)).toContain(
-      'Clue "aldric-not-beside-edmund" uses a difficulty-2 predicate ("not-beside"), which exceeds this case\'s declared difficulty of 1.',
+      'Clue "aldric-in-corner" uses a difficulty-2 predicate ("in-corner"), which exceeds this case\'s declared difficulty of 1.',
     );
   });
 

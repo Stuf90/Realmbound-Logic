@@ -207,22 +207,41 @@ adjacent to that same cell. "Someone else was beside the same prop" without sayi
 prop; otherwise `'unknown'` until every other character is placed (a nearby match found
 early decides `true` right away, with no need to wait).
 
-## Predicate difficulty
+## Predicate difficulty rating
 
-Every predicate type carries a fixed authoring-time difficulty weight, 1-3, in
+**The sole canonical source for every difficulty number in this doc set** — the table
+below is the only place any predicate's or book keyword's rating lives. No other table
+(including "Murdoku book glossary" below, and the
+[Murdoku clue catalog](murdoku-clue-catalog.human.md)) restates a number — they link back
+here instead. Rating is 1-3, and it isn't a "harder predicate = higher weight" scale
+stacking on top of itself — read it as a plain tier label: a clue rated N can appear in
+any puzzle that declares rating N **or higher**. Fixed at authoring time, lives in
 `predicateDifficulty.ts`:
 
-| Weight | Meaning | Predicates |
+| Rating | Meaning | Predicates |
 | --- | --- | --- |
-| 1 | Trivial/foundational fact | `exact-row`, `exact-column`, `exact-chamber`, `same-chamber`, `different-chamber`, `on-prop` |
-| 2 | Moderate counting/positional reasoning | `direction-from`, `beside`, `not-beside`, `chamber-occupant-count`, `in-corner`, `seated-character-count`, `not-beside-wall` |
-| 3 | Hard multi-axis or existential reasoning | `category-not-beside-prop`, `shares-prop-neighbor`, `diagonal-from`, `not-diagonal-from` |
+| 1 | Trivial/foundational fact | `exact-row`, `exact-column`, `exact-chamber`, `same-chamber`, `different-chamber`, `on-prop`, `beside`, `not-beside`, `seated-character-count` |
+| 2 | Moderate counting/positional reasoning | `direction-from`, `chamber-occupant-count`, `in-corner`, `not-beside-wall`, `shares-prop-neighbor` |
+| 3 | Hard multi-axis or existential reasoning | `category-not-beside-prop`, `diagonal-from`, `not-diagonal-from` |
+
+Ratings revised from the original, after a cross-check pass against the
+[Murdoku book glossary](#murdoku-book-glossary-source-vocab) — `beside`/`not-beside`/
+`seated-character-count` drop from 2 to 1 (a simple direct adjacency/uniqueness fact, no
+harder than `on-prop`), and `shares-prop-neighbor` drops from 3 to 2 (an existential pair,
+but anchored to a single prop, not multi-axis like `diagonal-from`).
 
 Every `InquestDefinition` declares its own `difficulty: number` (also 1-3).
-`validateInquestDefinition` rejects any clue whose predicate weight exceeds the case's
-declared difficulty — so a case can't accidentally reach for a weight-3 predicate like
-`diagonal-from` while claiming to be an easy case. This is purely an authoring-time gate;
-there's no player-facing difficulty selector or display.
+`validateInquestDefinition` rejects any clue whose predicate rating exceeds the case's
+declared difficulty — so a case can't accidentally reach for a rating-3 predicate like
+`diagonal-from` while claiming to be an easy case. In other words: a clue rated N is
+usable by any puzzle rated N or higher, never lower. This is purely an authoring-time
+gate; there's no player-facing difficulty selector or display.
+
+Gap keywords (book vocabulary with no engine predicate built yet) still need their own
+rating estimate somewhere for planning purposes — those live **only** in the "Murdoku
+book glossary" table below (marked *(new)*), since this table is keyed by real predicate
+only. No overlap: a keyword's number either lives here (it maps to a real predicate) or
+there (a gap, no predicate) — never both.
 
 ## What a clue may not do
 
@@ -279,6 +298,57 @@ There is no Murdoku category for `same-chamber` (the positive form of `different
 as a standalone clue in the published guide, but it's the natural complement of
 `different-chamber` and is exercised the same way — same predicate machinery, opposite
 boolean.
+
+## Murdoku book glossary (source vocab)
+
+Full keyword list pulled from the physical Murdoku book — the glossary page (p13) plus
+case clue card scans (cases 1, 2, 3, 4, 11, 38, 39, 54, 76). Check this table first when
+authoring a new clue — it's the source vocabulary every `InquestPredicate` maps against,
+plus a few book terms that are still gaps (no engine predicate yet — see "Predicate
+ideas not yet in the engine" below). Full provenance and raw quotes per term live in the
+[Murdoku clue catalog](murdoku-clue-catalog.human.md) — this table is the condensed
+version for quick lookup while writing a clue.
+
+The engine predicate column is a clean map, keyword → predicate — either a real
+`InquestPredicate` variant (look up its eval semantics and rating by name, in the section
+above and the "Predicate reference" section near the top of this doc), or plain
+"not implemented". The rationale for each gap lives in the Meaning column instead of
+here, so this column stays scannable — one lookup per row.
+
+Rating column only filled when a keyword has **no** engine predicate (a gap, marked
+*(new)*) — mapped keywords leave it blank; look up their predicate's rating in
+["Predicate difficulty rating"](#predicate-difficulty-rating) above instead. This keeps
+each number from living in two places.
+
+| Keyword | Meaning | Engine predicate | Rating (gap only) |
+| --- | --- | --- | --- |
+| row | Character sits in this row — `exact-row` is banned outright, see "What a clue may not do" above | not implemented | — |
+| column (+ Nth, + "last") | Character sits in this column, maybe a fixed number — `exact-column` banned for the same reason | not implemented | — |
+| under (a) | Lower row than a, not necessarily same room | `direction-from` (`south`) | — |
+| above (a) *(inferred)* | Higher row than a, not necessarily same room | `direction-from` (`north`) | — |
+| left of (a) | Same row, strictly less column than a | `direction-from` (`west`) | — |
+| right of (a) | Same row, strictly greater column than a | `direction-from` (`east`) | — |
+| beside | Directly up/down/left/right AND same room | `beside` | — |
+| not beside (character) *(derived, engine)* | Negates "beside" — any placement not both adjacent and same-chamber. No own glossary card (book's "naast" covers both senses) | `not-beside` | — |
+| not beside a wall *(derived, case 4)* | Cell is fully interior to its room | `not-beside-wall` | — |
+| corner | Cell where two walls of the same room meet | `in-corner` | — |
+| one of the four corners *(derived, case 76)* | Disjunctive variant of "corner" — same predicate, already disjunctive by design | `in-corner` | — |
+| by a window | Cell touches a window (edge-only prop) — no window edge-adjacency concept exists yet, see [Board, rooms, props](board-rooms-props.human.md#asset-ideas-not-yet-built) | not implemented | 2 *(new)* |
+| alone | Nobody else in the room, not even the victim | `chamber-occupant-count` (`count: 0`) | — |
+| alone with (b) | Only these two people in the room | `same-chamber(a,b)` + `chamber-occupant-count(a,1)` combined | — |
+| not alone *(derived, case 76)* | Negates "alone" — check the predicate supports a negated form (count != 0) before using it | `chamber-occupant-count` negated | — |
+| alone on [prop area] *(derived, case 38)* | "Alone" localized to a prop-tagged area — `chamber-occupant-count` only scopes the whole chamber today, not a prop subset | not implemented | 2 *(new)* |
+| empty | Nobody in the room at all, not even the victim | `chamber-occupant-count` (`count: 0`, everyone including the victim) | — |
+| no empty room *(derived, case 39)* | Global, every room at once — already an author-time invariant, see [Board, rooms, props](board-rooms-props.human.md) "no empty chamber at the solution" — not a clue predicate itself | not a clue | `n/a` |
+| only person on [prop] | Nobody else sat on the same prop type — prop is unique to one cell by construction, doubling as uniqueness | `on-prop` | — |
+| exactly one person on [prop-kind] *(derived, case 76)* | Global unique quantifier, cast-wide, whole prop-kind | `seated-character-count` (`count: 1`) | — |
+| room/chamber | Any enclosed area | `exact-chamber` | — |
+| two people stood beside a table | Exactly two adjacent to the same table, victim may be one — `shares-prop-neighbor` only does "at least one other", not an exact count of two | not implemented | 3 *(new)* |
+| beside the same [prop] *(derived, case 39)* | Existential pair, second character unnamed | `shares-prop-neighbor` | — |
+| room with exactly N other suspects *(derived, case 54)* | Room occupant-count, excludes self | `chamber-occupant-count` | — |
+| no [category] beside [prop] *(derived, case 54)* | Global, nobody matching a category adjacent to a prop | `category-not-beside-prop` | — |
+| same diagonal as (a) (or (b)) *(derived, case 38)* | One row plus one column apart — only the single-reference form is implemented, OR of two references isn't supported today | `diagonal-from` | — |
+| N columns and M rows ... (a) *(derived, case 38, 76)* | Relative offset, exact vector distance — no exact-distance predicate exists, only direction via `direction-from` | not implemented | 3 *(new, hardest — capped at 3)* |
 
 ## Predicate ideas not yet in the engine
 
