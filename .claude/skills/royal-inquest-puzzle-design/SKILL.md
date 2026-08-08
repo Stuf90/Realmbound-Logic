@@ -8,7 +8,9 @@ description: Use whenever designing or authoring a new Royal Inquest case (a new
 The Royal Inquest is a spatial Murdoku-style placement puzzle (`src/features/royal-inquest/`). This
 skill is the entry point for designing a **new case** (new board/cast/clues) — not for gameplay
 mechanics changes, which follow the general [`realmbound-workflow`](../realmbound-workflow/SKILL.md)
-skill instead.
+skill instead. Targeting a specific difficulty tier, or authoring a batch across tiers? See
+[`royal-inquest-difficulty-design`](../royal-inquest-difficulty-design/SKILL.md) for the tier-specific
+knob — this skill covers everything else.
 
 ## Read in this order
 
