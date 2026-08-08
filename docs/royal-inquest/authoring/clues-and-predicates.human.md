@@ -115,6 +115,20 @@ fires there) — the shipped case uses `aldric-not-beside-edmund` exactly this w
 since "not adjacent" is trivially true whenever two characters don't even share a row or
 column, and can still be a meaningful clue combined with same/different-chamber facts.
 
+### `diagonal-from` / `not-diagonal-from`
+
+```ts
+{ type: 'diagonal-from'; firstCharacterId: CharacterId; secondCharacterId: CharacterId }
+{ type: 'not-diagonal-from'; firstCharacterId: CharacterId; secondCharacterId: CharacterId }
+```
+
+`'unknown'` unless both characters are placed. Otherwise: true when the two characters sit
+exactly one row **and** one column apart — a pure coordinate relationship, like
+`direction-from`, with **no** same-chamber requirement (unlike `beside`/`not-beside`).
+`not-diagonal-from` is the exact negation. This is the hardest predicate in the vocabulary
+(see "Predicate difficulty" below) — it requires reasoning about two axes at once, and
+readers can't fall back on chamber membership the way `beside` lets them.
+
 ### `chamber-occupant-count`
 
 ```ts
@@ -193,6 +207,23 @@ adjacent to that same cell. "Someone else was beside the same prop" without sayi
 prop; otherwise `'unknown'` until every other character is placed (a nearby match found
 early decides `true` right away, with no need to wait).
 
+## Predicate difficulty
+
+Every predicate type carries a fixed authoring-time difficulty weight, 1-3, in
+`predicateDifficulty.ts`:
+
+| Weight | Meaning | Predicates |
+| --- | --- | --- |
+| 1 | Trivial/foundational fact | `exact-row`, `exact-column`, `exact-chamber`, `same-chamber`, `different-chamber`, `on-prop` |
+| 2 | Moderate counting/positional reasoning | `direction-from`, `beside`, `not-beside`, `chamber-occupant-count`, `in-corner`, `seated-character-count`, `not-beside-wall` |
+| 3 | Hard multi-axis or existential reasoning | `category-not-beside-prop`, `shares-prop-neighbor`, `diagonal-from`, `not-diagonal-from` |
+
+Every `InquestDefinition` declares its own `difficulty: number` (also 1-3).
+`validateInquestDefinition` rejects any clue whose predicate weight exceeds the case's
+declared difficulty — so a case can't accidentally reach for a weight-3 predicate like
+`diagonal-from` while claiming to be an easy case. This is purely an authoring-time gate;
+there's no player-facing difficulty selector or display.
+
 ## What a clue may not do
 
 `validateInquestDefinition` rejects two shapes of clue outright, independent of the
@@ -258,10 +289,9 @@ Inquest already deliberately simplifies from Murdoku's full rule set (see the
 `exact-row`/`exact-column` ban above) — expanding the vocabulary is a design decision,
 not an automatic "the genre does it so we should too."
 
-1. **Diagonal** — "on the same diagonal as character X." Our solution model is a full
-   row/column permutation (see the `direction-from` entry above), so a diagonal
-   relation may never be satisfiable for the same reason `direction-from` never fires —
-   needs checking before adoption.
+1. ~~**Diagonal**~~ — implemented as `diagonal-from`/`not-diagonal-from` (see the
+   predicate reference above); unlike `direction-from`, it doesn't require sharing a row
+   or column, so it stays satisfiable against a full row/column permutation solution.
 2. **Relative offset** — "one column and two rows up-left of X." Stronger than
    `direction-from` (exact distance, not just direction) — likely has the same
    permutation-solution caveat.
@@ -310,11 +340,14 @@ generic "can now be placed" phrase since no clue matches a specific character.
 1. Decide which fact about the solution the clue should reveal.
 2. Pick the predicate variant that expresses it exactly, from the allowed set
    (`exact-chamber`, `on-prop`, `same-chamber`, `different-chamber`, `direction-from`,
-   `beside`, `not-beside`, `chamber-occupant-count`, `in-corner`, `seated-character-count`,
-   `not-beside-wall`, `category-not-beside-prop`, `shares-prop-neighbor`) — never
-   `exact-row`/`exact-column`, and never referencing the victim.
-3. Write `text` as in-world flavor that matches the predicate's meaning.
-4. Run `validateInquestDefinition` (or the test suite). Unlike before, you don't have to
+   `beside`, `not-beside`, `diagonal-from`, `not-diagonal-from`, `chamber-occupant-count`,
+   `in-corner`, `seated-character-count`, `not-beside-wall`, `category-not-beside-prop`,
+   `shares-prop-neighbor`) — never `exact-row`/`exact-column`, and never referencing the
+   victim.
+3. Check the predicate's difficulty weight (see "Predicate difficulty" above) against the
+   case's declared `difficulty` — `validateInquestDefinition` rejects the clue otherwise.
+4. Write `text` as in-world flavor that matches the predicate's meaning.
+5. Run `validateInquestDefinition` (or the test suite). Unlike before, you don't have to
    manually reason through whether the clue set pins down a unique placement — the
    bundled solver (`solver.ts`) backtracks the full clue set and tells you directly if
    it's under-constrained (no solution), ambiguous (more than one solution), or

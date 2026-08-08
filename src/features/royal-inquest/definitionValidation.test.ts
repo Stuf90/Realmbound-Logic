@@ -163,6 +163,38 @@ describe('Blackwood Keep definition', () => {
     );
   });
 
+  it('rejects a difficulty outside the 1-3 range', () => {
+    const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
+    malformed.difficulty = 0;
+
+    expect(validateInquestDefinition(malformed)).toContain(
+      'Difficulty must be an integer between 1 and 3.',
+    );
+  });
+
+  it('rejects a clue whose predicate exceeds the case\'s declared difficulty', () => {
+    const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
+    malformed.difficulty = 1;
+
+    expect(validateInquestDefinition(malformed)).toContain(
+      'Clue "aldric-not-beside-edmund" uses a difficulty-2 predicate ("not-beside"), which exceeds this case\'s declared difficulty of 1.',
+    );
+  });
+
+  it('accepts a diagonal-from clue as structurally valid', () => {
+    const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
+    malformed.difficulty = 3;
+    malformed.clues.push({
+      id: 'aldric-diagonal-beatrice',
+      text: 'Aldric was glimpsed diagonally across from Beatrice.',
+      predicate: { type: 'diagonal-from', firstCharacterId: 'aldric', secondCharacterId: 'beatrice' },
+    });
+
+    const issues = validateInquestDefinition(malformed);
+    expect(issues).not.toContain('Every clue must be structurally valid.');
+    expect(issues.some((issue) => issue.includes('diagonal-from'))).toBe(false);
+  });
+
   it('rejects a clue set that does not narrow to a unique solution', () => {
     const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
     malformed.clues = malformed.clues.filter((clue) => clue.id !== 'aldric-seated');

@@ -35,6 +35,10 @@ export type InquestPredicate =
     }
   | { type: 'beside'; firstCharacterId: CharacterId; secondCharacterId: CharacterId }
   | { type: 'not-beside'; firstCharacterId: CharacterId; secondCharacterId: CharacterId }
+  // Pure coordinate relationship, like `direction-from` — true when the two characters sit
+  // exactly one row AND one column apart, with no same-chamber requirement (unlike `beside`).
+  | { type: 'diagonal-from'; firstCharacterId: CharacterId; secondCharacterId: CharacterId }
+  | { type: 'not-diagonal-from'; firstCharacterId: CharacterId; secondCharacterId: CharacterId }
   | { type: 'on-prop'; characterId: CharacterId; propId: PropAssetId }
   // True when exactly `count` OTHER characters (besides `characterId`) share its chamber in the
   // completed solution. Subsumes "was alone" (count: 0); combine with `same-chamber` to say
@@ -69,6 +73,9 @@ export interface InquestDefinition {
   id: string;
   title: string;
   definitionVersion: number;
+  // 1-3 authoring-time rating: gates which predicate types this case's clues may use, see
+  // `predicateDifficulty.ts`.
+  difficulty: number;
   rows: number;
   columns: number;
   characters: InquestCharacter[];

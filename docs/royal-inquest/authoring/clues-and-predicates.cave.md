@@ -111,6 +111,19 @@ THERE) — SHIP CASE USE `aldric-not-beside-edmund` EXACT THIS WAY, SINCE "NOT A
 TRIVIAL TRUE WHENEVER TWO CHARACTER NOT EVEN SHARE ROW/COLUMN, STILL MEANINGFUL CLUE
 COMBINE WITH SAME/DIFFERENT-CHAMBER FACT.
 
+### `diagonal-from` / `not-diagonal-from`
+
+```ts
+{ type: 'diagonal-from'; firstCharacterId: CharacterId; secondCharacterId: CharacterId }
+{ type: 'not-diagonal-from'; firstCharacterId: CharacterId; secondCharacterId: CharacterId }
+```
+
+`'unknown'` UNLESS BOTH PLACE. ELSE: TRUE WHEN TWO CHARACTER SIT EXACT ONE ROW **+** ONE
+COLUMN APART — PURE COORDINATE RELATION, LIKE `direction-from`, **NO** SAME-CHAMBER
+REQUIRE (UNLIKE `beside`/`not-beside`). `not-diagonal-from` = EXACT NEGATE. HARDEST
+PREDICATE IN VOCAB (SEE "PREDICATE DIFFICULTY" BELOW) — NEED REASON TWO AXIS SAME TIME,
+NO FALL BACK ON CHAMBER MEMBER LIKE `beside` ALLOW.
+
 ### `chamber-occupant-count`
 
 ```ts
@@ -184,6 +197,22 @@ ELSE WAS BESIDE SAME PROP" WITHOUT SAY WHO — SECOND CHARACTER DELIBERATE NOT R
 `characterId` NOT EVEN NEAR PROP; ELSE `'unknown'` TILL EVERY OTHER CHARACTER PLACE (SOME
 NEARBY MATCH FOUND EARLY → DECIDE `true` RIGHT AWAY, NO WAIT).
 
+## PREDICATE DIFFICULTY
+
+EVERY PREDICATE TYPE CARRY FIX AUTHOR-TIME DIFFICULTY WEIGHT, 1-3, IN
+`predicateDifficulty.ts`:
+
+| WEIGHT | MEAN | PREDICATE |
+| --- | --- | --- |
+| 1 | TRIVIAL/FOUNDATION FACT | `exact-row`, `exact-column`, `exact-chamber`, `same-chamber`, `different-chamber`, `on-prop` |
+| 2 | MODERATE COUNT/POSITION REASON | `direction-from`, `beside`, `not-beside`, `chamber-occupant-count`, `in-corner`, `seated-character-count`, `not-beside-wall` |
+| 3 | HARD MULTI-AXIS OR EXISTENTIAL REASON | `category-not-beside-prop`, `shares-prop-neighbor`, `diagonal-from`, `not-diagonal-from` |
+
+EVERY `InquestDefinition` DECLARE OWN `difficulty: number` (ALSO 1-3).
+`validateInquestDefinition` REJECT ANY CLUE WHOSE PREDICATE WEIGHT EXCEED CASE DECLARE
+DIFFICULTY — SO CASE CAN'T GRAB WEIGHT-3 PREDICATE LIKE `diagonal-from` WHILE CLAIM EASY
+CASE. PURE AUTHOR-TIME GATE — NO PLAYER-FACE DIFFICULTY SELECT OR DISPLAY.
+
 ## WHAT CLUE MAY NOT DO
 
 `validateInquestDefinition` REJECT TWO SHAPE CLUE OUTRIGHT, INDEPENDENT FROM PREDICATE
@@ -245,9 +274,9 @@ FUTURE IDEA, NOT SPEC. NONE IMPLEMENT TODAY. DISCUSS + SPEC
 SIMPLIFY FROM MURDOKU FULL RULE SET ALREADY (SEE `exact-row`/`exact-column` BAN ABOVE) —
 EXPAND VOCAB = DESIGN DECISION, NOT AUTOMATIC "GENRE DO IT SO WE SHOULD."
 
-1. **DIAGONAL** — "SAME DIAGONAL AS CHARACTER X." OUR SOLUTION MODEL = FULL
-   ROW/COLUMN PERMUTATION (SEE `direction-from` ENTRY ABOVE) SO DIAGONAL RELATION MAY
-   NEVER FIRE SAME REASON `direction-from` NEVER FIRE — NEED CHECK BEFORE ADOPT.
+1. ~~**DIAGONAL**~~ — IMPLEMENT AS `diagonal-from`/`not-diagonal-from` (SEE PREDICATE
+   REFERENCE ABOVE); UNLIKE `direction-from`, NOT NEED SHARE ROW/COLUMN, SO STAY
+   SATISFY-ABLE AGAINST FULL ROW/COLUMN PERMUTATION SOLUTION.
 2. **RELATIVE OFFSET** — "ONE COLUMN + TWO ROW UP-LEFT OF X." STRONGER THAN
    `direction-from` (EXACT DISTANCE, NOT JUST DIRECTION) — LIKELY SAME PERMUTATION-
    SOLUTION CAVEAT.
@@ -293,11 +322,13 @@ SINCE NO CLUE MATCH A SPECIFIC CHARACTER.
 1. DECIDE WHICH FACT ABOUT SOLUTION CLUE SHOULD REVEAL.
 2. PICK PREDICATE VARIANT EXPRESS EXACT, FROM ALLOW SET (`exact-chamber`, `on-prop`,
    `same-chamber`, `different-chamber`, `direction-from`, `beside`, `not-beside`,
-   `chamber-occupant-count`, `in-corner`, `seated-character-count`, `not-beside-wall`,
-   `category-not-beside-prop`, `shares-prop-neighbor`) — NEVER `exact-row`/`exact-column`,
-   NEVER REF VICTIM.
-3. WRITE `text` AS IN-WORLD FLAVOR MATCH PREDICATE MEAN.
-4. RUN `validateInquestDefinition` (OR TEST SUITE). UNLIKE BEFORE, NOT NEED HAND-REASON
+   `diagonal-from`, `not-diagonal-from`, `chamber-occupant-count`, `in-corner`,
+   `seated-character-count`, `not-beside-wall`, `category-not-beside-prop`,
+   `shares-prop-neighbor`) — NEVER `exact-row`/`exact-column`, NEVER REF VICTIM.
+3. CHECK PREDICATE DIFFICULTY WEIGHT (SEE "PREDICATE DIFFICULTY" ABOVE) AGAINST CASE
+   DECLARE `difficulty` — `validateInquestDefinition` REJECT CLUE ELSE.
+4. WRITE `text` AS IN-WORLD FLAVOR MATCH PREDICATE MEAN.
+5. RUN `validateInquestDefinition` (OR TEST SUITE). UNLIKE BEFORE, NOT NEED HAND-REASON
    WHETHER CLUE SET PIN DOWN UNIQUE PLACEMENT — BUNDLE SOLVER (`solver.ts`) BACKTRACK
    FULL CLUE SET, TELL DIRECT IF UNDER-CONSTRAIN (NO SOLUTION), AMBIGUOUS (MORE THAN
    ONE SOLUTION), OR INCONSISTENT WITH AUTHOR `solution`. ALSO VERIFY VICTIM CELL FORCE
