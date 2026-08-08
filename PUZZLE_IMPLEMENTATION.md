@@ -38,7 +38,8 @@ saved locally. The MVP supports:
 - immutable player state;
 - Undo and Redo;
 - Reset with confirmation;
-- Check Progress without exposing unrelated solution cells;
+- Check Progress without exposing unrelated solution cells (Siege Lines only — the Royal
+  Inquest surfaces contradictions through hints instead);
 - one-step contextual hints that explain a deduction before applying it;
 - automatic completion detection;
 - save and resume after reload;
@@ -334,24 +335,26 @@ chamber. Coordinates increase from top to bottom and left to right. A north/sout
 predicate requires the same column and a lower/higher row respectively; an east/west
 predicate requires the same row and a higher/lower column respectively.
 
-### 5.5 Check Progress and hints
+### 5.5 Hints
 
-Check Progress evaluates in deterministic order:
+The Royal Inquest has no standalone Check Progress action — contradictions surface only
+through Apply Hint. Hints return existing contradictions first, evaluated in this
+deterministic order:
 
 1. illegal or blocked placements;
 2. duplicate occupied rows;
 3. duplicate occupied columns;
 4. definitely violated clues;
-5. a character with no remaining legal cell;
-6. an invalid completed envoy/traitor chamber.
+5. a character with no remaining legal cell.
 
-Return an explanation and affected character, cell, clue, or chamber without revealing
-an unrelated correct destination.
+Return an explanation and affected character, cell, or clue without revealing an
+unrelated correct destination. (The envoy/traitor chamber is never invalid at
+completion — `solveInquestDefinition`/`checkVictimElimination` prove this at authoring
+time, per §5.1, so it needs no live runtime check.)
 
-Hints return existing contradictions first. Otherwise, select one deterministic
-deduction from the bundled case, explain its rule or clue, and optionally offer one
-placement or cross. Applying a hint is one normal history entry and increments hint
-usage once.
+Otherwise, select one deterministic deduction from the bundled case, explain its rule or
+clue, and optionally offer one placement or cross. Applying a hint is one normal history
+entry and increments hint usage once.
 
 ### 5.6 Completion, presentation, and acceptance
 
@@ -576,7 +579,7 @@ motion. The production build must pass without TypeScript or console errors.
 - Complete Blackwood Keep from briefing through resolution.
 
 **Exit condition:** Royal Inquest can be completed, undone, redone, reset, saved,
-restored, checked, hinted, and replayed with keyboard and pointer input.
+restored, hinted, and replayed with keyboard and pointer input.
 
 ### Phase 1: Siege Lines
 
@@ -607,7 +610,7 @@ Implement **The Treason at Blackwood Keep** as an end-to-end vertical slice:
 2. Implement placement, exclusion, predicates, contradiction, hint, and completion logic.
 3. Add board and portrait interactions.
 4. Connect Undo, Redo, Reset, timer, and persistence.
-5. Complete Check Progress, hints, completion, and resolution.
+5. Complete hints, completion, and resolution.
 6. Verify keyboard, touch, reload, reduced motion, and non-color cues.
 
 This validates the React architecture and shared session services before the second

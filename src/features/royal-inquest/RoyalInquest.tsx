@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createHistory, commitHistory, redoHistory, undoHistory } from '../../shared/history';
 import { loadPuzzle, savePuzzle } from '../../shared/persistence';
 import { positionKey } from '../../shared/geometry';
@@ -25,11 +25,18 @@ export function RoyalInquest({ definition, onBack }: { definition: InquestDefini
   const [characterIndex, setCharacterIndex] = useState(0);
   const [conflictCellKey, setConflictCellKey] = useState<string | null>(null);
   const [dossierOpen, setDossierOpen] = useState(true);
+  const boardRef = useRef<HTMLDivElement | null>(null);
   const state = history.present;
   const complete = isInquestComplete(definition, state);
 
   useEffect(() => { if (complete) return; const id = window.setInterval(() => setSeconds((value) => value + 1), 1000); return () => clearInterval(id); }, [complete]);
-  useEffect(() => savePuzzle({ schemaVersion: 1, puzzleId: definition.id, state, elapsedSeconds: seconds, completed: complete, hintsUsed: hints, checksUsed: 0 }), [state, seconds, complete, hints]);
+  function persist() { savePuzzle({ schemaVersion: 1, puzzleId: definition.id, state, elapsedSeconds: seconds, completed: complete, hintsUsed: hints, checksUsed: 0 }); }
+  useEffect(persist, [state, seconds, complete, hints]);
+  useEffect(() => {
+    function handleVisibilityChange() { if (document.visibilityState === 'hidden') persist(); }
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [state, seconds, complete, hints]);
 
   function dispatch(action: Parameters<typeof reduceInquest>[1], meaningful = true) {
     const next = reduceInquest(state, action, definition);
@@ -60,6 +67,10 @@ export function RoyalInquest({ definition, onBack }: { definition: InquestDefini
     }
   }
   function reset() { if (window.confirm('Erase the current inquest and begin again?')) { setHistory(createHistory({ ...createInitialInquestState(), selectedCharacterId: definition.characters[0]?.id ?? null })); setCharacterIndex(0); setSeconds(0); setHints(0); setStatus('The inquest has been reset.'); } }
+  function focusCell(row: number, column: number) {
+    const target = boardRef.current?.querySelector<HTMLButtonElement>(`[data-row="${row}"][data-column="${column}"]`);
+    if (target && !target.disabled) target.focus();
+  }
   function goToCharacter(index: number) {
     const nextIndex = (index + definition.characters.length) % definition.characters.length;
     setCharacterIndex(nextIndex);
@@ -91,11 +102,12 @@ export function RoyalInquest({ definition, onBack }: { definition: InquestDefini
 
   return <main className="app-shell commission-page">
     <header className="app-topbar puzzle-topbar"><button className="text-button" onClick={onBack} aria-label="Back to Royal Inquest levels">← Levels</button><div><p className="eyebrow">Royal Inquest</p><h1>{definition.title}</h1></div><p className="metrics">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</p></header>
-    {complete && <section className="resolution" aria-labelledby="resolution-title"><p className="seal">Solved</p><h2 id="resolution-title">The traitor is unmasked</h2><p>{traitor.name} alone shared the {victimChamberName} with {victim.name}. The chamber arrangement proves the treason.</p></section>}
+    {complete && <section className="resolution" aria-labelledby="resolution-title"><p className="seal">Solved</p><h2 id="resolution-title">The traitor is unmasked</h2><p>{traitor.name} alone shared the {victimChamberName} with {victim.name}. The chamber arrangement proves the treason.</p><p className="resolution-stats">Solved in {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')} using {hints} hint{hints === 1 ? '' : 's'}.</p><button className="text-button" onClick={onBack}>Return to the Ledger</button></section>}
     <div className="puzzle-layout app-workspace">
       <section className="board-panel" aria-label="Castle floor plan">
         <div className="board-scroll">
         <div
+          ref={boardRef}
           className="inquest-board"
           role="grid"
           aria-label={`${definition.title}, ${definition.rows} by ${definition.columns}`}
@@ -125,7 +137,7 @@ export function RoyalInquest({ definition, onBack }: { definition: InquestDefini
             const wallClasses = `${walls.right ? ' wall-right' : ''}${walls.bottom ? ' wall-bottom' : ''}`;
             const isConflict = conflictCellKey === positionKey(cell.position);
             const conflictClass = isConflict ? ' conflict' : '';
-            return <button key={positionKey(cell.position)} role="gridcell" className={`cell ${cellState}${wallClasses}${conflictClass}`} style={{ backgroundImage: `var(--cell-tint), url(${tileUrl})` }} disabled={cell.blocked} aria-label={label} onClick={() => activate(cell.position.row, cell.position.column)} onKeyDown={(event) => { if (event.key.toLowerCase() === 'x') { event.preventDefault(); if (selected) dispatch({ type: 'toggle-cross', characterId: selected, position: cell.position }); } }}>{propUrl && <img className="cell-prop" src={propUrl} alt="" />}{character && <img className="cell-avatar" src={getCharacterAvatarUrl(character)} alt="" />}{!character && !propUrl && draftCharacters.length === 0 && cell.blocked && '◆'}{!character && draftCharacters.length > 0 && <span className="cell-draft" aria-hidden="true">{draftCharacters.map(({ portraitLabel }) => portraitLabel[0]).join('')}</span>}{!character && draftCharacters.length === 0 && (cellState === 'manual-cross' || cellState === 'auto-cross') && <span className={`cell-mark ${cellState}`} aria-hidden="true">{cellState === 'manual-cross' ? '×' : '·'}</span>}{chamberAnchorKeys.has(positionKey(cell.position)) && <span className="chamber-label" aria-hidden="true">{chamberName}</span>}<span className="sr-only">{label}</span></button>;
+            return <button key={positionKey(cell.position)} role="gridcell" className={`cell ${cellState}${wallClasses}${conflictClass}`} style={{ backgroundImage: `var(--cell-tint), url(${tileUrl})` }} disabled={cell.blocked} aria-label={label} data-row={cell.position.row} data-column={cell.position.column} onClick={() => activate(cell.position.row, cell.position.column)} onKeyDown={(event) => { if (event.key.toLowerCase() === 'x') { event.preventDefault(); if (selected) dispatch({ type: 'toggle-cross', characterId: selected, position: cell.position }); return; } const delta = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[event.key]; if (delta) { event.preventDefault(); focusCell(cell.position.row + delta[0], cell.position.column + delta[1]); } }}>{propUrl && <img className="cell-prop" src={propUrl} alt="" />}{character && <img className="cell-avatar" src={getCharacterAvatarUrl(character)} alt="" />}{!character && !propUrl && draftCharacters.length === 0 && cell.blocked && '◆'}{!character && draftCharacters.length > 0 && <span className="cell-draft" aria-hidden="true">{draftCharacters.map(({ portraitLabel }) => portraitLabel[0]).join('')}</span>}{!character && draftCharacters.length === 0 && (cellState === 'manual-cross' || cellState === 'auto-cross') && <span className={`cell-mark ${cellState}`} aria-hidden="true">{cellState === 'manual-cross' ? '×' : '·'}</span>}{chamberAnchorKeys.has(positionKey(cell.position)) && <span className="chamber-label" aria-hidden="true">{chamberName}</span>}<span className="sr-only">{label}</span></button>;
           })}
         </div></div>
         <div className="toolbar" role="toolbar" aria-label="Puzzle actions">

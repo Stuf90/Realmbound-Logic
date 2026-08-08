@@ -30,7 +30,7 @@ type PredicateResult = true | false | 'unknown';
 ```
 
 `'unknown'` means at least one referenced character isn't placed yet — the predicate is
-withheld from Check Progress/Hint until it can be decided one way or the other.
+withheld from Hint until it can be decided one way or the other.
 
 ## Predicate reference
 
