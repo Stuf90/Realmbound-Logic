@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blackwoodKeep } from '../../src/features/royal-inquest/definition';
+import { blackwoodKeep } from '../../src/features/royal-inquest/levels/archive/blackwoodKeep';
 import { buildSolveReport } from './report';
 
 describe('buildSolveReport', () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { propsByEnvironment, royalInquestAssets } from '../../assets/royal-inquest/manifest';
-import { blackwoodKeep } from './definition';
+import { blackwoodKeep } from './levels/archive/blackwoodKeep';
 import { getCellPropUrl, getCellTileUrl, getCellWalls, getCharacterAvatarUrl } from './visuals';
 
 function cellAt(row: number, column: number) {
