@@ -7,3 +7,6 @@ coverage/
 !.claude/skills/
 *.local
 *.tsbuildinfo
+/playwright-report/
+/test-results/
+/blob-report/
