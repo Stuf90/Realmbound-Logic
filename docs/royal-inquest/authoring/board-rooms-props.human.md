@@ -161,9 +161,13 @@ mechanic above, and a prop's mere presence doesn't feed a clue predicate on its 
 that requires an explicit `on-prop` clue (see
 [clues and predicates](clues-and-predicates.human.md)).
 
-The [Murdoku book scan](../reference/murdoku-book.human.md) confirms our seat/decorative
-split matches the source material exactly ("can be occupied" vs "cannot be occupied").
-It also flags two asset ideas we haven't built: a **door** (blocking decorative prop,
-see case 76) and the **window edge-only rule** (a window only sits on the board's outer
-edge, see case 4) — neither needs a new predicate, just a new asset and, for the
-window, a new placement constraint if we ever adopt it.
+## Asset ideas not yet built
+
+Two prop ideas not yet implemented — captured here as future ideas, not a spec:
+
+1. **Door** — a blocking decorative prop, distinct from the existing
+   `dungeon-cage`/`bookshelf`/etc. Just a new asset, not a new predicate — slots
+   straight into the existing `decorative` prop model above.
+2. **Window edge-only rule** — a window prop that only sits on the board's outer edge,
+   spanning two grid cells. Needs a new asset **and** a new placement constraint
+   (edge-adjacency check) — the engine has no edge-adjacency concept today.

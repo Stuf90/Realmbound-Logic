@@ -20,24 +20,13 @@ categories one-for-one — see
 for the exact mapping. Where the two diverge, it is a deliberate simplification (documented
 inline), not an oversight.
 
-**Coverage check against a physical Murdoku book.** A scan of a real Murdoku puzzle book
-(rule pages, clue glossary, and worked cases) lives at
-[`reference/murdoku-book.human.md`](reference/murdoku-book.human.md). The core mechanics
-above — row/column uniqueness, chambers, `beside`/`not-beside`, the seat-vs-decorative
-prop split, and the victim/traitor "alone with" rule — match that source exactly. Two
-gaps to know about:
+Our predicate vocabulary isn't feature-complete relative to Murdoku's full clue set —
+the gap list and backlog of ideas live in
+[clues and predicates](authoring/clues-and-predicates.human.md#predicate-ideas-not-yet-in-the-engine).
 
-- **Our one intentional divergence** (`exact-row`/`exact-column` banned from clues even
-  though Murdoku's own guide permits them) is already covered above and in
-  [clues and predicates](authoring/clues-and-predicates.human.md#what-a-clue-may-not-do).
-- **Unintentional gaps** — the book's clue glossary and advanced cases use several clue
-  shapes we don't model at all yet: corner, "not beside a wall", "by a window", "no
-  empty room", diagonal, relative offset, occupancy count, attribute/category (e.g.
-  gender), shared-prop pairing without naming both characters, disjunctive corner sets,
-  and global uniqueness quantifiers. These are real Murdoku vocabulary we simply haven't
-  built, not a deliberate design choice — see the backlog list in
-  [`reference/murdoku-book.human.md`](reference/murdoku-book.human.md#predicate-ideas-not-yet-in-the-engine)
-  before assuming our predicate set is feature-complete relative to the genre.
+Reference images (rule pages and worked puzzle examples from a physical Murdoku book)
+live at [`reference/murdoku-book/`](reference/murdoku-book.human.md) — cross-check
+against the source when authoring a new case or extending the predicate vocabulary.
 
 ## Board
 
