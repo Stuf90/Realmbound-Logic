@@ -14,6 +14,11 @@ function chamberAt(definition: InquestDefinition, position: GridPosition): strin
     ?.chamberId;
 }
 
+function areaKeyAt(definition: InquestDefinition, position: GridPosition): string | undefined {
+  const cell = definition.cells.find((candidate) => positionKey(candidate.position) === positionKey(position));
+  return cell ? `${cell.chamberId}:${cell.areaId ?? ''}` : undefined;
+}
+
 function isAdjacent(first: GridPosition, second: GridPosition): boolean {
   return Math.abs(first.row - second.row) + Math.abs(first.column - second.column) === 1;
 }
@@ -179,6 +184,57 @@ export function evaluatePredicate(
       const allOthersPlaced = otherIds.every((id) => placements[id]);
       return allOthersPlaced ? false : 'unknown';
     }
+    case 'offset-from': {
+      const subject = placements[predicate.subjectCharacterId];
+      const reference = placements[predicate.referenceCharacterId];
+      if (!subject || !reference) return 'unknown';
+      return (
+        subject.row - reference.row === predicate.rowOffset &&
+        subject.column - reference.column === predicate.columnOffset
+      );
+    }
+    case 'prop-neighbor-count': {
+      const propCell = definition.cells.find((cell) => cell.propId === predicate.propId);
+      if (!propCell) return false;
+      const allIds = definition.characters.map(({ id }) => id);
+      let nearby = 0;
+      let placedTotal = 0;
+      for (const id of allIds) {
+        const position = placements[id];
+        if (!position) continue;
+        placedTotal += 1;
+        if (isAdjacent(position, propCell.position)) nearby += 1;
+      }
+      if (nearby > predicate.count) return false;
+      if (placedTotal < allIds.length) return 'unknown';
+      return nearby === predicate.count;
+    }
+    case 'area-occupant-count': {
+      const position = placements[predicate.characterId];
+      if (!position) return 'unknown';
+      const ownArea = areaKeyAt(definition, position);
+      const otherIds = definition.characters
+        .map(({ id }) => id)
+        .filter((id) => id !== predicate.characterId);
+      let placedOthersInArea = 0;
+      let placedOthersTotal = 0;
+      for (const id of otherIds) {
+        const otherPosition = placements[id];
+        if (!otherPosition) continue;
+        placedOthersTotal += 1;
+        if (areaKeyAt(definition, otherPosition) === ownArea) placedOthersInArea += 1;
+      }
+      if (placedOthersInArea > predicate.count) return false;
+      if (placedOthersTotal < otherIds.length) return 'unknown';
+      return placedOthersInArea === predicate.count;
+    }
+    case 'by-window': {
+      const position = placements[predicate.characterId];
+      if (!position) return 'unknown';
+      const propCell = definition.cells.find((cell) => cell.propId === predicate.propId);
+      if (!propCell) return false;
+      return isAdjacent(position, propCell.position);
+    }
     default: {
       const exhaustive: never = predicate;
       return exhaustive;
@@ -196,6 +252,8 @@ export function getPredicateCharacterIds(predicate: InquestPredicate): Character
     case 'in-corner':
     case 'not-beside-wall':
     case 'shares-prop-neighbor':
+    case 'area-occupant-count':
+    case 'by-window':
       return [predicate.characterId];
     case 'same-chamber':
     case 'different-chamber':
@@ -205,9 +263,11 @@ export function getPredicateCharacterIds(predicate: InquestPredicate): Character
     case 'not-diagonal-from':
       return [predicate.firstCharacterId, predicate.secondCharacterId];
     case 'direction-from':
+    case 'offset-from':
       return [predicate.subjectCharacterId, predicate.referenceCharacterId];
     case 'seated-character-count':
     case 'category-not-beside-prop':
+    case 'prop-neighbor-count':
       return [];
     default: {
       const exhaustive: never = predicate;

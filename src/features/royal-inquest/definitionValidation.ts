@@ -48,6 +48,10 @@ const PREDICATE_TYPES = new Set([
   'shares-prop-neighbor',
   'diagonal-from',
   'not-diagonal-from',
+  'offset-from',
+  'prop-neighbor-count',
+  'area-occupant-count',
+  'by-window',
 ]);
 
 function isClue(value: unknown): value is InquestClue {
@@ -160,6 +164,15 @@ export function validateInquestDefinition(definition: unknown): string[] {
       !propsByEnvironment[environment as keyof typeof propsByEnvironment]?.includes(cell.propId as PropAssetId)
     ) {
       issues.push(`Prop "${cell.propId}" is not permitted in a "${environment}" chamber.`);
+    }
+    if (
+      cell.propId === 'window' &&
+      cell.position.row !== 0 &&
+      cell.position.row !== rows - 1 &&
+      cell.position.column !== 0 &&
+      cell.position.column !== columns - 1
+    ) {
+      issues.push('Prop "window" must sit on the board\'s outer edge.');
     }
   }
 

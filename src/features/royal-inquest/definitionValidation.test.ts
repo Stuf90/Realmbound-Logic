@@ -229,4 +229,74 @@ describe('Blackwood Keep definition', () => {
       'Chamber "crypt" has no occupant in the solution; every chamber must house at least one character.',
     );
   });
+
+  it('accepts a clue using a newly added predicate type (area-occupant-count)', () => {
+    const augmented = structuredClone(blackwoodKeep) as InquestDefinition;
+    // No cell sets areaId, so this behaves exactly like the already-true chamber-occupant-count(aldric, 1).
+    augmented.clues.push({
+      id: 'aldric-area-alone-with-envoy',
+      text: 'Aldric shared his corner of the keep with exactly one other soul.',
+      predicate: { type: 'area-occupant-count', characterId: 'aldric', count: 1 },
+    });
+
+    expect(validateInquestDefinition(augmented)).toEqual([]);
+  });
+
+  it('accepts a clue using a newly added predicate type (by-window), with the window on the board edge', () => {
+    const augmented = structuredClone(blackwoodKeep) as InquestDefinition;
+    const cornerCell = augmented.cells.find(
+      (cell) => cell.position.row === 0 && cell.position.column === 0,
+    )!;
+    cornerCell.propId = 'window';
+    cornerCell.blocked = true;
+    augmented.clues.push({
+      id: 'aldric-by-window',
+      text: 'Aldric stood in front of a window.',
+      predicate: { type: 'by-window', characterId: 'aldric', propId: 'window' },
+    });
+
+    // Window at (0,0) is on the board's outer edge; aldric's solution cell (1,0) is adjacent to it.
+    expect(validateInquestDefinition(augmented)).toEqual([]);
+  });
+
+  it("rejects a window prop not placed on the board's outer edge", () => {
+    const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
+    const interiorCell = malformed.cells.find(
+      (cell) => cell.position.row === 2 && cell.position.column === 2,
+    )!;
+    interiorCell.propId = 'window';
+    interiorCell.blocked = true;
+
+    expect(validateInquestDefinition(malformed)).toContain(
+      'Prop "window" must sit on the board\'s outer edge.',
+    );
+  });
+
+  it('accepts clues using the two newly added rating-3 predicate types (offset-from, prop-neighbor-count)', () => {
+    const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
+    malformed.difficulty = 3;
+    malformed.clues.push(
+      {
+        id: 'edmund-offset-from-beatrice',
+        text: 'Edmund was one row and three columns from Beatrice.',
+        predicate: {
+          type: 'offset-from',
+          subjectCharacterId: 'edmund',
+          referenceCharacterId: 'beatrice',
+          rowOffset: 1,
+          columnOffset: 3,
+        },
+      },
+      {
+        id: 'nobody-beside-the-chair',
+        text: 'Nobody else stood beside the chair.',
+        predicate: { type: 'prop-neighbor-count', propId: 'formal-chair', count: 0 },
+      },
+    );
+
+    const issues = validateInquestDefinition(malformed);
+    expect(issues).not.toContain('Every clue must be structurally valid.');
+    expect(issues.some((issue) => issue.includes('offset-from'))).toBe(false);
+    expect(issues.some((issue) => issue.includes('prop-neighbor-count'))).toBe(false);
+  });
 });

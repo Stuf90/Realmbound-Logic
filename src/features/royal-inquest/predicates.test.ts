@@ -427,6 +427,106 @@ describe('evaluatePredicate', () => {
       'unknown',
     );
   });
+
+  it('evaluates offset-from as an exact row+column vector distance', () => {
+    const predicate = {
+      type: 'offset-from' as const,
+      subjectCharacterId: 'edmund',
+      referenceCharacterId: 'beatrice',
+      rowOffset: 1,
+      columnOffset: 3,
+    };
+
+    // edmund (3,4), beatrice (2,1): exactly one row and three columns apart.
+    expect(
+      evaluatePredicate(
+        predicate,
+        { edmund: { row: 3, column: 4 }, beatrice: { row: 2, column: 1 } },
+        blackwoodKeep,
+      ),
+    ).toBe(true);
+    expect(
+      evaluatePredicate(
+        { ...predicate, columnOffset: 2 },
+        { edmund: { row: 3, column: 4 }, beatrice: { row: 2, column: 1 } },
+        blackwoodKeep,
+      ),
+    ).toBe(false);
+    expect(
+      evaluatePredicate(predicate, { edmund: { row: 3, column: 4 } }, blackwoodKeep),
+    ).toBe('unknown');
+  });
+
+  it('evaluates prop-neighbor-count across the whole cast, naming no one', () => {
+    const predicate = { type: 'prop-neighbor-count' as const, propId: 'formal-chair' as const, count: 0 };
+
+    // formal-chair sits at (1,0); none of the authored solution's other placements are
+    // orthogonally adjacent to it (aldric sits ON it, which doesn't count as adjacent).
+    expect(evaluatePredicate(predicate, blackwoodKeep.solution, blackwoodKeep)).toBe(true);
+    expect(
+      evaluatePredicate({ ...predicate, count: 1 }, blackwoodKeep.solution, blackwoodKeep),
+    ).toBe(false);
+    expect(
+      evaluatePredicate(
+        { ...predicate, count: 1 },
+        { aldric: blackwoodKeep.solution.aldric! },
+        blackwoodKeep,
+      ),
+    ).toBe('unknown');
+    // beatrice at (0,0) is adjacent to the chair; already exceeds a target of 0, decisive early.
+    expect(
+      evaluatePredicate(predicate, { beatrice: { row: 0, column: 0 } }, blackwoodKeep),
+    ).toBe(false);
+  });
+
+  it('evaluates area-occupant-count as chamber-occupant-count when no cell sets areaId', () => {
+    const predicate = { type: 'area-occupant-count' as const, characterId: 'aldric', count: 1 };
+
+    expect(evaluatePredicate(predicate, blackwoodKeep.solution, blackwoodKeep)).toBe(true);
+    expect(
+      evaluatePredicate({ ...predicate, count: 0 }, blackwoodKeep.solution, blackwoodKeep),
+    ).toBe(false);
+    expect(
+      evaluatePredicate(predicate, { aldric: blackwoodKeep.solution.aldric! }, blackwoodKeep),
+    ).toBe('unknown');
+  });
+
+  it('scopes area-occupant-count to a tagged sub-area smaller than the whole chamber', () => {
+    const definition = {
+      ...blackwoodKeep,
+      cells: blackwoodKeep.cells.map((cell) =>
+        cell.position.row === 0 && cell.position.column === 3 ? { ...cell, areaId: 'stand' } : cell,
+      ),
+    };
+    const predicate = { type: 'area-occupant-count' as const, characterId: 'envoy', count: 0 };
+
+    // envoy (0,3) is the only solar cell tagged "stand"; aldric also sits in the solar chamber
+    // (1,0, untagged) but that no longer counts once scoped to the area instead of the chamber.
+    expect(evaluatePredicate(predicate, blackwoodKeep.solution, definition)).toBe(true);
+    expect(
+      evaluatePredicate({ ...predicate, count: 1 }, blackwoodKeep.solution, definition),
+    ).toBe(false);
+    expect(
+      evaluatePredicate(predicate, { envoy: blackwoodKeep.solution.envoy! }, definition),
+    ).toBe('unknown');
+  });
+
+  it('evaluates by-window against orthogonal adjacency to the propId cell', () => {
+    const definition = {
+      ...blackwoodKeep,
+      cells: blackwoodKeep.cells.map((cell) =>
+        cell.position.row === 0 && cell.position.column === 0
+          ? { ...cell, propId: 'window' as const }
+          : cell,
+      ),
+    };
+    const predicate = { type: 'by-window' as const, characterId: 'aldric', propId: 'window' as const };
+
+    // window sits at (0,0); aldric at (1,0) is orthogonally adjacent.
+    expect(evaluatePredicate(predicate, { aldric: { row: 1, column: 0 } }, definition)).toBe(true);
+    expect(evaluatePredicate(predicate, { aldric: { row: 5, column: 5 } }, definition)).toBe(false);
+    expect(evaluatePredicate(predicate, {}, definition)).toBe('unknown');
+  });
 });
 
 describe('getPredicateCharacterIds', () => {
@@ -497,5 +597,29 @@ describe('getPredicateCharacterIds', () => {
         propId: 'formal-chair',
       }),
     ).toEqual([]);
+    expect(
+      getPredicateCharacterIds({ type: 'prop-neighbor-count', propId: 'formal-chair', count: 1 }),
+    ).toEqual([]);
+  });
+
+  it('returns both character ids for offset-from', () => {
+    expect(
+      getPredicateCharacterIds({
+        type: 'offset-from',
+        subjectCharacterId: 'edmund',
+        referenceCharacterId: 'beatrice',
+        rowOffset: 1,
+        columnOffset: 3,
+      }),
+    ).toEqual(['edmund', 'beatrice']);
+  });
+
+  it('returns the single character id for area-occupant-count and by-window', () => {
+    expect(
+      getPredicateCharacterIds({ type: 'area-occupant-count', characterId: 'aldric', count: 1 }),
+    ).toEqual(['aldric']);
+    expect(
+      getPredicateCharacterIds({ type: 'by-window', characterId: 'aldric', propId: 'window' }),
+    ).toEqual(['aldric']);
   });
 });

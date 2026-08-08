@@ -168,11 +168,19 @@ that requires an explicit `on-prop` clue (see
 
 ## Asset ideas not yet built
 
-Two prop ideas not yet implemented — captured here as future ideas, not a spec:
-
 1. **Door** — a blocking decorative prop, distinct from the existing
    `dungeon-cage`/`bookshelf`/etc. Just a new asset, not a new predicate — slots
    straight into the existing `decorative` prop model above.
-2. **Window edge-only rule** — a window prop that only sits on the board's outer edge,
-   spanning two grid cells. Needs a new asset **and** a new placement constraint
-   (edge-adjacency check) — the engine has no edge-adjacency concept today.
+2. **Window edge-only rule** — mostly done. `window` is now a real `PropAssetId`
+   (decorative, permitted in every chamber environment), `definitionValidation.ts`
+   requires any cell bearing it to sit on the board's outer edge, and the `by-window`
+   predicate (see [clues and predicates](clues-and-predicates.human.md)) checks
+   orthogonal adjacency to it. Two things remain open, both non-goals of
+   `docs/superpowers/specs/2026-08-08-royal-inquest-predicate-expansion-design.md`:
+   - **Real art.** `royalInquestAssets.props.window` currently reuses the
+     `stone-planter` image as a placeholder (`// TODO(art)` in `manifest.ts`) — there's
+     no source window sprite yet, and the asset pipeline (`tools/royal_inquest_assets/`)
+     only processes existing source images rather than generating new art.
+   - **Two-cell span.** The book's window visually spans two grid cells; the MVP here is
+     a normal single-cell decorative prop that's additionally edge-validated. Modeling a
+     true multi-cell prop is a separate, larger change to the placement/rendering model.

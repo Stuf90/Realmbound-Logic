@@ -102,12 +102,13 @@ export type PropAssetId =
   | 'bookshelf-right'
   | 'dungeon-cage'
   | 'candle-stand'
-  | 'offering-chest';
+  | 'offering-chest'
+  | 'window';
 
 export type TileEnvironment = 'room' | 'garden' | 'church' | 'kitchen' | 'hallway' | 'dungeon' | 'royalRoom';
 
 export const propsByEnvironment: Record<TileEnvironment, readonly PropAssetId[]> = {
-  royalRoom: ['throne', 'formal-chair'],
+  royalRoom: ['throne', 'formal-chair', 'window'],
   room: [
     'bookshelf',
     'bookshelf-left',
@@ -120,10 +121,11 @@ export const propsByEnvironment: Record<TileEnvironment, readonly PropAssetId[]>
     'dining-table',
     'dining-table-left',
     'dining-table-right',
+    'window',
   ],
-  church: ['church-pew', 'church-pew-left', 'church-pew-right', 'candle-stand', 'offering-chest'],
-  dungeon: ['dungeon-cage', 'barrel-cluster'],
-  garden: ['stone-planter', 'wooden-planter'],
+  church: ['church-pew', 'church-pew-left', 'church-pew-right', 'candle-stand', 'offering-chest', 'window'],
+  dungeon: ['dungeon-cage', 'barrel-cluster', 'window'],
+  garden: ['stone-planter', 'wooden-planter', 'window'],
   kitchen: [
     'kitchen-worktable',
     'kitchen-worktable-left',
@@ -132,8 +134,9 @@ export const propsByEnvironment: Record<TileEnvironment, readonly PropAssetId[]>
     'dining-table',
     'dining-table-left',
     'dining-table-right',
+    'window',
   ],
-  hallway: [],
+  hallway: ['window'],
 };
 
 // A "seat" prop sits on an unblocked, legal cell — a character may be placed there, with the prop
@@ -163,6 +166,7 @@ export const propKindByAsset: Record<PropAssetId, 'seat' | 'decorative'> = {
   'dungeon-cage': 'decorative',
   'candle-stand': 'decorative',
   'offering-chest': 'decorative',
+  window: 'decorative',
 };
 
 export const royalInquestAssets = {
@@ -211,6 +215,9 @@ export const royalInquestAssets = {
     'dungeon-cage': dungeonCage,
     'candle-stand': candleStand,
     'offering-chest': offeringChest,
+    // TODO(art): placeholder texture — swap for a real window sprite once sourced; see
+    // docs/royal-inquest/authoring/board-rooms-props.human.md#asset-idea-not-yet-built.
+    window: stonePlanter,
   },
   tiles: {
     room: [roomTimber1, roomTimber2, roomTimber3],
