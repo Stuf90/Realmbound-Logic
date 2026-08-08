@@ -24,7 +24,8 @@ function isCharacter(value: unknown): value is InquestCharacter {
     typeof value.id === 'string' &&
     typeof value.name === 'string' &&
     typeof value.portraitLabel === 'string' &&
-    (value.isVictim === undefined || typeof value.isVictim === 'boolean')
+    (value.isVictim === undefined || typeof value.isVictim === 'boolean') &&
+    (value.category === undefined || typeof value.category === 'string')
   );
 }
 
@@ -38,6 +39,12 @@ const PREDICATE_TYPES = new Set([
   'beside',
   'not-beside',
   'on-prop',
+  'chamber-occupant-count',
+  'in-corner',
+  'seated-character-count',
+  'not-beside-wall',
+  'category-not-beside-prop',
+  'shares-prop-neighbor',
 ]);
 
 function isClue(value: unknown): value is InquestClue {
@@ -188,6 +195,17 @@ export function validateInquestDefinition(definition: unknown): string[] {
   if (new Set(solutionRows).size !== solutionRows.length) issues.push('Solution rows must be unique.');
   if (new Set(solutionColumns).size !== solutionColumns.length) {
     issues.push('Solution columns must be unique.');
+  }
+
+  const solutionChamberIds = new Set(
+    validSolutionEntries
+      .map(([, position]) => cells.find((cell) => positionKey(cell.position) === positionKey(position))?.chamberId)
+      .filter((chamberId): chamberId is string => chamberId !== undefined),
+  );
+  for (const chamberId of chamberIds) {
+    if (!solutionChamberIds.has(chamberId)) {
+      issues.push(`Chamber "${chamberId}" has no occupant in the solution; every chamber must house at least one character.`);
+    }
   }
 
   for (const [characterId, position] of validSolutionEntries) {

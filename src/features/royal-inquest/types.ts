@@ -9,6 +9,9 @@ export interface InquestCharacter {
   portraitLabel: string;
   avatarId: AvatarAssetId;
   isVictim?: boolean;
+  // Optional attribute group (e.g. a gender) a category-scoped predicate can reference without
+  // naming the character directly — see `category-not-beside-prop`.
+  category?: string;
 }
 
 export interface InquestCell {
@@ -32,7 +35,29 @@ export type InquestPredicate =
     }
   | { type: 'beside'; firstCharacterId: CharacterId; secondCharacterId: CharacterId }
   | { type: 'not-beside'; firstCharacterId: CharacterId; secondCharacterId: CharacterId }
-  | { type: 'on-prop'; characterId: CharacterId; propId: PropAssetId };
+  | { type: 'on-prop'; characterId: CharacterId; propId: PropAssetId }
+  // True when exactly `count` OTHER characters (besides `characterId`) share its chamber in the
+  // completed solution. Subsumes "was alone" (count: 0); combine with `same-chamber` to say
+  // "alone with a specific named character" (same-chamber(a, b) + chamber-occupant-count(a, 1)).
+  | { type: 'chamber-occupant-count'; characterId: CharacterId; count: number }
+  // True when `characterId`'s cell is one of the board's four corners (row 0 or rows-1, AND
+  // column 0 or columns-1) — a disjunctive "one of a set of cells" clue, not a single exact cell.
+  | { type: 'in-corner'; characterId: CharacterId }
+  // Global (cast-wide) quantifier: true when exactly `count` characters, across the WHOLE cast,
+  // occupy a seat-kind prop cell in the completed solution. Unlike every other predicate here,
+  // this names no specific character — see `getPredicateCharacterIds`.
+  | { type: 'seated-character-count'; count: number }
+  // True when NONE of `characterId`'s four orthogonal neighbor cells are off-board or in a
+  // different chamber — i.e. the cell is fully interior to its chamber. Relates to the chamber
+  // boundary itself, not another character.
+  | { type: 'not-beside-wall'; characterId: CharacterId }
+  // Global/category quantifier: true when no character whose `category` matches is orthogonally
+  // adjacent to the (single) cell bearing `propId`. Names no specific character.
+  | { type: 'category-not-beside-prop'; category: string; propId: PropAssetId }
+  // Existential pairing: true when `characterId` is orthogonally adjacent to the (single) cell
+  // bearing `propId` AND at least one OTHER (unnamed) character is also adjacent to that same
+  // cell — "someone else was beside the same prop" without saying who.
+  | { type: 'shares-prop-neighbor'; characterId: CharacterId; propId: PropAssetId };
 
 export interface InquestClue {
   id: string;
