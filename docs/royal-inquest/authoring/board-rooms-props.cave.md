@@ -27,6 +27,11 @@ AUTHOR RULES, ENFORCE BY `validateInquestDefinition`:
 2. **MIN SIZE: 5 CELLS.** GROUP CELLS BY `chamberId`; EACH GROUP MUST HAVE >= 5 CELLS —
    ELSE `Chamber "<id>" must contain at least 5 tiles.` CHAMBERS MAY DIFFER SIZE ABOVE
    FLOOR — NO UNIFORM REQUIRE.
+3. **NO EMPTY CHAMBER AT SOLUTION.** EVERY `chamberId` USE BY ANY CELL MUST HOUSE >= 1
+   CHARACTER IN AUTHOR `solution` — ELSE `Chamber "<id>" has no occupant in the solution;
+   every chamber must house at least one character.` AUTHOR-TIME INVARIANT, NOT CLUE
+   PREDICATE — CATCH BY `validateInquestDefinition` DIRECT ON `solution`, NO SOLVER RUN
+   NEED.
 
 `chamberEnvironments` VALUES = ONE OF `TileEnvironment` UNION:
 `'room' | 'garden' | 'church' | 'kitchen' | 'hallway' | 'dungeon' | 'royalRoom'`.

@@ -111,6 +111,79 @@ THERE) — SHIP CASE USE `aldric-not-beside-edmund` EXACT THIS WAY, SINCE "NOT A
 TRIVIAL TRUE WHENEVER TWO CHARACTER NOT EVEN SHARE ROW/COLUMN, STILL MEANINGFUL CLUE
 COMBINE WITH SAME/DIFFERENT-CHAMBER FACT.
 
+### `chamber-occupant-count`
+
+```ts
+{ type: 'chamber-occupant-count'; characterId: CharacterId; count: number }
+```
+
+TRUE WHEN EXACT `count` OTHER CHARACTER (NOT `characterId` ITSELF) SHARE ITS CHAMBER AT
+COMPLETE SOLUTION. NEED KNOW **EVERY** OTHER CHARACTER PLACE TO CONFIRM `true` — IF
+ALREADY-PLACE OTHERS IN CHAMBER EXCEED `count`, DECIDE `false` EARLY (COUNT ONLY GROW AS
+MORE PLACE); ELSE STAY `'unknown'` TILL EVERY OTHER CHARACTER PLACED.
+
+SUBSUME "WAS ALONE" (`count: 0`). SAY "ALONE WITH SPECIFIC NAME CHARACTER B" BY COMBINE
+TWO CLUE: `same-chamber(a, b)` + `chamber-occupant-count(a, 1)`.
+
+### `in-corner`
+
+```ts
+{ type: 'in-corner'; characterId: CharacterId }
+```
+
+TRUE WHEN `characterId` CELL = ONE FOUR BOARD CORNER (ROW `0` OR `rows - 1`, **AND**
+COLUMN `0` OR `columns - 1`). DISJUNCTIVE — MATCH **ANY** OF SET FOUR CELL, NOT ONE
+EXACT CELL LIKE `exact-chamber`.
+
+### `seated-character-count`
+
+```ts
+{ type: 'seated-character-count'; count: number }
+```
+
+GLOBAL (CAST-WIDE) QUANTIFIER — NAME NO SPECIFIC CHARACTER (SEE "WHICH CHARACTERS
+PREDICATE TOUCH" BELOW, RETURN EMPTY ARRAY). TRUE WHEN EXACT `count` CHARACTER, ACROSS
+**WHOLE CAST**, SIT ON SEAT-KIND PROP CELL (`propKindByAsset[propId] === 'seat'`) AT
+COMPLETE SOLUTION. SAME EARLY-`false`/STAY-`'unknown'`-TILL-EVERYONE-PLACE LOGIC AS
+`chamber-occupant-count`, JUST COUNT ACROSS EVERY CHARACTER INSTEAD ONE CHAMBER.
+
+### `not-beside-wall`
+
+```ts
+{ type: 'not-beside-wall'; characterId: CharacterId }
+```
+
+TRUE WHEN NONE `characterId` FOUR ORTHOGONAL NEIGHBOR CELL ARE OFF-BOARD OR DIFFERENT
+CHAMBER — I.E. CELL FULLY INTERIOR ITS CHAMBER, NO WALL TOUCH ANY SIDE (MATCH
+`getCellWalls` WALL-DRAW RULE, SEE [BOARD, ROOMS, PROPS](board-rooms-props.cave.md)).
+RELATE CHAMBER BOUNDARY ITSELF, NOT ANOTHER CHARACTER — ONLY PREDICATE HERE THAT DO
+SO. DECISIVE SOON `characterId` PLACE (NO `'unknown'` WAIT ON OTHER CHARACTER).
+
+### `category-not-beside-prop`
+
+```ts
+{ type: 'category-not-beside-prop'; category: string; propId: PropAssetId }
+```
+
+GLOBAL/CATEGORY QUANTIFIER — NAME NO SPECIFIC CHARACTER. TRUE WHEN NO CHARACTER WHOSE
+`InquestCharacter.category` MATCH `category` SIT ORTHOGONAL ADJACENT (MANHATTAN DIST 1,
+NO SAME-CHAMBER REQUIRE UNLIKE `beside`) TO (SINGLE) CELL BEAR `propId`. `category` FIELD
+OPTIONAL ON `InquestCharacter` — CASE THAT NEVER SET IT SIMPLY HAVE NO CHARACTER MATCH
+ANY `category` STRING, PREDICATE VACUOUS TRUE.
+
+### `shares-prop-neighbor`
+
+```ts
+{ type: 'shares-prop-neighbor'; characterId: CharacterId; propId: PropAssetId }
+```
+
+EXISTENTIAL PAIR — TRUE WHEN `characterId` ORTHOGONAL ADJACENT (SINGLE) CELL BEAR
+`propId` **AND** AT LEAST ONE OTHER (UNNAME) CHARACTER ALSO ADJACENT SAME CELL. "SOMEONE
+ELSE WAS BESIDE SAME PROP" WITHOUT SAY WHO — SECOND CHARACTER DELIBERATE NOT RETURN BY
+`getPredicateCharacterIds` (ONLY `characterId` NAME). `false` IMMEDIATE IF
+`characterId` NOT EVEN NEAR PROP; ELSE `'unknown'` TILL EVERY OTHER CHARACTER PLACE (SOME
+NEARBY MATCH FOUND EARLY → DECIDE `true` RIGHT AWAY, NO WAIT).
+
 ## WHAT CLUE MAY NOT DO
 
 `validateInquestDefinition` REJECT TWO SHAPE CLUE OUTRIGHT, INDEPENDENT FROM PREDICATE
@@ -210,12 +283,19 @@ EXHAUSTIVE ALL VARIANT. THIS WHAT BOTH VICTIM-NAME CHECK ABOVE + HINT TEXT USE F
 "CLUE RELEVANT THIS CHARACTER" — USE IT (DON'T HAND-ROLL CHECK AGAINST ONLY
 `characterId`, MISS EVERY PAIRWISE PREDICATE).
 
+`seated-character-count` + `category-not-beside-prop` RETURN **EMPTY ARRAY** — NAME NO
+CHARACTER AT ALL (GLOBAL/CATEGORY SCOPE). VICTIM-NAME CHECK NATURAL PASS THESE (EMPTY
+ARRAY NEVER `includes(victimId)`); HINT TEXT FALL BACK GENERIC "CAN NOW BE PLACE" PHRASE
+SINCE NO CLUE MATCH A SPECIFIC CHARACTER.
+
 ## WRITE CLUE
 
 1. DECIDE WHICH FACT ABOUT SOLUTION CLUE SHOULD REVEAL.
 2. PICK PREDICATE VARIANT EXPRESS EXACT, FROM ALLOW SET (`exact-chamber`, `on-prop`,
-   `same-chamber`, `different-chamber`, `direction-from`, `beside`, `not-beside`) —
-   NEVER `exact-row`/`exact-column`, NEVER REF VICTIM.
+   `same-chamber`, `different-chamber`, `direction-from`, `beside`, `not-beside`,
+   `chamber-occupant-count`, `in-corner`, `seated-character-count`, `not-beside-wall`,
+   `category-not-beside-prop`, `shares-prop-neighbor`) — NEVER `exact-row`/`exact-column`,
+   NEVER REF VICTIM.
 3. WRITE `text` AS IN-WORLD FLAVOR MATCH PREDICATE MEAN.
 4. RUN `validateInquestDefinition` (OR TEST SUITE). UNLIKE BEFORE, NOT NEED HAND-REASON
    WHETHER CLUE SET PIN DOWN UNIQUE PLACEMENT — BUNDLE SOLVER (`solver.ts`) BACKTRACK

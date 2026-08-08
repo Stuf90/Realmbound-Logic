@@ -115,6 +115,84 @@ fires there) — the shipped case uses `aldric-not-beside-edmund` exactly this w
 since "not adjacent" is trivially true whenever two characters don't even share a row or
 column, and can still be a meaningful clue combined with same/different-chamber facts.
 
+### `chamber-occupant-count`
+
+```ts
+{ type: 'chamber-occupant-count'; characterId: CharacterId; count: number }
+```
+
+True when exactly `count` other characters (not `characterId` itself) share its chamber
+in the completed solution. This needs to know **every** other character's placement to
+confirm `true` — if the already-placed others in the chamber already exceed `count`, it
+decides `false` early (the count can only grow as more are placed); otherwise it stays
+`'unknown'` until every other character is placed.
+
+This subsumes "was alone" (`count: 0`). To say "alone with a specific named character
+B," combine two clues: `same-chamber(a, b)` plus `chamber-occupant-count(a, 1)`.
+
+### `in-corner`
+
+```ts
+{ type: 'in-corner'; characterId: CharacterId }
+```
+
+True when `characterId`'s cell is one of the board's four corners (row `0` or
+`rows - 1`, **and** column `0` or `columns - 1`). Disjunctive — matches **any** of a set
+of four cells, not one exact cell like `exact-chamber`.
+
+### `seated-character-count`
+
+```ts
+{ type: 'seated-character-count'; count: number }
+```
+
+A global (cast-wide) quantifier — names no specific character (see "Which characters a
+predicate touches" below; it returns an empty array). True when exactly `count`
+characters, across the **whole cast**, are seated on a seat-kind prop cell
+(`propKindByAsset[propId] === 'seat'`) in the completed solution. Same early-`false`/
+stay-`'unknown'`-until-everyone's-placed logic as `chamber-occupant-count`, just counted
+across every character instead of one chamber.
+
+### `not-beside-wall`
+
+```ts
+{ type: 'not-beside-wall'; characterId: CharacterId }
+```
+
+True when none of `characterId`'s four orthogonal neighbor cells are off-board or in a
+different chamber — i.e. the cell is fully interior to its chamber, with no wall
+touching any side (matches the `getCellWalls` wall-drawing rule; see
+[board, rooms, and props](board-rooms-props.human.md)). This is the only predicate that
+relates to the chamber boundary itself rather than another character. It's decisive as
+soon as `characterId` is placed — no waiting on any other character.
+
+### `category-not-beside-prop`
+
+```ts
+{ type: 'category-not-beside-prop'; category: string; propId: PropAssetId }
+```
+
+A global/category quantifier — names no specific character. True when no character
+whose `InquestCharacter.category` matches `category` is orthogonally adjacent
+(Manhattan distance 1 — no same-chamber requirement, unlike `beside`) to the (single)
+cell bearing `propId`. `category` is an optional field on `InquestCharacter`; a case
+that never sets it simply has no character matching any `category` string, so the
+predicate is vacuously true.
+
+### `shares-prop-neighbor`
+
+```ts
+{ type: 'shares-prop-neighbor'; characterId: CharacterId; propId: PropAssetId }
+```
+
+An existential pairing — true when `characterId` is orthogonally adjacent to the
+(single) cell bearing `propId` **and** at least one other (unnamed) character is also
+adjacent to that same cell. "Someone else was beside the same prop" without saying who
+— the second character is deliberately not returned by `getPredicateCharacterIds` (only
+`characterId` is named). It's `false` immediately if `characterId` isn't even near the
+prop; otherwise `'unknown'` until every other character is placed (a nearby match found
+early decides `true` right away, with no need to wait).
+
 ## What a clue may not do
 
 `validateInquestDefinition` rejects two shapes of clue outright, independent of the
@@ -222,13 +300,19 @@ exhaustively over all variants. This is what both the victim-naming check above 
 text use to find "the clue relevant to this character" — use it (don't hand-roll a check
 against only `characterId`, which misses every pairwise predicate).
 
+`seated-character-count` and `category-not-beside-prop` return an **empty array** — they
+name no character at all (global/category scope). The victim-naming check naturally
+passes these (an empty array never `includes(victimId)`); hint text falls back to a
+generic "can now be placed" phrase since no clue matches a specific character.
+
 ## Writing a clue
 
 1. Decide which fact about the solution the clue should reveal.
 2. Pick the predicate variant that expresses it exactly, from the allowed set
    (`exact-chamber`, `on-prop`, `same-chamber`, `different-chamber`, `direction-from`,
-   `beside`, `not-beside`) — never `exact-row`/`exact-column`, and never referencing the
-   victim.
+   `beside`, `not-beside`, `chamber-occupant-count`, `in-corner`, `seated-character-count`,
+   `not-beside-wall`, `category-not-beside-prop`, `shares-prop-neighbor`) — never
+   `exact-row`/`exact-column`, and never referencing the victim.
 3. Write `text` as in-world flavor that matches the predicate's meaning.
 4. Run `validateInquestDefinition` (or the test suite). Unlike before, you don't have to
    manually reason through whether the clue set pins down a unique placement — the

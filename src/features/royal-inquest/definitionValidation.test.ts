@@ -170,4 +170,26 @@ describe('Blackwood Keep definition', () => {
     const issues = validateInquestDefinition(malformed);
     expect(issues).toContain('The clue set does not narrow the puzzle to a unique solution.');
   });
+
+  it('accepts a clue using a newly added predicate type (in-corner)', () => {
+    const augmented = structuredClone(blackwoodKeep) as InquestDefinition;
+    // Daria's authored solution cell, (5, 5), is genuinely the board's bottom-right corner.
+    augmented.clues.push({
+      id: 'daria-corner',
+      text: 'Daria was found in the far corner of the keep.',
+      predicate: { type: 'in-corner', characterId: 'daria' },
+    });
+
+    expect(validateInquestDefinition(augmented)).toEqual([]);
+  });
+
+  it('rejects a solution that leaves a chamber empty', () => {
+    const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
+    // Move Daria out of the Crypt entirely, leaving no solution occupant there.
+    malformed.solution.daria = { row: 0, column: 4 };
+
+    expect(validateInquestDefinition(malformed)).toContain(
+      'Chamber "crypt" has no occupant in the solution; every chamber must house at least one character.',
+    );
+  });
 });
