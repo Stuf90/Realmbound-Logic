@@ -27,6 +27,9 @@ describe('evaluatePredicate', () => {
         blackwoodKeep,
       ),
     ).toBe(false);
+    expect(
+      evaluatePredicate({ type: 'exact-row', characterId: 'envoy', row: 0 }, {}, blackwoodKeep),
+    ).toBe('unknown');
   });
 
   it('requires beside characters to be orthogonally adjacent in one chamber', () => {
@@ -50,6 +53,9 @@ describe('evaluatePredicate', () => {
         blackwoodKeep,
       ),
     ).toBe(false);
+    expect(
+      evaluatePredicate(predicate, { envoy: { row: 0, column: 0 } }, blackwoodKeep),
+    ).toBe('unknown');
   });
 
   it('evaluates chamber relationships', () => {
@@ -74,6 +80,27 @@ describe('evaluatePredicate', () => {
         blackwoodKeep,
       ),
     ).toBe(true);
+    expect(
+      evaluatePredicate(
+        { type: 'same-chamber', firstCharacterId: 'envoy', secondCharacterId: 'beatrice' },
+        placements,
+        blackwoodKeep,
+      ),
+    ).toBe(false);
+    expect(
+      evaluatePredicate(
+        { type: 'different-chamber', firstCharacterId: 'envoy', secondCharacterId: 'aldric' },
+        placements,
+        blackwoodKeep,
+      ),
+    ).toBe(false);
+    expect(
+      evaluatePredicate(
+        { type: 'different-chamber', firstCharacterId: 'envoy', secondCharacterId: 'daria' },
+        { envoy: placements.envoy },
+        blackwoodKeep,
+      ),
+    ).toBe('unknown');
   });
 
   it('evaluates exact-chamber placement', () => {
