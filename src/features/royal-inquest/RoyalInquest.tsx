@@ -104,7 +104,7 @@ export function RoyalInquest({ definition, onBack }: { definition: InquestDefini
 
   return <main className="app-shell commission-page">
     <header className="app-topbar puzzle-topbar"><button className="text-button" onClick={onBack} aria-label="Back to Royal Inquest levels">← Levels</button><div><p className="eyebrow">Royal Inquest</p><h1>{definition.title}</h1></div><p className="metrics">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</p></header>
-    {complete && <section className="resolution" aria-labelledby="resolution-title"><p className="seal">Solved</p><h2 id="resolution-title">The traitor is unmasked</h2><p>{traitor.name} alone shared the {victimChamberName} with {victim.name}. The chamber arrangement proves the treason.</p><p className="resolution-stats">Solved in {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')} using {hints} hint{hints === 1 ? '' : 's'}.</p><button className="text-button" onClick={onBack}>Return to the Ledger</button></section>}
+    {complete && <section className="resolution" aria-labelledby="resolution-title"><div className="resolution-card"><p className="seal">Solved</p><h2 id="resolution-title">The traitor is unmasked</h2><p>{traitor.name} alone shared the {victimChamberName} with {victim.name}. The chamber arrangement proves the treason.</p><p className="resolution-stats">Solved in {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')} using {hints} hint{hints === 1 ? '' : 's'}.</p><button className="text-button" onClick={onBack}>Return to the Ledger</button></div></section>}
     <div className="puzzle-layout app-workspace">
       <section className="board-panel" aria-label="Castle floor plan">
         <div className="board-scroll">
