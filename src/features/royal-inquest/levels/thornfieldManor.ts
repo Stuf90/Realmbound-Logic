@@ -88,6 +88,7 @@ export const thornfieldManor: InquestDefinition = {
   id: 'thornfield-manor',
   title: 'The Vanishing at Thornfield Manor',
   definitionVersion: 1,
+  difficulty: 2,
   rows: 6,
   columns: 6,
   characters: [

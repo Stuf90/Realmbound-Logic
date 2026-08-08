@@ -1,6 +1,7 @@
 import { positionKey, type GridPosition } from '../../shared/geometry';
 import { propKindByAsset, propsByEnvironment, type PropAssetId } from '../../assets/royal-inquest/manifest';
 import { getPredicateCharacterIds } from './predicates';
+import { predicateDifficulty } from './predicateDifficulty';
 import { solveInquestDefinition, checkVictimElimination } from './solver';
 import type { InquestCell, InquestCharacter, InquestClue, InquestDefinition } from './types';
 
@@ -45,6 +46,8 @@ const PREDICATE_TYPES = new Set([
   'not-beside-wall',
   'category-not-beside-prop',
   'shares-prop-neighbor',
+  'diagonal-from',
+  'not-diagonal-from',
 ]);
 
 function isClue(value: unknown): value is InquestClue {
@@ -86,6 +89,10 @@ export function validateInquestDefinition(definition: unknown): string[] {
   const rows = rawRows;
   const columns = rawColumns;
   if (definition.definitionVersion !== 1) issues.push('Definition version must be 1.');
+  const difficulty = definition.difficulty;
+  if (typeof difficulty !== 'number' || !Number.isInteger(difficulty) || difficulty < 1 || difficulty > 3) {
+    issues.push('Difficulty must be an integer between 1 and 3.');
+  }
   if (!Array.isArray(definition.characters) || characters.length !== definition.characters.length) {
     issues.push('Every character must be structurally valid.');
   }
@@ -164,6 +171,11 @@ export function validateInquestDefinition(definition: unknown): string[] {
     if (clue.predicate.type === 'exact-row' || clue.predicate.type === 'exact-column') {
       issues.push(
         `Clue "${clue.id}" may not use exact-row/exact-column; use exact-chamber, direction-from, beside, not-beside, same-chamber, or different-chamber instead.`,
+      );
+    }
+    if (typeof difficulty === 'number' && predicateDifficulty[clue.predicate.type] > difficulty) {
+      issues.push(
+        `Clue "${clue.id}" uses a difficulty-${predicateDifficulty[clue.predicate.type]} predicate ("${clue.predicate.type}"), which exceeds this case's declared difficulty of ${difficulty}.`,
       );
     }
   }

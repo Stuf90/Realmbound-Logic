@@ -15,6 +15,7 @@ function makeSyntheticDefinition(overrides: Partial<InquestDefinition> = {}): In
     id: 'synthetic',
     title: 'Synthetic',
     definitionVersion: 1,
+    difficulty: 3,
     rows: 2,
     columns: 2,
     characters: [

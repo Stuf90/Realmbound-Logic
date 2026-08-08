@@ -208,6 +208,69 @@ describe('evaluatePredicate', () => {
     ).toBe('unknown');
   });
 
+  it('evaluates diagonal-from as a pure coordinate check, ignoring chamber', () => {
+    const predicate = {
+      type: 'diagonal-from' as const,
+      firstCharacterId: 'aldric',
+      secondCharacterId: 'beatrice',
+    };
+
+    // aldric (1,0, solar) and beatrice (2,1, guardroom): one row and one column apart, across
+    // a chamber boundary — true here despite the different chambers, unlike `beside`.
+    expect(
+      evaluatePredicate(
+        predicate,
+        { aldric: { row: 1, column: 0 }, beatrice: { row: 2, column: 1 } },
+        blackwoodKeep,
+      ),
+    ).toBe(true);
+    // Orthogonally adjacent (same row, one column apart) is not diagonal.
+    expect(
+      evaluatePredicate(
+        predicate,
+        { aldric: { row: 1, column: 0 }, beatrice: { row: 1, column: 2 } },
+        blackwoodKeep,
+      ),
+    ).toBe(false);
+    // More than one row/column apart is not diagonal.
+    expect(
+      evaluatePredicate(
+        predicate,
+        { aldric: { row: 1, column: 0 }, beatrice: { row: 3, column: 2 } },
+        blackwoodKeep,
+      ),
+    ).toBe(false);
+    expect(
+      evaluatePredicate(predicate, { aldric: { row: 1, column: 0 } }, blackwoodKeep),
+    ).toBe('unknown');
+  });
+
+  it('evaluates not-diagonal-from as the exact negation of diagonal-from', () => {
+    const predicate = {
+      type: 'not-diagonal-from' as const,
+      firstCharacterId: 'aldric',
+      secondCharacterId: 'beatrice',
+    };
+
+    expect(
+      evaluatePredicate(
+        predicate,
+        { aldric: { row: 1, column: 0 }, beatrice: { row: 2, column: 1 } },
+        blackwoodKeep,
+      ),
+    ).toBe(false);
+    expect(
+      evaluatePredicate(
+        predicate,
+        { aldric: { row: 1, column: 0 }, beatrice: { row: 1, column: 2 } },
+        blackwoodKeep,
+      ),
+    ).toBe(true);
+    expect(
+      evaluatePredicate(predicate, { aldric: { row: 1, column: 0 } }, blackwoodKeep),
+    ).toBe('unknown');
+  });
+
   it('evaluates on-prop against the cell bearing that propId', () => {
     const predicate = { type: 'on-prop' as const, characterId: 'aldric', propId: 'formal-chair' as const };
 
@@ -365,6 +428,20 @@ describe('getPredicateCharacterIds', () => {
         direction: 'north',
       }),
     ).toEqual(['beatrice', 'daria']);
+    expect(
+      getPredicateCharacterIds({
+        type: 'diagonal-from',
+        firstCharacterId: 'aldric',
+        secondCharacterId: 'beatrice',
+      }),
+    ).toEqual(['aldric', 'beatrice']);
+    expect(
+      getPredicateCharacterIds({
+        type: 'not-diagonal-from',
+        firstCharacterId: 'aldric',
+        secondCharacterId: 'beatrice',
+      }),
+    ).toEqual(['aldric', 'beatrice']);
   });
 
   it('returns the single character id for chamber-occupant-count, in-corner, not-beside-wall, and shares-prop-neighbor', () => {

@@ -89,6 +89,7 @@ export const ravensholtAbbey: InquestDefinition = {
   id: 'ravensholt-abbey',
   title: 'The Reckoning at Ravensholt Abbey',
   definitionVersion: 1,
+  difficulty: 2,
   rows: 6,
   columns: 6,
   characters: [

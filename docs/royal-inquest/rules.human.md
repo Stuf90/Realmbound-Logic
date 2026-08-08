@@ -89,6 +89,12 @@ A clue can be in one of three states while the player is still placing character
 Only definite violations are ever reported before the puzzle is complete — the player is
 never told a clue is wrong when it's merely still unknown.
 
+Every case also declares a 1-3 `difficulty` rating, which gates which predicate types its
+clues may use (harder predicates like `diagonal-from` require a higher rating) — see
+[predicate difficulty](authoring/clues-and-predicates.human.md#predicate-difficulty) for
+the full table. This is an authoring-time-only concept; there is no player-facing
+difficulty selector.
+
 ## Victim and traitor
 
 The traitor is not an independent placement fact — it falls out of everyone else's

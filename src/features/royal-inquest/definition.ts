@@ -87,6 +87,7 @@ export const blackwoodKeep: InquestDefinition = {
   id: 'blackwood-keep',
   title: 'The Treason at Blackwood Keep',
   definitionVersion: 1,
+  difficulty: 2,
   rows: 6,
   columns: 6,
   characters: [

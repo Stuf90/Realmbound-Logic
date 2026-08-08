@@ -53,7 +53,7 @@ The following are explicitly deferred:
 
 - accounts, cloud synchronization, or backend services;
 - procedural generation or puzzle-authoring tools;
-- campaign progression, daily puzzles, and multiple difficulty levels;
+- campaign progression and daily puzzles;
 - more cases or maps than the two bundled commissions;
 - multiplayer, leaderboards, monetization, and analytics;
 - external artwork or audio dependencies;

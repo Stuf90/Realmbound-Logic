@@ -18,6 +18,10 @@ function isAdjacent(first: GridPosition, second: GridPosition): boolean {
   return Math.abs(first.row - second.row) + Math.abs(first.column - second.column) === 1;
 }
 
+function isDiagonal(first: GridPosition, second: GridPosition): boolean {
+  return Math.abs(first.row - second.row) === 1 && Math.abs(first.column - second.column) === 1;
+}
+
 export function evaluatePredicate(
   predicate: InquestPredicate,
   placements: InquestState['placements'],
@@ -68,6 +72,14 @@ export function evaluatePredicate(
       const adjacentSameChamber =
         distance === 1 && chamberAt(definition, first) === chamberAt(definition, second);
       return predicate.type === 'beside' ? adjacentSameChamber : !adjacentSameChamber;
+    }
+    case 'diagonal-from':
+    case 'not-diagonal-from': {
+      const first = placements[predicate.firstCharacterId];
+      const second = placements[predicate.secondCharacterId];
+      if (!first || !second) return 'unknown';
+      const diagonal = isDiagonal(first, second);
+      return predicate.type === 'diagonal-from' ? diagonal : !diagonal;
     }
     case 'on-prop': {
       const position = placements[predicate.characterId];
@@ -189,6 +201,8 @@ export function getPredicateCharacterIds(predicate: InquestPredicate): Character
     case 'different-chamber':
     case 'beside':
     case 'not-beside':
+    case 'diagonal-from':
+    case 'not-diagonal-from':
       return [predicate.firstCharacterId, predicate.secondCharacterId];
     case 'direction-from':
       return [predicate.subjectCharacterId, predicate.referenceCharacterId];
