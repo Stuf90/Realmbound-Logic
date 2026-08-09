@@ -129,15 +129,6 @@ export const marrowfenChapel: InquestDefinition = {
       text: 'The Almoner was seen in the Almonry Kitchen.',
       predicate: { type: 'exact-chamber', characterId: 'almoner', chamberId: 'almonry' },
     },
-    {
-      id: 'sexton-not-beside-curate',
-      text: 'The Sexton was never seen beside the Curate.',
-      predicate: {
-        type: 'not-beside',
-        firstCharacterId: 'sexton',
-        secondCharacterId: 'curate',
-      },
-    },
   ],
   traitorId: 'sexton',
   solution,

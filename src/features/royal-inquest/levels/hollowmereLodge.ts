@@ -129,15 +129,6 @@ export const hollowmereLodge: InquestDefinition = {
       text: 'The Scholar was seen in the Trophy Cellar.',
       predicate: { type: 'exact-chamber', characterId: 'scholar', chamberId: 'trophy-cellar' },
     },
-    {
-      id: 'lodge-keeper-not-beside-cook',
-      text: 'The Lodge-Keeper was never seen beside the Cook.',
-      predicate: {
-        type: 'not-beside',
-        firstCharacterId: 'lodge-keeper',
-        secondCharacterId: 'cook',
-      },
-    },
   ],
   traitorId: 'lodge-keeper',
   solution,

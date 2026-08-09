@@ -129,15 +129,6 @@ export const ashwellManor: InquestDefinition = {
       text: 'The Chaplain was seen in the Family Chapel.',
       predicate: { type: 'exact-chamber', characterId: 'chaplain', chamberId: 'chapel' },
     },
-    {
-      id: 'butler-not-beside-botanist',
-      text: 'The Butler was never seen beside the Botanist.',
-      predicate: {
-        type: 'not-beside',
-        firstCharacterId: 'butler',
-        secondCharacterId: 'botanist',
-      },
-    },
   ],
   traitorId: 'butler',
   solution,

@@ -129,15 +129,6 @@ export const thistledownMarket: InquestDefinition = {
       text: 'The Shrine Keeper was seen at the Shrine Corner.',
       predicate: { type: 'exact-chamber', characterId: 'shrine-keeper', chamberId: 'shrine-corner' },
     },
-    {
-      id: 'stallmaster-not-beside-florist',
-      text: 'The Stallmaster was never seen beside the Florist.',
-      predicate: {
-        type: 'not-beside',
-        firstCharacterId: 'stallmaster',
-        secondCharacterId: 'florist',
-      },
-    },
   ],
   traitorId: 'stallmaster',
   solution,
