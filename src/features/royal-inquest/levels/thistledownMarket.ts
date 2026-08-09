@@ -2,28 +2,29 @@ import type { GridPosition } from '../../../shared/geometry';
 import type { PropAssetId } from '../../../assets/royal-inquest/manifest';
 import type { CharacterId, InquestCell, InquestDefinition } from '../types';
 
-// Same chamber shape as the archived template cases (see ../levels/archive/): one full-width top
-// chamber hosting the victim + traitor, then four irregular chambers below sized so the
-// exact-chamber clues plus the one-per-row/one-per-column rule force every non-victim
-// character's cell uniquely — verified by `solveInquestDefinition` in levels.test.ts.
-// `2:2`/`2:3` alternate decorative assets so they don't stamp the same one twice in a row.
+// 180-degree rotation of the Marrowfen Chapel template (see ../levels/archive/ and
+// marrowfenChapel.ts): the victim + traitor chamber runs as a full-width BOTTOM row instead of a
+// top row, with four irregular chambers above it. A 180-degree rotation of a proven layout
+// preserves the one-per-row/one-per-column solvability guarantee exactly (row/column distinctness
+// survives any rotation/reflection) — verified fresh by `solveInquestDefinition` in levels.test.ts.
+// `3:3`/`3:2` alternate decorative assets so they don't stamp the same one twice in a row.
 const decorativePropsByPosition: Record<string, PropAssetId> = {
-  '3:0': 'dining-table',
-  '2:5': 'wooden-planter',
-  '5:4': 'offering-chest',
-  '5:3': 'candle-stand',
-  '3:3': 'stone-planter',
-  '2:2': 'kitchen-worktable',
-  '4:1': 'dungeon-cage',
-  '5:1': 'barrel-cluster',
-  '5:2': 'dungeon-cage',
-  '2:3': 'dining-table',
+  '2:5': 'dining-table',
+  '3:0': 'wooden-planter',
+  '0:1': 'offering-chest',
+  '0:2': 'candle-stand',
+  '2:2': 'stone-planter',
+  '3:3': 'kitchen-worktable',
+  '1:4': 'dungeon-cage',
+  '0:4': 'barrel-cluster',
+  '0:3': 'dungeon-cage',
+  '3:2': 'dining-table',
 };
 
 // Seat prop sits on a legal/solution cell: a character can be placed on it (the prop
 // renders under the avatar), doubling as a positional hint ("seated in the chair").
 const seatPropsByPosition: Record<string, PropAssetId> = {
-  '1:0': 'simple-chair',
+  '4:5': 'simple-chair',
 };
 
 const propsByPosition: Record<string, PropAssetId> = {
@@ -34,12 +35,12 @@ const propsByPosition: Record<string, PropAssetId> = {
 const blockedCells = new Set(Object.keys(decorativePropsByPosition));
 
 const chamberByPosition = [
+  ['shrine-corner', 'shrine-corner', 'shrine-corner', 'storage-vault', 'storage-vault', 'storage-vault'],
+  ['shrine-corner', 'shrine-corner', 'shrine-corner', 'storage-vault', 'storage-vault', 'storage-vault'],
+  ['flower-stall', 'flower-stall', 'flower-stall', 'storage-vault', 'storage-vault', 'spice-stall'],
+  ['flower-stall', 'flower-stall', 'spice-stall', 'spice-stall', 'spice-stall', 'spice-stall'],
   ['market-hall', 'market-hall', 'market-hall', 'market-hall', 'market-hall', 'market-hall'],
   ['market-hall', 'market-hall', 'market-hall', 'market-hall', 'market-hall', 'market-hall'],
-  ['spice-stall', 'spice-stall', 'spice-stall', 'spice-stall', 'flower-stall', 'flower-stall'],
-  ['spice-stall', 'storage-vault', 'storage-vault', 'flower-stall', 'flower-stall', 'flower-stall'],
-  ['storage-vault', 'storage-vault', 'storage-vault', 'shrine-corner', 'shrine-corner', 'shrine-corner'],
-  ['storage-vault', 'storage-vault', 'storage-vault', 'shrine-corner', 'shrine-corner', 'shrine-corner'],
 ] as const;
 
 const chamberEnvironments: InquestDefinition['chamberEnvironments'] = {
@@ -71,12 +72,12 @@ const cells: InquestCell[] = chamberByPosition.flatMap((row, rowIndex) =>
 );
 
 const solution: Record<CharacterId, GridPosition> = {
-  assessor: { row: 0, column: 3 },
-  stallmaster: { row: 1, column: 0 },
-  'spice-merchant': { row: 2, column: 1 },
-  florist: { row: 3, column: 4 },
-  'vault-keeper': { row: 4, column: 2 },
-  'shrine-keeper': { row: 5, column: 5 },
+  assessor: { row: 5, column: 2 },
+  stallmaster: { row: 4, column: 5 },
+  'spice-merchant': { row: 3, column: 4 },
+  florist: { row: 2, column: 1 },
+  'vault-keeper': { row: 1, column: 3 },
+  'shrine-keeper': { row: 0, column: 0 },
 };
 
 export const thistledownMarket: InquestDefinition = {
