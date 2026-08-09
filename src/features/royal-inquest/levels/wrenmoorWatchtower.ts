@@ -2,28 +2,29 @@ import type { GridPosition } from '../../../shared/geometry';
 import type { PropAssetId } from '../../../assets/royal-inquest/manifest';
 import type { CharacterId, InquestCell, InquestDefinition } from '../types';
 
-// Same chamber shape as the archived template cases (see ../levels/archive/): one full-width top
-// chamber hosting the victim + traitor, then four irregular chambers below sized so the
-// exact-chamber clues plus the one-per-row/one-per-column rule force every non-victim
-// character's cell uniquely — verified by `solveInquestDefinition` in levels.test.ts.
-// `2:2`/`2:3` alternate decorative assets so they don't stamp the same one twice in a row.
+// 90-degree-clockwise rotation of the Marrowfen Chapel template (see ../levels/archive/ and
+// marrowfenChapel.ts): the victim + traitor chamber runs as a full-height RIGHT column instead of
+// a top row, with four irregular chambers to its left. A 90-degree rotation of a proven layout
+// preserves the one-per-row/one-per-column solvability guarantee exactly (row/column distinctness
+// survives any rotation/reflection) — verified fresh by `solveInquestDefinition` in levels.test.ts.
+// `2:3`/`3:3` alternate decorative assets so they don't stamp the same one twice in a row.
 const decorativePropsByPosition: Record<string, PropAssetId> = {
-  '3:0': 'dungeon-cage',
-  '2:5': 'bookshelf',
-  '5:4': 'barrel-cluster',
-  '5:3': 'kitchen-worktable',
-  '3:3': 'dining-table',
-  '2:2': 'barrel-cluster',
-  '4:1': 'stone-planter',
-  '5:1': 'wooden-planter',
-  '5:2': 'stone-planter',
-  '2:3': 'dungeon-cage',
+  '0:2': 'dungeon-cage',
+  '5:3': 'bookshelf',
+  '4:0': 'barrel-cluster',
+  '3:0': 'kitchen-worktable',
+  '3:2': 'dining-table',
+  '2:3': 'barrel-cluster',
+  '1:1': 'stone-planter',
+  '1:0': 'wooden-planter',
+  '2:0': 'stone-planter',
+  '3:3': 'dungeon-cage',
 };
 
 // Seat prop sits on a legal/solution cell: a character can be placed on it (the prop
 // renders under the avatar), doubling as a positional hint ("seated in the pew").
 const seatPropsByPosition: Record<string, PropAssetId> = {
-  '1:0': 'church-pew',
+  '0:4': 'church-pew',
 };
 
 const propsByPosition: Record<string, PropAssetId> = {
@@ -34,12 +35,12 @@ const propsByPosition: Record<string, PropAssetId> = {
 const blockedCells = new Set(Object.keys(decorativePropsByPosition));
 
 const chamberByPosition = [
-  ['signal-chapel', 'signal-chapel', 'signal-chapel', 'signal-chapel', 'signal-chapel', 'signal-chapel'],
-  ['signal-chapel', 'signal-chapel', 'signal-chapel', 'signal-chapel', 'signal-chapel', 'signal-chapel'],
-  ['powder-store', 'powder-store', 'powder-store', 'powder-store', 'quarters', 'quarters'],
-  ['powder-store', 'terrace', 'terrace', 'quarters', 'quarters', 'quarters'],
-  ['terrace', 'terrace', 'terrace', 'mess-hall', 'mess-hall', 'mess-hall'],
-  ['terrace', 'terrace', 'terrace', 'mess-hall', 'mess-hall', 'mess-hall'],
+  ['terrace', 'terrace', 'powder-store', 'powder-store', 'signal-chapel', 'signal-chapel'],
+  ['terrace', 'terrace', 'terrace', 'powder-store', 'signal-chapel', 'signal-chapel'],
+  ['terrace', 'terrace', 'terrace', 'powder-store', 'signal-chapel', 'signal-chapel'],
+  ['mess-hall', 'mess-hall', 'quarters', 'powder-store', 'signal-chapel', 'signal-chapel'],
+  ['mess-hall', 'mess-hall', 'quarters', 'quarters', 'signal-chapel', 'signal-chapel'],
+  ['mess-hall', 'mess-hall', 'quarters', 'quarters', 'signal-chapel', 'signal-chapel'],
 ] as const;
 
 const chamberEnvironments: InquestDefinition['chamberEnvironments'] = {
@@ -71,12 +72,12 @@ const cells: InquestCell[] = chamberByPosition.flatMap((row, rowIndex) =>
 );
 
 const solution: Record<CharacterId, GridPosition> = {
-  courier: { row: 0, column: 3 },
-  'watch-captain': { row: 1, column: 0 },
-  powderman: { row: 2, column: 1 },
-  lieutenant: { row: 3, column: 4 },
-  herbalist: { row: 4, column: 2 },
-  cook: { row: 5, column: 5 },
+  courier: { row: 3, column: 5 },
+  'watch-captain': { row: 0, column: 4 },
+  powderman: { row: 1, column: 3 },
+  lieutenant: { row: 4, column: 2 },
+  herbalist: { row: 2, column: 1 },
+  cook: { row: 5, column: 0 },
 };
 
 export const wrenmoorWatchtower: InquestDefinition = {

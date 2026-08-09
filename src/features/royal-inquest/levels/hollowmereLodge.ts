@@ -2,28 +2,30 @@ import type { GridPosition } from '../../../shared/geometry';
 import type { PropAssetId } from '../../../assets/royal-inquest/manifest';
 import type { CharacterId, InquestCell, InquestDefinition } from '../types';
 
-// Same chamber shape as the archived template cases (see ../levels/archive/): one full-width top
-// chamber hosting the victim + traitor, then four irregular chambers below sized so the
-// exact-chamber clues plus the one-per-row/one-per-column rule force every non-victim
-// character's cell uniquely — verified by `solveInquestDefinition` in levels.test.ts.
-// `2:2`/`2:3` alternate decorative assets so they don't stamp the same one twice in a row.
+// 90-degree-counterclockwise rotation of the Marrowfen Chapel template (see ../levels/archive/ and
+// marrowfenChapel.ts): the victim + traitor chamber runs as a full-height LEFT column instead of a
+// top row (mirrored the opposite way from Ashwell Manor's transpose), with four irregular chambers
+// to its right. A 90-degree rotation of a proven layout preserves the one-per-row/one-per-column
+// solvability guarantee exactly (row/column distinctness survives any rotation/reflection) —
+// verified fresh by `solveInquestDefinition` in levels.test.ts.
+// `2:2`/`3:2` alternate decorative assets so they don't stamp the same one twice in a row.
 const decorativePropsByPosition: Record<string, PropAssetId> = {
-  '3:0': 'stone-planter',
-  '2:5': 'kitchen-worktable',
-  '5:4': 'dungeon-cage',
-  '5:3': 'barrel-cluster',
-  '3:3': 'dining-table',
-  '2:2': 'wooden-planter',
-  '4:1': 'bookshelf',
-  '5:1': 'dining-table',
-  '5:2': 'bookshelf',
-  '2:3': 'stone-planter',
+  '5:3': 'stone-planter',
+  '0:2': 'kitchen-worktable',
+  '1:5': 'dungeon-cage',
+  '2:5': 'barrel-cluster',
+  '2:3': 'dining-table',
+  '3:2': 'wooden-planter',
+  '4:4': 'bookshelf',
+  '4:5': 'dining-table',
+  '3:5': 'bookshelf',
+  '2:2': 'stone-planter',
 };
 
 // Seat prop sits on a legal/solution cell: a character can be placed on it (the prop
 // renders under the avatar), doubling as a positional hint ("seated in the chair").
 const seatPropsByPosition: Record<string, PropAssetId> = {
-  '1:0': 'formal-chair',
+  '5:1': 'formal-chair',
 };
 
 const propsByPosition: Record<string, PropAssetId> = {
@@ -34,12 +36,12 @@ const propsByPosition: Record<string, PropAssetId> = {
 const blockedCells = new Set(Object.keys(decorativePropsByPosition));
 
 const chamberByPosition = [
-  ['lodge-hall', 'lodge-hall', 'lodge-hall', 'lodge-hall', 'lodge-hall', 'lodge-hall'],
-  ['lodge-hall', 'lodge-hall', 'lodge-hall', 'lodge-hall', 'lodge-hall', 'lodge-hall'],
-  ['kennel-yard', 'kennel-yard', 'kennel-yard', 'kennel-yard', 'larder', 'larder'],
-  ['kennel-yard', 'study', 'study', 'larder', 'larder', 'larder'],
-  ['study', 'study', 'study', 'trophy-cellar', 'trophy-cellar', 'trophy-cellar'],
-  ['study', 'study', 'study', 'trophy-cellar', 'trophy-cellar', 'trophy-cellar'],
+  ['lodge-hall', 'lodge-hall', 'larder', 'larder', 'trophy-cellar', 'trophy-cellar'],
+  ['lodge-hall', 'lodge-hall', 'larder', 'larder', 'trophy-cellar', 'trophy-cellar'],
+  ['lodge-hall', 'lodge-hall', 'kennel-yard', 'larder', 'trophy-cellar', 'trophy-cellar'],
+  ['lodge-hall', 'lodge-hall', 'kennel-yard', 'study', 'study', 'study'],
+  ['lodge-hall', 'lodge-hall', 'kennel-yard', 'study', 'study', 'study'],
+  ['lodge-hall', 'lodge-hall', 'kennel-yard', 'kennel-yard', 'study', 'study'],
 ] as const;
 
 const chamberEnvironments: InquestDefinition['chamberEnvironments'] = {
@@ -71,12 +73,12 @@ const cells: InquestCell[] = chamberByPosition.flatMap((row, rowIndex) =>
 );
 
 const solution: Record<CharacterId, GridPosition> = {
-  'game-warden': { row: 0, column: 3 },
-  'lodge-keeper': { row: 1, column: 0 },
-  kennelman: { row: 2, column: 1 },
-  cook: { row: 3, column: 4 },
-  taxidermist: { row: 4, column: 2 },
-  scholar: { row: 5, column: 5 },
+  'game-warden': { row: 2, column: 0 },
+  'lodge-keeper': { row: 5, column: 1 },
+  kennelman: { row: 4, column: 2 },
+  cook: { row: 1, column: 3 },
+  taxidermist: { row: 3, column: 4 },
+  scholar: { row: 0, column: 5 },
 };
 
 export const hollowmereLodge: InquestDefinition = {
