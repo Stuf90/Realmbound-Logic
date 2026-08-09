@@ -183,7 +183,12 @@ export function validateInquestDefinition(definition: unknown): string[] {
   for (const clue of clues) {
     if (clue.predicate.type === 'exact-row' || clue.predicate.type === 'exact-column') {
       issues.push(
-        `Clue "${clue.id}" may not use exact-row/exact-column; use exact-chamber, direction-from, beside, not-beside, same-chamber, or different-chamber instead.`,
+        `Clue "${clue.id}" may not use exact-row/exact-column; use exact-chamber, direction-from, same-chamber, or different-chamber instead.`,
+      );
+    }
+    if (clue.predicate.type === 'beside' || clue.predicate.type === 'not-beside') {
+      issues.push(
+        `Clue "${clue.id}" may not use beside/not-beside between two characters; placement rules guarantee two characters never share a row or column, so a character-pair beside/not-beside clue is always vacuously true and conveys no information. Use not-beside-wall, category-not-beside-prop, by-window, shares-prop-neighbor, or prop-neighbor-count for wall/asset adjacency instead.`,
       );
     }
     if (typeof difficulty === 'number' && predicateDifficulty[clue.predicate.type] > difficulty) {

@@ -110,16 +110,22 @@ reason. A future case with a non-permutation solution could use it for real.
 exactly 1 **and** the same chamber — crossing a chamber wall does not count as adjacent
 even if the cells are physically next to each other. `not-beside` is the exact negation.
 
-`beside` and `not-beside` are both dead against a permutation solution (see
-[character placement](character-placement.human.md) — every shipped case is one): since
-placement rules forbid two characters from ever sharing a row or column, Manhattan
-distance can never be exactly 1, so `beside` is never satisfiable and `not-beside` is
-always trivially true, unconditionally, regardless of chamber. There is no combination
-with same/different-chamber facts that makes it meaningful — the OR resolves to "always
-true" before chamber is even considered. **Do not author a `not-beside` clue** — it
-conveys zero information. (An earlier version of this doc claimed `not-beside` could
-still be meaningful; that was wrong. The `aldric-not-beside-edmund` clue this claim was
-based on has been removed — see [rules.human.md](../rules.human.md#chambers-and-adjacency).)
+**Neither variant may name two characters — `validateInquestDefinition` rejects it
+outright**, the same way it rejects `exact-row`/`exact-column` (see "What a clue may not
+do" below). Placement rules 1–2 are a fixed game rule, true in every case, not a
+per-case authored property: two characters can never share a row or column, so Manhattan
+distance between them can never be exactly 1. `beside` is therefore never satisfiable and
+`not-beside` is always trivially true, unconditionally, regardless of chamber — there is
+no combination with same/different-chamber facts that makes it meaningful. This isn't
+scoped to "permutation solutions" the way `direction-from`'s caveat below is; it holds for
+every case the engine can express. `beside`/`not-beside` only ever take two
+`characterId`s (see the type above) — they have no wall or asset form, so this predicate
+type has no remaining legitimate use at all. For adjacency to a wall or a prop, use
+`not-beside-wall`, `category-not-beside-prop`, `by-window`, `shares-prop-neighbor`, or
+`prop-neighbor-count` instead. (An earlier version of this doc claimed a character-pair
+`not-beside` could still be meaningful; that was wrong. The `aldric-not-beside-edmund`
+clue this claim was based on has been removed — see
+[rules.human.md](../rules.human.md#chambers-and-adjacency).)
 
 ### `diagonal-from` / `not-diagonal-from`
 
@@ -315,16 +321,25 @@ there (a gap, no predicate) — never both.
 
 ## What a clue may not do
 
-`validateInquestDefinition` rejects two shapes of clue outright, independent of the
+`validateInquestDefinition` rejects three shapes of clue outright, independent of the
 predicate reference above:
 
 1. **No `exact-row`/`exact-column` clue.**
    > `Clue "<id>" may not use exact-row/exact-column; use exact-chamber, direction-from,
-   > beside, not-beside, same-chamber, or different-chamber instead.`
+   > same-chamber, or different-chamber instead.`
 
    Stating a literal coordinate is a giveaway, not a deduction — chamber membership,
    relative direction, and adjacency are the vocabulary the game is built around.
-2. **No clue may name the victim.** Checked via `getPredicateCharacterIds(clue.predicate)`
+2. **No `beside`/`not-beside` clue between two characters.**
+   > `Clue "<id>" may not use beside/not-beside between two characters; placement rules
+   > guarantee two characters never share a row or column, so a character-pair
+   > beside/not-beside clue is always vacuously true and conveys no information. Use
+   > not-beside-wall, category-not-beside-prop, by-window, shares-prop-neighbor, or
+   > prop-neighbor-count for wall/asset adjacency instead.`
+
+   See the `beside`/`not-beside` entry above for why this holds in every case, not just
+   the shipped ones.
+3. **No clue may name the victim.** Checked via `getPredicateCharacterIds(clue.predicate)`
    against the victim's `id`:
    > `Clue "<id>" names the victim directly; the victim's position must be derived only
    > from other witnesses.`
@@ -360,7 +375,7 @@ author already familiar with Murdoku can write a Royal Inquest clue on sight:
 | Room/location clues | `exact-chamber` | Direct match — "seen in the Kitchen." |
 | Object/prop clues (a single chair, a single plant) | `on-prop` | Direct match — the prop is unique to one cell by construction, so this doubles as Murdoku's "uniqueness clue" (see below). |
 | Directional clues ("south of") | `direction-from` | Direct match in shape; see its own entry above for why the shipped cases never author it as a real (non-vacuous) clue. |
-| Adjacency/"beside" clues | `beside` / `not-beside` | Direct match, including Murdoku's rule that two cells can touch physically but belong to different regions and still not count as "beside" — see `beside`'s entry above. |
+| Adjacency/"beside" clues | `not-beside-wall`, `category-not-beside-prop`, `by-window`, `shares-prop-neighbor`, `prop-neighbor-count` | Murdoku's "beside" covers character-to-character adjacency too, but our board's one-row/one-column-per-character rule makes that shape always vacuous (see "What a clue may not do" above) — so our adjacency predicates are scoped to a wall or a prop instead, never a second character. `beside`/`not-beside` themselves (character-pair form) are **deliberately never authored**, same as `exact-row`/`exact-column` below — they stay in the engine only for internal solver/hint reasoning. |
 | "Alone with" (victim/murderer) | The traitor rule (not a clue at all) | Direct match in meaning: the only other character left alone with the victim's chamber is the traitor. See [character placement](character-placement.human.md) and [rules.human.md](../rules.human.md#victim-and-traitor). |
 | Column/row clues ("fixed rows or columns") | `exact-row` / `exact-column` — **deliberately never authored** | This is the one intentional divergence: Murdoku permits a clue that fixes a suspect to a literal row or column, but the Royal Inquest's validator rejects any clue using either predicate (see "What a clue may not do" above). A raw coordinate reads as a giveaway rather than a deduction in our presentation; the predicates stay in the engine only so hints and hand-authored `solution` checks still have a coordinate-level primitive to reason with internally. |
 
@@ -475,10 +490,11 @@ generic "can now be placed" phrase since no clue matches a specific character.
 1. Decide which fact about the solution the clue should reveal.
 2. Pick the predicate variant that expresses it exactly, from the allowed set
    (`exact-chamber`, `on-prop`, `same-chamber`, `different-chamber`, `direction-from`,
-   `beside`, `not-beside`, `diagonal-from`, `not-diagonal-from`, `chamber-occupant-count`,
+   `diagonal-from`, `not-diagonal-from`, `chamber-occupant-count`,
    `in-corner`, `seated-character-count`, `not-beside-wall`, `category-not-beside-prop`,
    `shares-prop-neighbor`, `offset-from`, `prop-neighbor-count`, `area-occupant-count`,
-   `by-window`) — never `exact-row`/`exact-column`, and never referencing the victim.
+   `by-window`) — never `exact-row`/`exact-column`, never `beside`/`not-beside` between two
+   characters, and never referencing the victim.
 3. Check the predicate's difficulty weight (see "Predicate difficulty" above) against the
    case's declared `difficulty` — `validateInquestDefinition` rejects the clue otherwise.
 4. Write `text` as in-world flavor that matches the predicate's meaning.
