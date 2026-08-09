@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { blackwoodKeep } from './definition';
+import { blackwoodKeep } from './levels/archive/blackwoodKeep';
 import { checkVictimElimination, solveInquestDefinition } from './solver';
 import type { InquestDefinition } from './types';
 

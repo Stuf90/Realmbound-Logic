@@ -1,6 +1,6 @@
-import type { GridPosition } from '../../shared/geometry';
-import type { PropAssetId } from '../../assets/royal-inquest/manifest';
-import type { CharacterId, InquestCell, InquestDefinition } from './types';
+import type { GridPosition } from '../../../../shared/geometry';
+import type { PropAssetId } from '../../../../assets/royal-inquest/manifest';
+import type { CharacterId, InquestCell, InquestDefinition } from '../../types';
 
 // The Solar spans the full top two rows (all 6 columns) so it can host both the envoy and the
 // traitor without squeezing every other chamber below it into a single shared column. The remaining

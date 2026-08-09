@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { validateInquestDefinition } from '../definitionValidation';
-import { thornfieldManor } from './thornfieldManor';
-import { ravensholtAbbey } from './ravensholtAbbey';
+import { marrowfenChapel } from './marrowfenChapel';
+import { ashwellManor } from './ashwellManor';
+import { thistledownMarket } from './thistledownMarket';
+import { wrenmoorWatchtower } from './wrenmoorWatchtower';
+import { hollowmereLodge } from './hollowmereLodge';
 import { royalInquestLevels, getRoyalInquestLevel } from './index';
 
 describe.each([
-  ['Thornfield Manor', thornfieldManor],
-  ['Ravensholt Abbey', ravensholtAbbey],
+  ['Marrowfen Chapel', marrowfenChapel],
+  ['Ashwell Manor', ashwellManor],
+  ['Thistledown Market', thistledownMarket],
+  ['Wrenmoor Watchtower', wrenmoorWatchtower],
+  ['Hollowmere Lodge', hollowmereLodge],
 ])('%s definition', (_name, definition) => {
   it('is a structurally valid inquest with a unique, clue-derivable solution', () => {
     expect(validateInquestDefinition(definition)).toEqual([]);
@@ -22,19 +28,25 @@ describe.each([
     const victim = definition.characters.find(({ isVictim }) => isVictim);
     expect(definition.traitorId).not.toBe(victim?.id);
   });
+
+  it('declares difficulty 1', () => {
+    expect(definition.difficulty).toBe(1);
+  });
 });
 
 describe('royalInquestLevels registry', () => {
-  it('lists Blackwood Keep, Thornfield Manor, and Ravensholt Abbey in order', () => {
+  it('lists the 5 difficulty-1 cases in order', () => {
     expect(royalInquestLevels.map((level) => level.id)).toEqual([
-      'blackwood-keep',
-      'thornfield-manor',
-      'ravensholt-abbey',
+      'marrowfen-chapel',
+      'ashwell-manor',
+      'thistledown-market',
+      'wrenmoor-watchtower',
+      'hollowmere-lodge',
     ]);
   });
 
   it('looks up a level by id', () => {
-    expect(getRoyalInquestLevel('thornfield-manor')).toBe(thornfieldManor);
+    expect(getRoyalInquestLevel('marrowfen-chapel')).toBe(marrowfenChapel);
   });
 
   it('throws for an unknown id', () => {
