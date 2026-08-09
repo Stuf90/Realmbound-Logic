@@ -135,15 +135,6 @@ export const ravensholtAbbey: InquestDefinition = {
       text: 'The Captain was seen in the Cellar.',
       predicate: { type: 'exact-chamber', characterId: 'captain', chamberId: 'cellar' },
     },
-    {
-      id: 'prior-not-beside-monk',
-      text: 'The Prior was never seen beside the Monk.',
-      predicate: {
-        type: 'not-beside',
-        firstCharacterId: 'prior',
-        secondCharacterId: 'monk',
-      },
-    },
   ],
   traitorId: 'prior',
   solution,

@@ -129,15 +129,6 @@ export const wrenmoorWatchtower: InquestDefinition = {
       text: 'The Cook was seen in the Mess Hall.',
       predicate: { type: 'exact-chamber', characterId: 'cook', chamberId: 'mess-hall' },
     },
-    {
-      id: 'watch-captain-not-beside-lieutenant',
-      text: 'The Watch-Captain was never seen beside the Lieutenant.',
-      predicate: {
-        type: 'not-beside',
-        firstCharacterId: 'watch-captain',
-        secondCharacterId: 'lieutenant',
-      },
-    },
   ],
   traitorId: 'watch-captain',
   solution,

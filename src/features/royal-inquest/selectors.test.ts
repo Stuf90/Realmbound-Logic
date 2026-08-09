@@ -46,8 +46,8 @@ describe('getCluesForCharacter', () => {
     expect(ids).toEqual([]);
   });
 
-  it('matches a character referenced only as the second participant in a pair', () => {
+  it('includes every solo clue naming the character', () => {
     const ids = getCluesForCharacter(blackwoodKeep, 'aldric').map((clue) => clue.id);
-    expect(ids).toEqual(['aldric-solar', 'aldric-seated', 'aldric-not-beside-edmund']);
+    expect(ids).toEqual(['aldric-solar', 'aldric-seated']);
   });
 });

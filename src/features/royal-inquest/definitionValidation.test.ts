@@ -146,7 +146,20 @@ describe('Blackwood Keep definition', () => {
     });
 
     expect(validateInquestDefinition(malformed)).toContain(
-      'Clue "bad-row-clue" may not use exact-row/exact-column; use exact-chamber, direction-from, beside, not-beside, same-chamber, or different-chamber instead.',
+      'Clue "bad-row-clue" may not use exact-row/exact-column; use exact-chamber, direction-from, same-chamber, or different-chamber instead.',
+    );
+  });
+
+  it('rejects a clue that uses beside or not-beside between two characters', () => {
+    const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
+    malformed.clues.push({
+      id: 'bad-beside-clue',
+      text: 'Aldric was never seen beside Edmund.',
+      predicate: { type: 'not-beside', firstCharacterId: 'aldric', secondCharacterId: 'edmund' },
+    });
+
+    expect(validateInquestDefinition(malformed)).toContain(
+      'Clue "bad-beside-clue" may not use beside/not-beside between two characters; placement rules guarantee two characters never share a row or column, so a character-pair beside/not-beside clue is always vacuously true and conveys no information. Use not-beside-wall, category-not-beside-prop, by-window, shares-prop-neighbor, or prop-neighbor-count for wall/asset adjacency instead.',
     );
   });
 

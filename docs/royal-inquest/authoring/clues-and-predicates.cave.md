@@ -106,10 +106,19 @@ FUTURE CASE NON-PERMUTATION SOLUTION COULD USE REAL.
 CHAMBER — CROSS CHAMBER WALL NOT COUNT ADJACENT EVEN IF CELL PHYSICAL NEXT TO EACH
 OTHER. `not-beside` = EXACT NEGATE.
 
-`not-beside` *IS* USABLE AGAINST PERMUTATION SOLUTION (UNLIKE `beside`, NEVER FIRE
-THERE) — SHIP CASE USE `aldric-not-beside-edmund` EXACT THIS WAY, SINCE "NOT ADJACENT"
-TRIVIAL TRUE WHENEVER TWO CHARACTER NOT EVEN SHARE ROW/COLUMN, STILL MEANINGFUL CLUE
-COMBINE WITH SAME/DIFFERENT-CHAMBER FACT.
+**NEITHER VARIANT MAY NAME TWO CHARACTER — `validateInquestDefinition` REJECT OUTRIGHT**,
+SAME AS `exact-row`/`exact-column` (SEE "WHAT CLUE MAY NOT DO" BELOW). PLACEMENT RULE 1-2
+= FIXED GAME RULE, TRUE EVERY CASE, NOT PER-CASE AUTHOR PROPERTY: TWO CHARACTER NEVER
+SHARE ROW/COLUMN → MANHATTAN DIST NEVER EXACT 1 → `beside` NEVER SATISFY, `not-beside`
+ALWAYS TRIVIAL TRUE, NO CONDITION, NO MATTER CHAMBER — NO COMBINE WITH
+SAME/DIFFERENT-CHAMBER FACT MAKE MEANINGFUL. NOT SCOPE "PERMUTATION SOLUTION" LIKE
+`direction-from` CAVEAT BELOW — HOLD EVERY CASE ENGINE CAN EXPRESS. `beside`/`not-beside`
+ONLY EVER TAKE TWO `characterId` (SEE TYPE ABOVE) — NO WALL/ASSET FORM, SO TYPE HAVE NO
+LEGIT USE LEFT AT ALL. WALL/PROP ADJACENT → USE `not-beside-wall`,
+`category-not-beside-prop`, `by-window`, `shares-prop-neighbor`, OR `prop-neighbor-count`
+INSTEAD. (OLDER DOC VERSION CLAIM CHARACTER-PAIR `not-beside` STILL MEANINGFUL — WRONG.
+`aldric-not-beside-edmund` CLUE THAT CLAIM BASE ON = REMOVE — SEE
+[rules.cave.md](../rules.cave.md#chambers--adjacency).)
 
 ### `diagonal-from` / `not-diagonal-from`
 
@@ -287,16 +296,24 @@ EITHER LIVE HERE (MAP TO REAL PREDICATE) OR THERE (GAP, NO PREDICATE) — NEVER 
 
 ## WHAT CLUE MAY NOT DO
 
-`validateInquestDefinition` REJECT TWO SHAPE CLUE OUTRIGHT, INDEPENDENT FROM PREDICATE
+`validateInquestDefinition` REJECT THREE SHAPE CLUE OUTRIGHT, INDEPENDENT FROM PREDICATE
 REFERENCE ABOVE:
 
 1. **NO `exact-row`/`exact-column` CLUE.**
    > `Clue "<id>" may not use exact-row/exact-column; use exact-chamber, direction-from,
-   > beside, not-beside, same-chamber, or different-chamber instead.`
+   > same-chamber, or different-chamber instead.`
 
    STATE LITERAL COORDINATE = GIVEAWAY, NOT DEDUCTION — CHAMBER MEMBERSHIP, RELATIVE
    DIRECTION, ADJACENCY = VOCAB GAME BUILD AROUND.
-2. **NO CLUE MAY NAME VICTIM.** CHECK VIA `getPredicateCharacterIds(clue.predicate)`
+2. **NO `beside`/`not-beside` CLUE BETWEEN TWO CHARACTER.**
+   > `Clue "<id>" may not use beside/not-beside between two characters; placement rules
+   > guarantee two characters never share a row or column, so a character-pair
+   > beside/not-beside clue is always vacuously true and conveys no information. Use
+   > not-beside-wall, category-not-beside-prop, by-window, shares-prop-neighbor, or
+   > prop-neighbor-count for wall/asset adjacency instead.`
+
+   SEE `beside`/`not-beside` ENTRY ABOVE WHY HOLD EVERY CASE, NOT JUST SHIP ONE.
+3. **NO CLUE MAY NAME VICTIM.** CHECK VIA `getPredicateCharacterIds(clue.predicate)`
    AGAINST VICTIM `id`:
    > `Clue "<id>" names the victim directly; the victim's position must be derived only
    > from other witnesses.`
@@ -330,7 +347,7 @@ ROYAL INQUEST CLUE ON SIGHT:
 | ROOM/LOCATION CLUE | `exact-chamber` | DIRECT MATCH — "SEEN IN KITCHEN." |
 | OBJECT/PROP CLUE (SINGLE CHAIR, SINGLE PLANT) | `on-prop` | DIRECT MATCH — PROP UNIQUE TO ONE CELL BY CONSTRUCT, SO DOUBLE AS MURDOKU "UNIQUENESS CLUE" (SEE BELOW). |
 | DIRECTIONAL CLUE ("SOUTH OF") | `direction-from` | DIRECT MATCH SHAPE; SEE OWN ENTRY ABOVE WHY SHIP CASE NEVER AUTHOR AS REAL (NON-VACUOUS) CLUE. |
-| ADJACENCY/"BESIDE" CLUE | `beside` / `not-beside` | DIRECT MATCH, INCLUDE MURDOKU RULE TWO CELL TOUCH PHYSICAL BUT BELONG DIFFERENT REGION STILL NOT COUNT "BESIDE" — SEE `beside` ENTRY ABOVE. |
+| ADJACENCY/"BESIDE" CLUE | `not-beside-wall`, `category-not-beside-prop`, `by-window`, `shares-prop-neighbor`, `prop-neighbor-count` | MURDOKU "BESIDE" COVER CHARACTER-TO-CHARACTER TOO, BUT OUR BOARD ONE-ROW/ONE-COLUMN-PER-CHARACTER RULE MAKE THAT SHAPE ALWAYS VACUOUS (SEE "WHAT CLUE MAY NOT DO" ABOVE) — SO OUR ADJACENCY PREDICATE SCOPE TO WALL OR PROP INSTEAD, NEVER SECOND CHARACTER. `beside`/`not-beside` THEMSELVES (CHARACTER-PAIR FORM) = **DELIBERATE NEVER AUTHOR**, SAME AS `exact-row`/`exact-column` BELOW — STAY ENGINE ONLY FOR INTERNAL SOLVER/HINT REASON. |
 | "ALONE WITH" (VICTIM/MURDERER) | TRAITOR RULE (NOT CLUE AT ALL) | DIRECT MATCH MEAN: ONLY OTHER CHARACTER LEFT ALONE WITH VICTIM CHAMBER = TRAITOR. SEE [CHARACTER PLACEMENT](character-placement.cave.md) + [rules.cave.md](../rules.cave.md#victim-and-traitor). |
 | COLUMN/ROW CLUE ("FIXED ROW/COLUMN") | `exact-row` / `exact-column` — **DELIBERATE NEVER AUTHOR** | ONE INTENTIONAL DIVERGE: MURDOKU PERMIT CLUE FIX SUSPECT LITERAL ROW/COLUMN, BUT ROYAL INQUEST VALIDATOR REJECT ANY CLUE USE EITHER PREDICATE (SEE "WHAT CLUE MAY NOT DO" ABOVE). RAW COORDINATE READ AS GIVEAWAY NOT DEDUCTION OUR PRESENTATION; PREDICATE STAY ENGINE ONLY SO HINT + HAND-AUTHOR `solution` CHECK STILL HAVE COORDINATE-LEVEL PRIMITIVE REASON INTERNAL. |
 
@@ -437,11 +454,12 @@ SINCE NO CLUE MATCH A SPECIFIC CHARACTER.
 
 1. DECIDE WHICH FACT ABOUT SOLUTION CLUE SHOULD REVEAL.
 2. PICK PREDICATE VARIANT EXPRESS EXACT, FROM ALLOW SET (`exact-chamber`, `on-prop`,
-   `same-chamber`, `different-chamber`, `direction-from`, `beside`, `not-beside`,
+   `same-chamber`, `different-chamber`, `direction-from`,
    `diagonal-from`, `not-diagonal-from`, `chamber-occupant-count`, `in-corner`,
    `seated-character-count`, `not-beside-wall`, `category-not-beside-prop`,
    `shares-prop-neighbor`, `offset-from`, `prop-neighbor-count`, `area-occupant-count`,
-   `by-window`) — NEVER `exact-row`/`exact-column`, NEVER REF VICTIM.
+   `by-window`) — NEVER `exact-row`/`exact-column`, NEVER `beside`/`not-beside` BETWEEN TWO
+   CHARACTER, NEVER REF VICTIM.
 3. CHECK PREDICATE DIFFICULTY WEIGHT (SEE "PREDICATE DIFFICULTY" ABOVE) AGAINST CASE
    DECLARE `difficulty` — `validateInquestDefinition` REJECT CLUE ELSE.
 4. WRITE `text` AS IN-WORLD FLAVOR MATCH PREDICATE MEAN.

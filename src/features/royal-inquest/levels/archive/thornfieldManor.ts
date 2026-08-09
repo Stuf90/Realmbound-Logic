@@ -134,15 +134,6 @@ export const thornfieldManor: InquestDefinition = {
       text: 'The Merchant searched the Larder.',
       predicate: { type: 'exact-chamber', characterId: 'merchant', chamberId: 'larder' },
     },
-    {
-      id: 'steward-not-beside-maid',
-      text: 'The Steward was never seen beside the Maid.',
-      predicate: {
-        type: 'not-beside',
-        firstCharacterId: 'steward',
-        secondCharacterId: 'maid',
-      },
-    },
   ],
   traitorId: 'steward',
   solution,
