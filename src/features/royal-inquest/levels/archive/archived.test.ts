@@ -10,8 +10,8 @@ import { wrenmoorWatchtower } from './wrenmoorWatchtower';
 import { hollowmereLodge } from './hollowmereLodge';
 
 // These 8 cases were retired from the active `royalInquestLevels` rotation (see ../index.ts) but
-// are kept here, still regression-tested, for provenance.
-describe.each([
+// are kept here, for provenance. Regression tests disabled — no longer worth CI cost.
+describe.skip.each([
   ['Blackwood Keep', blackwoodKeep],
   ['Thornfield Manor', thornfieldManor],
   ['Ravensholt Abbey', ravensholtAbbey],
