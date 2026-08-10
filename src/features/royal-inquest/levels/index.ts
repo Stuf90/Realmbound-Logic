@@ -1,16 +1,16 @@
-import { marrowfenChapel } from './marrowfenChapel';
-import { ashwellManor } from './ashwellManor';
-import { thistledownMarket } from './thistledownMarket';
-import { wrenmoorWatchtower } from './wrenmoorWatchtower';
-import { hollowmereLodge } from './hollowmereLodge';
+import { graywickPriory } from './graywickPriory';
+import { fenmoorAlmshouse } from './fenmoorAlmshouse';
+import { duskhollowGranary } from './duskhollowGranary';
+import { sableridgeGarrison } from './sableridgeGarrison';
+import { wyrmscarInfirmary } from './wyrmscarInfirmary';
 import type { InquestDefinition } from '../types';
 
 export const royalInquestLevels: InquestDefinition[] = [
-  marrowfenChapel,
-  ashwellManor,
-  thistledownMarket,
-  wrenmoorWatchtower,
-  hollowmereLodge,
+  graywickPriory,
+  fenmoorAlmshouse,
+  duskhollowGranary,
+  sableridgeGarrison,
+  wyrmscarInfirmary,
 ];
 
 export function getRoyalInquestLevel(id: string): InquestDefinition {
