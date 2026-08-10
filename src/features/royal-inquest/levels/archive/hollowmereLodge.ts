@@ -1,6 +1,6 @@
-import type { GridPosition } from '../../../shared/geometry';
-import type { PropAssetId } from '../../../assets/royal-inquest/manifest';
-import type { CharacterId, InquestCell, InquestDefinition } from '../types';
+import type { GridPosition } from '../../../../shared/geometry';
+import type { PropAssetId } from '../../../../assets/royal-inquest/manifest';
+import type { CharacterId, InquestCell, InquestDefinition } from '../../types';
 
 // 90-degree-counterclockwise rotation of the Marrowfen Chapel template (see ../levels/archive/ and
 // marrowfenChapel.ts): the victim + traitor chamber runs as a full-height LEFT column instead of a

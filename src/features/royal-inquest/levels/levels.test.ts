@@ -1,18 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { validateInquestDefinition } from '../definitionValidation';
-import { marrowfenChapel } from './marrowfenChapel';
-import { ashwellManor } from './ashwellManor';
-import { thistledownMarket } from './thistledownMarket';
-import { wrenmoorWatchtower } from './wrenmoorWatchtower';
-import { hollowmereLodge } from './hollowmereLodge';
+import { graywickPriory } from './graywickPriory';
+import { fenmoorAlmshouse } from './fenmoorAlmshouse';
+import { duskhollowGranary } from './duskhollowGranary';
+import { sableridgeGarrison } from './sableridgeGarrison';
+import { wyrmscarInfirmary } from './wyrmscarInfirmary';
 import { royalInquestLevels, getRoyalInquestLevel } from './index';
 
 describe.each([
-  ['Marrowfen Chapel', marrowfenChapel],
-  ['Ashwell Manor', ashwellManor],
-  ['Thistledown Market', thistledownMarket],
-  ['Wrenmoor Watchtower', wrenmoorWatchtower],
-  ['Hollowmere Lodge', hollowmereLodge],
+  ['Graywick Priory', graywickPriory],
+  ['Fenmoor Almshouse', fenmoorAlmshouse],
+  ['Duskhollow Granary', duskhollowGranary],
+  ['Sableridge Garrison', sableridgeGarrison],
+  ['Wyrmscar Infirmary', wyrmscarInfirmary],
 ])('%s definition', (_name, definition) => {
   it('is a structurally valid inquest with a unique, clue-derivable solution', () => {
     expect(validateInquestDefinition(definition)).toEqual([]);
@@ -37,16 +37,16 @@ describe.each([
 describe('royalInquestLevels registry', () => {
   it('lists the 5 difficulty-1 cases in order', () => {
     expect(royalInquestLevels.map((level) => level.id)).toEqual([
-      'marrowfen-chapel',
-      'ashwell-manor',
-      'thistledown-market',
-      'wrenmoor-watchtower',
-      'hollowmere-lodge',
+      'graywick-priory',
+      'fenmoor-almshouse',
+      'duskhollow-granary',
+      'sableridge-garrison',
+      'wyrmscar-infirmary',
     ]);
   });
 
   it('looks up a level by id', () => {
-    expect(getRoyalInquestLevel('marrowfen-chapel')).toBe(marrowfenChapel);
+    expect(getRoyalInquestLevel('graywick-priory')).toBe(graywickPriory);
   });
 
   it('throws for an unknown id', () => {

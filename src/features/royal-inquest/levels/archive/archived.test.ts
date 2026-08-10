@@ -3,13 +3,23 @@ import { validateInquestDefinition } from '../../definitionValidation';
 import { blackwoodKeep } from './blackwoodKeep';
 import { thornfieldManor } from './thornfieldManor';
 import { ravensholtAbbey } from './ravensholtAbbey';
+import { marrowfenChapel } from './marrowfenChapel';
+import { ashwellManor } from './ashwellManor';
+import { thistledownMarket } from './thistledownMarket';
+import { wrenmoorWatchtower } from './wrenmoorWatchtower';
+import { hollowmereLodge } from './hollowmereLodge';
 
-// These 3 cases were retired from the active `royalInquestLevels` rotation (see ../index.ts) but
+// These 8 cases were retired from the active `royalInquestLevels` rotation (see ../index.ts) but
 // are kept here, still regression-tested, for provenance.
 describe.each([
   ['Blackwood Keep', blackwoodKeep],
   ['Thornfield Manor', thornfieldManor],
   ['Ravensholt Abbey', ravensholtAbbey],
+  ['Marrowfen Chapel', marrowfenChapel],
+  ['Ashwell Manor', ashwellManor],
+  ['Thistledown Market', thistledownMarket],
+  ['Wrenmoor Watchtower', wrenmoorWatchtower],
+  ['Hollowmere Lodge', hollowmereLodge],
 ])('%s definition (archived)', (_name, definition) => {
   it('is a structurally valid inquest with a unique, clue-derivable solution', () => {
     expect(validateInquestDefinition(definition)).toEqual([]);
