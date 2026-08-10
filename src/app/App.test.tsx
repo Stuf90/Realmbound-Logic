@@ -60,9 +60,9 @@ describe('puzzle navigation', () => {
   });
 
   it('marks a persisted completed level', async () => {
-    localStorage.setItem('realmbound:marrowfen-chapel', JSON.stringify({
+    localStorage.setItem('realmbound:graywick-priory', JSON.stringify({
       schemaVersion: 1,
-      puzzleId: 'marrowfen-chapel',
+      puzzleId: 'graywick-priory',
       state: {},
       elapsedSeconds: 1,
       completed: true,
@@ -87,9 +87,9 @@ describe('puzzle navigation', () => {
   });
 
   it('offers to reset a completed puzzle and shows its completion time', async () => {
-    localStorage.setItem('realmbound:marrowfen-chapel', JSON.stringify({
+    localStorage.setItem('realmbound:graywick-priory', JSON.stringify({
       schemaVersion: 1,
-      puzzleId: 'marrowfen-chapel',
+      puzzleId: 'graywick-priory',
       state: {},
       elapsedSeconds: 125,
       completed: true,
@@ -108,8 +108,8 @@ describe('puzzle navigation', () => {
   });
 
   it('cancels replay without changing the completed save', async () => {
-    const save = { schemaVersion: 1, puzzleId: 'marrowfen-chapel', state: {}, elapsedSeconds: 125, completed: true, hintsUsed: 0, checksUsed: 1 };
-    localStorage.setItem('realmbound:marrowfen-chapel', JSON.stringify(save));
+    const save = { schemaVersion: 1, puzzleId: 'graywick-priory', state: {}, elapsedSeconds: 125, completed: true, hintsUsed: 0, checksUsed: 1 };
+    localStorage.setItem('realmbound:graywick-priory', JSON.stringify(save));
     const user = userEvent.setup();
     render(<App />);
 
@@ -119,11 +119,11 @@ describe('puzzle navigation', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'Royal Inquest levels' })).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem('realmbound:marrowfen-chapel') ?? 'null')).toEqual(save);
+    expect(JSON.parse(localStorage.getItem('realmbound:graywick-priory') ?? 'null')).toEqual(save);
   });
 
   it('resets only the completed puzzle and starts it immediately', async () => {
-    localStorage.setItem('realmbound:marrowfen-chapel', JSON.stringify({ schemaVersion: 1, puzzleId: 'marrowfen-chapel', state: {}, elapsedSeconds: 125, completed: true, hintsUsed: 0, checksUsed: 1 }));
+    localStorage.setItem('realmbound:graywick-priory', JSON.stringify({ schemaVersion: 1, puzzleId: 'graywick-priory', state: {}, elapsedSeconds: 125, completed: true, hintsUsed: 0, checksUsed: 1 }));
     localStorage.setItem('realmbound:highgate-passage', JSON.stringify({ schemaVersion: 1, puzzleId: 'highgate-passage', state: {}, elapsedSeconds: 70, completed: true, hintsUsed: 0, checksUsed: 1 }));
     const user = userEvent.setup();
     render(<App />);
@@ -132,8 +132,8 @@ describe('puzzle navigation', () => {
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Reset and replay' }));
 
-    expect(JSON.parse(localStorage.getItem('realmbound:marrowfen-chapel') ?? 'null')).toMatchObject({
-      puzzleId: 'marrowfen-chapel',
+    expect(JSON.parse(localStorage.getItem('realmbound:graywick-priory') ?? 'null')).toMatchObject({
+      puzzleId: 'graywick-priory',
       elapsedSeconds: 0,
       completed: false,
     });
@@ -175,15 +175,15 @@ describe('puzzle navigation', () => {
     await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
     const levelGrid = screen.getByRole('list', { name: 'Royal Inquest levels' });
     await user.click(within(levelGrid).getByRole('button', { name: /^Level 2\b/ }));
-    expect(screen.getByRole('heading', { name: 'The Reckoning at Ashwell Manor' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'The Almshouse Reckoning' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
-    expect(screen.getByRole('grid', { name: /The Reckoning at Ashwell Manor/ })).toBeInTheDocument();
+    expect(screen.getByRole('grid', { name: /The Almshouse Reckoning/ })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Back to Royal Inquest levels' }));
 
     await user.click(within(screen.getByRole('list', { name: 'Royal Inquest levels' })).getByRole('button', { name: /^Level 3\b/ }));
-    expect(screen.getByRole('heading', { name: 'Shadows over Thistledown Market' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'The Reckoning at Duskhollow Granary' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
-    expect(screen.getByRole('grid', { name: /Shadows over Thistledown Market/ })).toBeInTheDocument();
+    expect(screen.getByRole('grid', { name: /The Reckoning at Duskhollow Granary/ })).toBeInTheDocument();
   });
 
   it('returns through the puzzle navigation hierarchy', async () => {
@@ -233,11 +233,11 @@ describe('puzzle play', () => {
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
     await user.click(screen.getByRole('button', { name: 'Previous character' }));
-    await user.click(screen.getByRole('button', { name: /The Pilgrim Envoy/ }));
+    await user.click(screen.getByRole('button', { name: /The Wandering Almswoman/ }));
     await user.click(screen.getByRole('gridcell', { name: /Row 1, column 2/ }));
-    const placedCell = screen.getByRole('gridcell', { name: /Pilgrim Envoy/ });
+    const placedCell = screen.getByRole('gridcell', { name: /Wandering Almswoman/ });
     expect(placedCell).toBeInTheDocument();
-    expect(placedCell.querySelector('img')).toHaveAttribute('src', expect.stringContaining('prisoner'));
+    expect(placedCell.querySelector('img')).toHaveAttribute('src', expect.stringContaining('maid'));
     expect(screen.getByRole('button', { name: 'Apply hint' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Check progress' })).not.toBeInTheDocument();
   });
@@ -249,24 +249,24 @@ describe('puzzle play', () => {
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
     await user.click(screen.getByRole('button', { name: 'Previous character' }));
-    await user.click(screen.getByRole('button', { name: /The Pilgrim Envoy/ }));
+    await user.click(screen.getByRole('button', { name: /The Wandering Almswoman/ }));
 
     await user.click(screen.getByRole('button', { name: 'Note' }));
     await user.click(screen.getByRole('gridcell', { name: /Row 1, column 2/ }));
     await user.click(screen.getByRole('gridcell', { name: /Row 1, column 3/ }));
 
-    const firstDraftCell = screen.getByRole('gridcell', { name: /Row 1, column 2.*noted for The Pilgrim Envoy/ });
+    const firstDraftCell = screen.getByRole('gridcell', { name: /Row 1, column 2.*noted for The Wandering Almswoman/ });
     expect(firstDraftCell).toBeInTheDocument();
-    expect(firstDraftCell.querySelector('.cell-draft')).toHaveTextContent('P');
-    expect(screen.getByRole('gridcell', { name: /Row 1, column 3.*noted for The Pilgrim Envoy/ })).toBeInTheDocument();
+    expect(firstDraftCell.querySelector('.cell-draft')).toHaveTextContent('A');
+    expect(screen.getByRole('gridcell', { name: /Row 1, column 3.*noted for The Wandering Almswoman/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Note' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Place' }));
     await user.click(screen.getByRole('gridcell', { name: /Row 1, column 2/ }));
 
-    const placedCell = screen.getByRole('gridcell', { name: /^Row 1, column 2, Chapel Nave, The Pilgrim Envoy$/ });
+    const placedCell = screen.getByRole('gridcell', { name: /^Row 1, column 2, Priory Hall, The Wandering Almswoman$/ });
     expect(placedCell).not.toHaveAccessibleName(/noted for/);
-    expect(screen.getByRole('gridcell', { name: /Row 1, column 3.*noted for The Pilgrim Envoy/ })).toBeInTheDocument();
+    expect(screen.getByRole('gridcell', { name: /Row 1, column 3.*noted for The Wandering Almswoman/ })).toBeInTheDocument();
   });
 
   it('renders visible chamber name labels and prop art on blocked cells', async () => {
@@ -278,7 +278,7 @@ describe('puzzle play', () => {
 
     const chamberLabels = [...container.querySelectorAll('.chamber-label')].map((el) => el.textContent);
     expect(chamberLabels).toEqual(
-      expect.arrayContaining(['Chapel Nave', 'Charnel Vault', 'Vestry', 'Cloister Garden', 'Almonry Kitchen']),
+      expect.arrayContaining(['Priory Hall', 'Bone Crypt', 'Scriptorium', 'Herb Cloister', 'Priory Kitchen']),
     );
 
     const decoratedCell = screen.getByRole('gridcell', { name: /Row 4, column 1,/ });
@@ -296,7 +296,7 @@ describe('puzzle play', () => {
     expect(seatCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('church-pew'));
     expect(seatCell).not.toBeDisabled();
 
-    await user.click(screen.getByRole('button', { name: /The Sexton/ }));
+    await user.click(screen.getByRole('button', { name: /The Prioress/ }));
     await user.click(seatCell);
 
     expect(seatCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('church-pew'));
@@ -310,13 +310,13 @@ describe('puzzle play', () => {
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
 
-    const sextonBrief = screen.getByRole('region', { name: /Clues about The Sexton/i });
-    expect(within(sextonBrief).getByText('The Sexton was seen in the Nave.')).toBeInTheDocument();
+    const prioressBrief = screen.getByRole('region', { name: /Clues about The Prioress/i });
+    expect(within(prioressBrief).getByText('The Prioress was seen in the Priory Hall.')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Previous character' }));
 
-    const envoyBrief = screen.getByRole('region', { name: /Clues about The Pilgrim Envoy/i });
-    expect(within(envoyBrief).getByText('No witness statement names The Pilgrim Envoy directly.')).toBeInTheDocument();
+    const almswomanBrief = screen.getByRole('region', { name: /Clues about The Wandering Almswoman/i });
+    expect(within(almswomanBrief).getByText('No witness statement names The Wandering Almswoman directly.')).toBeInTheDocument();
   });
 
   it('renders a wall indicator at every real chamber boundary', async () => {
