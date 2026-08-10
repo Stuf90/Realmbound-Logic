@@ -424,7 +424,7 @@ each number from living in two places.
 | not alone *(derived, case 76)* | Negates "alone" — check the predicate supports a negated form (count != 0) before using it | `chamber-occupant-count` negated | — |
 | alone on [prop area] *(derived, case 38)* | "Alone" localized to a prop-tagged area (an `InquestCell.areaId`), not the whole chamber | `area-occupant-count` (`count: 0`) | — |
 | empty | Nobody in the room at all, not even the victim | `chamber-occupant-count` (`count: 0`, everyone including the victim) | — |
-| no empty room *(derived, case 39)* | Global, every room at once — already an author-time invariant, see [Board, rooms, props](board-rooms-props.human.md) "no empty chamber at the solution" — not a clue predicate itself | not a clue | `n/a` |
+| no empty room *(derived, case 39)* | Global, every room at once — no longer enforced as an author-time invariant (rule dropped — an empty chamber is legal now), and not a clue predicate either | not a clue | `n/a` |
 | only person on [prop] | Nobody else sat on the same prop type — prop is unique to one cell by construction, doubling as uniqueness | `on-prop` | — |
 | exactly one person on [prop-kind] *(derived, case 76)* | Global unique quantifier, cast-wide, whole prop-kind | `seated-character-count` (`count: 1`) | — |
 | room/chamber | Any enclosed area | `exact-chamber` | — |
@@ -458,9 +458,10 @@ reference" above.
 Only one item never was a clue predicate at all and stays out of scope here:
 
 1. **No-empty-room global constraint** — "no room stayed empty" as a puzzle-level fact
-   that helps solving, but isn't a clue predicate itself — it's an author-time invariant
-   (every chamber gets at least one occupant at the solution), already enforced by
-   `validateInquestDefinition`'s "every chamber has no occupant in the solution" check.
+   that helps solving, but isn't a clue predicate itself — no longer enforced as an
+   author-time invariant (it used to require every chamber to have at least one
+   occupant at the solution, via `validateInquestDefinition`). An empty chamber is legal
+   now.
 
 Two follow-ups remain open from this pass, both flagged as non-goals in
 `docs/superpowers/specs/2026-08-08-royal-inquest-predicate-expansion-design.md`:

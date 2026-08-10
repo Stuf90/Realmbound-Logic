@@ -227,17 +227,6 @@ export function validateInquestDefinition(definition: unknown): string[] {
     issues.push('Solution columns must be unique.');
   }
 
-  const solutionChamberIds = new Set(
-    validSolutionEntries
-      .map(([, position]) => cells.find((cell) => positionKey(cell.position) === positionKey(position))?.chamberId)
-      .filter((chamberId): chamberId is string => chamberId !== undefined),
-  );
-  for (const chamberId of chamberIds) {
-    if (!solutionChamberIds.has(chamberId)) {
-      issues.push(`Chamber "${chamberId}" has no occupant in the solution; every chamber must house at least one character.`);
-    }
-  }
-
   for (const [characterId, position] of validSolutionEntries) {
     const cell = cells.find((candidate) => positionKey(candidate.position) === positionKey(position));
     if (!cell || cell.blocked) {
