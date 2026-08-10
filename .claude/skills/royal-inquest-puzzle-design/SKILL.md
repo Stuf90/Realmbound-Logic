@@ -12,6 +12,20 @@ skill instead. Targeting a specific difficulty tier, or authoring a batch across
 [`royal-inquest-difficulty-design`](../royal-inquest-difficulty-design/SKILL.md) for the tier-specific
 knob — this skill covers everything else.
 
+## Why this skill leads with a generator now
+
+All 5 shipped cases used to trace back to one hand-authored template — same board skeleton, and a
+clue set that was *always* exactly one `exact-chamber` clue per non-victim character plus one
+`on-prop` clue on the traitor, even after board shapes were later varied. The engine supports 20
+`InquestPredicate` variants, but almost none had ever shipped in real content, because "author a new
+case" reliably made an agent (or a rushed human) copy the nearest existing level's shape instead of
+exploring the predicate space. `tools/royal-inquest-generator/` fixes this by making board shape,
+prop placement, cast, and clue-predicate mix a property of code, gated by the same
+`predicateDifficulty.ts`/`validateInquestDefinition` rules below — see
+[`level-generator.cave.md`](../../../docs/royal-inquest/authoring/level-generator.cave.md) for the
+full pipeline. This skill's default path (see "Where a new case lives" below) now runs that generator
+first and hand-polishes its output, rather than authoring from a blank file.
+
 ## Read in this order
 
 1. [`docs/royal-inquest/rules.cave.md`](../../../docs/royal-inquest/rules.cave.md) — canonical game
@@ -25,6 +39,9 @@ knob — this skill covers everything else.
    case must pass.
 4. [`docs/royal-inquest/authoring/clues-and-predicates.cave.md`](../../../docs/royal-inquest/authoring/clues-and-predicates.cave.md)
    — every `InquestPredicate` variant, which ones a clue may actually use, exact eval semantics.
+5. [`docs/royal-inquest/authoring/level-generator.cave.md`](../../../docs/royal-inquest/authoring/level-generator.cave.md)
+   — the procedural generator that is now the default entry point for a new case: CLI flags, the
+   five pipeline stages, the solver-backed repair loop, and why it exists.
 
 Each doc has a `.human.md` twin — per this repo's convention (and the workspace's), read only the
 `.cave.md` version.
@@ -87,10 +104,30 @@ deduction alone. Two ways to run it:
 
 ## Where a new case lives
 
-- Definition: a new file under `src/features/royal-inquest/levels/` (see `ravensholtAbbey.ts` /
-  `thornfieldManor.ts` for shape), registered in `src/features/royal-inquest/levels/index.ts`
-  (`royalInquestLevels` array).
-- Follow the standard spec/plan/worktree flow from
-  [`realmbound-workflow`](../realmbound-workflow/SKILL.md) for anything beyond a trivial content
-  addition — a new case is exactly the kind of non-trivial change that skill's plan-first rule
-  covers.
+**Default path — run the generator first, then hand-polish:**
+
+1. `npm run inquest:generate -- --difficulty <N> --out src/features/royal-inquest/levels/<slug>.ts`
+   — produces a validator-clean `InquestDefinition` with a randomized board, chamber shapes, props,
+   cast, and clue-predicate mix (never just `exact-chamber`/`on-prop`). See
+   [`level-generator.cave.md`](../../../docs/royal-inquest/authoring/level-generator.cave.md) for
+   what it does and why. Pass `--seed <n>` to reproduce a specific run; omit it and the CLI logs the
+   seed it picked.
+2. Hand-polish the generated file: rename chambers/characters/the case title to fit a theme, adjust
+   clue wording, optionally add one bespoke hand-written clue on top. This is where taste and flavor
+   get added — the generator only guarantees structural variety and validity, not narrative quality.
+3. Re-validate after hand edits: `npm run inquest:solve -- --file src/features/royal-inquest/levels/<slug>.ts`
+   (unchanged from before — hand edits can break solvability just as easily as from-scratch authoring
+   can).
+4. Register the new level in `src/features/royal-inquest/levels/index.ts` (`royalInquestLevels`
+   array), same as any case.
+
+**Escape hatch — manual from-scratch authoring.** Still possible (a new file under
+`src/features/royal-inquest/levels/`, following an existing case's shape, e.g. `hollowmereLodge.ts`),
+but no longer the default: use it only when the generator's constraints (square 5x5/6x6 board with a
+full-quota cast, `room`/`church`/`royalRoom`-only chamber environments, region-grown chamber shapes,
+no `-left`/`-right` props — see the generator doc's "Why" sections and scope cuts) don't fit what's
+needed, and note *why* the escape hatch was used in the case's spec/plan.
+
+Either way, follow the standard spec/plan/worktree flow from
+[`realmbound-workflow`](../realmbound-workflow/SKILL.md) for anything beyond a trivial content
+addition — a new case is exactly the kind of non-trivial change that skill's plan-first rule covers.
