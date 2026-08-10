@@ -3,6 +3,11 @@ import { fenmoorAlmshouse } from './fenmoorAlmshouse';
 import { duskhollowGranary } from './duskhollowGranary';
 import { sableridgeGarrison } from './sableridgeGarrison';
 import { wyrmscarInfirmary } from './wyrmscarInfirmary';
+import { thornwickAbbey } from './thornwickAbbey';
+import { millraceForge } from './millraceForge';
+import { ashenportCustomhouse } from './ashenportCustomhouse';
+import { vellumArchive } from './vellumArchive';
+import { gallowmereTollhouse } from './gallowmereTollhouse';
 import type { InquestDefinition } from '../types';
 
 export const royalInquestLevels: InquestDefinition[] = [
@@ -11,6 +16,11 @@ export const royalInquestLevels: InquestDefinition[] = [
   duskhollowGranary,
   sableridgeGarrison,
   wyrmscarInfirmary,
+  thornwickAbbey,
+  millraceForge,
+  ashenportCustomhouse,
+  vellumArchive,
+  gallowmereTollhouse,
 ];
 
 export function getRoyalInquestLevel(id: string): InquestDefinition {

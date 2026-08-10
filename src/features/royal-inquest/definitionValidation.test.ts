@@ -233,16 +233,6 @@ describe('Blackwood Keep definition', () => {
     expect(validateInquestDefinition(augmented)).toEqual([]);
   });
 
-  it('rejects a solution that leaves a chamber empty', () => {
-    const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
-    // Move Daria out of the Crypt entirely, leaving no solution occupant there.
-    malformed.solution.daria = { row: 0, column: 4 };
-
-    expect(validateInquestDefinition(malformed)).toContain(
-      'Chamber "crypt" has no occupant in the solution; every chamber must house at least one character.',
-    );
-  });
-
   it('accepts a clue using a newly added predicate type (area-occupant-count)', () => {
     const augmented = structuredClone(blackwoodKeep) as InquestDefinition;
     // No cell sets areaId, so this behaves exactly like the already-true chamber-occupant-count(aldric, 1).

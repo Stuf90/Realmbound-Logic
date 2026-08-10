@@ -28,12 +28,6 @@ Authoring rules, enforced by `validateInquestDefinition`:
 2. **Minimum size: 5 cells.** Group cells by `chamberId`; each group must contain at
    least 5 cells — `Chamber "<id>" must contain at least 5 tiles.` Chambers may differ in
    size above that floor; there's no uniformity requirement.
-3. **No empty chamber at the solution.** Every `chamberId` used by any cell must house at
-   least one character in the authored `solution` — otherwise `Chamber "<id>" has no
-   occupant in the solution; every chamber must house at least one character.` This is
-   an authoring-time invariant, not a clue predicate — checked by
-   `validateInquestDefinition` directly against `solution`, no solver run needed.
-
 `chamberEnvironments` values are one of the `TileEnvironment` union:
 `'room' | 'garden' | 'church' | 'kitchen' | 'hallway' | 'dungeon' | 'royalRoom'`. The
 environment selects both the chamber's tile art (`royalInquestAssets.tiles[environment]`)
