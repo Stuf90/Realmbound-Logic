@@ -176,3 +176,5 @@ author a **new** case (a new board, cast, chamber layout, prop set, or clue list
   every case must pass.
 - [Clues and predicates](authoring/clues-and-predicates.human.md) — every predicate
   type, which ones a clue may actually use, and how to write a clue against them.
+- [Asset inventory](authoring/asset-inventory.human.md) — every existing avatar, prop,
+  and tile id, and a tracked list of planned/possible future assets.
