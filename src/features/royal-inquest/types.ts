@@ -88,7 +88,79 @@ export type InquestPredicate =
   // True when `characterId` is orthogonally adjacent to the (single) cell bearing `propId` —
   // same adjacency check as `shares-prop-neighbor`'s first half, but without requiring a second
   // (unnamed) character nearby. Intended for edge-anchored props like `window`.
-  | { type: 'by-window'; characterId: CharacterId; propId: PropAssetId };
+  | { type: 'by-window'; characterId: CharacterId; propId: PropAssetId }
+  | { type: 'not-on-prop'; characterId: CharacterId; propId: PropAssetId }
+  | { type: 'not-seated'; characterId: CharacterId }
+  | { type: 'not-in-corner'; characterId: CharacterId }
+  | { type: 'not-exact-chamber'; characterId: CharacterId; chamberId: string }
+  // Exact negation of `not-beside-wall`: true when at least one orthogonal neighbor is off-board
+  // or in a different chamber.
+  | { type: 'beside-wall'; characterId: CharacterId }
+  // Generic version of `by-window`: orthogonal adjacency to the (single) cell bearing `propId`
+  // AND same chamber as that cell — unlike `by-window`, which never needed the chamber check
+  // because a window sits on the chamber's own edge cell.
+  | { type: 'near-prop'; characterId: CharacterId; propId: PropAssetId }
+  | { type: 'not-near-prop'; characterId: CharacterId; propId: PropAssetId }
+  // True when some cell sharing `characterId`'s row (or column, per `axis`) bears `propId`.
+  // `characterId`'s own cell doesn't count.
+  | { type: 'prop-in-axis'; characterId: CharacterId; propId: PropAssetId; axis: 'row' | 'column' }
+  // True when at least one of `characterId`'s same-chamber orthogonal open (unblocked) neighbor
+  // cells ends up unoccupied by another character.
+  | { type: 'beside-empty-cell'; characterId: CharacterId }
+  // Whoever occupies the (single) cell bearing `propId` belongs to `category` — names no specific
+  // character, works for an unnamed "a man was in it" clue shape.
+  | { type: 'category-on-prop'; category: string; propId: PropAssetId }
+  // Pure board-layout fact: true when the (single) cell bearing `propId` sits in `chamberId`.
+  // Never placement-dependent, never `'unknown'`, names no character.
+  | { type: 'prop-in-chamber'; chamberId: string; propId: PropAssetId }
+  // Generalizes `offset-from` to a single axis, like `direction-from` generalizes to a direction
+  // without distance: true when `subject.<axis> - reference.<axis> === offset`.
+  | {
+      type: 'axis-offset-from';
+      subjectCharacterId: CharacterId;
+      referenceCharacterId: CharacterId;
+      axis: 'row' | 'column';
+      offset: number;
+    }
+  // Cast-wide quantifier, like `seated-character-count`, but scoped to one chamber and counted by
+  // `InquestCharacter.category` rather than seat occupancy.
+  | {
+      type: 'category-chamber-count';
+      category: string;
+      chamberId: string;
+      count: number;
+    }
+  // True when `characterId` is the topmost/bottommost/leftmost/rightmost of `chamberId`'s
+  // occupants by row or column. Two characters sharing a chamber always have distinct rows and
+  // distinct columns (permutation board), so no tie handling is needed.
+  | {
+      type: 'chamber-rank';
+      characterId: CharacterId;
+      chamberId: string;
+      rank: 'topmost' | 'bottommost' | 'leftmost' | 'rightmost';
+    }
+  // Disjunction over nested predicates — true if any option is true, `'unknown'` if none are true
+  // but at least one is `'unknown'`, else false.
+  | { type: 'one-of'; options: InquestPredicate[] }
+  // Conjunction over nested predicates — false if any option is false, `'unknown'` if none are
+  // false but at least one is `'unknown'`, else true. Mainly useful nested inside a `one-of`.
+  | { type: 'all-of'; predicates: InquestPredicate[] }
+  // Compares two characters' chambers by `InquestDefinition.chamberOrder` (golf holes, bus stops,
+  // course order, ...). `'unknown'` unless both chambers have a `chamberOrder` entry.
+  | {
+      type: 'chamber-order-compare';
+      subjectCharacterId: CharacterId;
+      referenceCharacterId: CharacterId;
+      comparator: 'greater' | 'less' | 'immediately-after' | 'immediately-before';
+    }
+  // True when both characters are placed and the set of prop categories (see
+  // `propCategoryByAsset`) orthogonally adjacent to each of them intersects — "X and Y are each
+  // beside a plant," not necessarily the same plant.
+  | {
+      type: 'shares-prop-category-neighbor';
+      firstCharacterId: CharacterId;
+      secondCharacterId: CharacterId;
+    };
 
 export interface InquestClue {
   id: string;
@@ -112,6 +184,9 @@ export interface InquestDefinition {
   solution: Record<CharacterId, GridPosition>;
   chamberEnvironments: Record<string, TileEnvironment>;
   chamberNames: Record<string, string>;
+  // Optional ordering fact per chamber (golf holes, bus stops, course order, ...) — only chambers
+  // referenced by a `chamber-order-compare` clue need an entry.
+  chamberOrder?: Record<string, number>;
 }
 
 export interface InquestState {

@@ -71,6 +71,18 @@ dungeon cage, and so on.
   cell is exactly as open to every character as any other unblocked cell once you
   place a chair or bench on it.
 
+- `manifest.ts` also exports `propCategoryByAsset: Record<PropAssetId, string>` (added
+  2026-08-16 for the `shares-prop-category-neighbor` predicate — see
+  [clues + predicates](clues-and-predicates.human.md#shares-prop-category-neighbor)),
+  grouping asset variants that are the same "thing" in different skins/environments into
+  one category string: `stone-planter`/`wooden-planter` → `planter`;
+  `dining-table`/`-left`/`-right` → `dining-table`; `kitchen-worktable`/`-left`/`-right`
+  → `kitchen-worktable`; `bookshelf`/`-left`/`-right` → `bookshelf`;
+  `wooden-bench`/`-left`/`-right` → `wooden-bench`; `church-pew`/`-left`/`-right` →
+  `church-pew`. Every other asset (no sibling variant) maps to its own id, which is
+  already a unique category. This is separate from `propKindByAsset` (seat/decorative) —
+  an orthogonal concern, since one asset has both a kind and a category.
+
 ### Allow-list by environment
 
 `manifest.ts` also exports `propsByEnvironment: Record<TileEnvironment, readonly PropAssetId[]>`

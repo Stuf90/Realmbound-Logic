@@ -1,7 +1,7 @@
 import { positionKey, type GridPosition } from '../../shared/geometry';
 import { propKindByAsset, propsByEnvironment, type PropAssetId } from '../../assets/royal-inquest/manifest';
 import { getPredicateCharacterIds } from './predicates';
-import { predicateDifficulty } from './predicateDifficulty';
+import { effectivePredicateDifficulty } from './predicateDifficulty';
 import { solveInquestDefinition, checkVictimElimination } from './solver';
 import type { InquestCell, InquestCharacter, InquestClue, InquestDefinition } from './types';
 
@@ -52,6 +52,24 @@ const PREDICATE_TYPES = new Set([
   'prop-neighbor-count',
   'area-occupant-count',
   'by-window',
+  'not-on-prop',
+  'not-seated',
+  'not-in-corner',
+  'not-exact-chamber',
+  'beside-wall',
+  'near-prop',
+  'not-near-prop',
+  'prop-in-axis',
+  'beside-empty-cell',
+  'category-on-prop',
+  'prop-in-chamber',
+  'axis-offset-from',
+  'category-chamber-count',
+  'chamber-rank',
+  'one-of',
+  'all-of',
+  'chamber-order-compare',
+  'shares-prop-category-neighbor',
 ]);
 
 function isClue(value: unknown): value is InquestClue {
@@ -191,10 +209,37 @@ export function validateInquestDefinition(definition: unknown): string[] {
         `Clue "${clue.id}" may not use beside/not-beside between two characters; placement rules guarantee two characters never share a row or column, so a character-pair beside/not-beside clue is always vacuously true and conveys no information. Use not-beside-wall, category-not-beside-prop, by-window, shares-prop-neighbor, or prop-neighbor-count for wall/asset adjacency instead.`,
       );
     }
-    if (typeof difficulty === 'number' && predicateDifficulty[clue.predicate.type] > difficulty) {
+    if (typeof difficulty === 'number' && effectivePredicateDifficulty(clue.predicate) > difficulty) {
       issues.push(
-        `Clue "${clue.id}" uses a difficulty-${predicateDifficulty[clue.predicate.type]} predicate ("${clue.predicate.type}"), which exceeds this case's declared difficulty of ${difficulty}.`,
+        `Clue "${clue.id}" uses a difficulty-${effectivePredicateDifficulty(clue.predicate)} predicate ("${clue.predicate.type}"), which exceeds this case's declared difficulty of ${difficulty}.`,
       );
+    }
+  }
+
+  const chamberOrder = isRecord(definition.chamberOrder) ? definition.chamberOrder : undefined;
+  if (definition.chamberOrder !== undefined) {
+    if (!isRecord(definition.chamberOrder)) {
+      issues.push('chamberOrder must be an object mapping chamber ids to integers.');
+    } else {
+      for (const [chamberId, order] of Object.entries(definition.chamberOrder)) {
+        if (!Number.isInteger(order)) issues.push(`chamberOrder["${chamberId}"] must be an integer.`);
+        if (!chamberIds.has(chamberId)) issues.push(`chamberOrder references unknown chamber "${chamberId}".`);
+      }
+    }
+  }
+  for (const clue of clues) {
+    if (clue.predicate.type !== 'chamber-order-compare') continue;
+    const { subjectCharacterId, referenceCharacterId } = clue.predicate;
+    for (const characterId of [subjectCharacterId, referenceCharacterId]) {
+      const position = solution[characterId];
+      const chamberId = isPosition(position)
+        ? cells.find((cell) => positionKey(cell.position) === positionKey(position))?.chamberId
+        : undefined;
+      if (chamberId === undefined || chamberOrder?.[chamberId] === undefined) {
+        issues.push(
+          `Clue "${clue.id}" uses chamber-order-compare against character "${characterId}", whose chamber has no chamberOrder entry.`,
+        );
+      }
     }
   }
   const victimId = characters.find(({ isVictim }) => isVictim)?.id;

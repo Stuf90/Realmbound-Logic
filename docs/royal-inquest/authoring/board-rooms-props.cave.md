@@ -67,6 +67,17 @@ PROP = SCENERY SIT ONE CELL — THRONE, BOOKSHELF, DUNGEON CAGE, ETC.
   NO PER-CELL "RESERVE THIS SEAT ONE SPECIFIC CHARACTER" MECHANISM — SEAT CELL EXACT AS
   OPEN TO EVERY CHARACTER AS ANY OTHER UNBLOCKED CELL ONCE CHAIR/BENCH PLACE ON IT.
 
+- `manifest.ts` ALSO EXPORT `propCategoryByAsset: Record<PropAssetId, string>` (ADD
+  2026-08-16, `shares-prop-category-neighbor` PREDICATE — SEE
+  [CLUES + PREDICATES](clues-and-predicates.cave.md#shares-prop-category-neighbor)) —
+  GROUP ASSET VARIANT SAME "THING" DIFFERENT SKIN/ENVIRONMENT INTO ONE CATEGORY STRING:
+  `stone-planter`/`wooden-planter` → `planter`; `dining-table`/`-left`/`-right` →
+  `dining-table`; `kitchen-worktable`/`-left`/`-right` → `kitchen-worktable`;
+  `bookshelf`/`-left`/`-right` → `bookshelf`; `wooden-bench`/`-left`/`-right` →
+  `wooden-bench`; `church-pew`/`-left`/`-right` → `church-pew`. EVERY OTHER ASSET (NO
+  SIBLING VARIANT) MAP TO OWN ID — ALREADY UNIQUE CATEGORY. SEPARATE FROM `propKindByAsset`
+  (SEAT/DECORATIVE) — ORTHOGONAL CONCERN, ONE ASSET HAVE BOTH A KIND + A CATEGORY.
+
 ### ALLOW-LIST BY ENVIRONMENT
 
 `manifest.ts` ALSO EXPORT `propsByEnvironment: Record<TileEnvironment, readonly PropAssetId[]>`

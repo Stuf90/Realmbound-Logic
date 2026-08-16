@@ -83,17 +83,20 @@ NEGATE `same-chamber`, NOT DISTANCE CHECK.
 }
 ```
 
-`'unknown'` UNLESS BOTH PLACE. ELSE:
+`'unknown'` UNLESS BOTH PLACE. ELSE, LOOSE SINGLE-AXIS COMPARE — NO SHARE-ROW/COLUMN
+REQUIRE (FIX 2026-08-16, MATCH `murdoku-logic-engine` + FAN GLOSSARY "SOUTH OF" READ:
+"STRICTLY BELOW, ANY COLUMN"):
 
-- `north`: SAME COLUMN, SUBJECT ROW STRICT LESS THAN REFERENCE ROW.
-- `south`: SAME COLUMN, SUBJECT ROW STRICT GREATER.
-- `east`: SAME ROW, SUBJECT COLUMN STRICT GREATER.
-- `west`: SAME ROW, SUBJECT COLUMN STRICT LESS.
+- `north`: SUBJECT ROW STRICT LESS THAN REFERENCE ROW.
+- `south`: SUBJECT ROW STRICT GREATER.
+- `east`: SUBJECT COLUMN STRICT GREATER.
+- `west`: SUBJECT COLUMN STRICT LESS.
 
-ALL REQUIRE SUBJECT + REFERENCE SHARE ROW OR COLUMN — SOLUTION FULL ROW/COLUMN
-PERMUTATION (SEE [CHARACTER PLACEMENT](character-placement.cave.md)) NEVER MAKE
-`direction-from` CLUE TRUE ANY PAIR. SHIP CASE NEVER USE AS REAL CLUE THIS REASON.
-FUTURE CASE NON-PERMUTATION SOLUTION COULD USE REAL.
+OLD VERSION REQUIRE SUBJECT + REFERENCE SHARE OTHER AXIS TOO — DEAD ON THIS BOARD
+(ONE-PER-ROW/COLUMN PERMUTATION MEAN TWO CHARACTER NEVER SHARE ROW **OR** COLUMN, SO
+OLD CHECK NEVER PASS, PREDICATE VACUOUS). NOW REAL + USABLE — DIAGONAL DIRECTION
+(NE/NW/SE/SW) STILL **NOT** MODEL HERE, ENGINE-SIDE ONLY (SEE
+`murdoku-logic-engine/src/predicates.ts` `directionHolds`), NOT YET PORT.
 
 ### `beside` / `not-beside`
 
@@ -262,6 +265,174 @@ EDGE-PROP COULD REUSE SAME SHAPE. `definitionValidation.ts` SEPARATE REQUIRE ANY
 `propId` = `window` SIT BOARD OUTER EDGE — SEE
 [BOARD, ROOMS, PROPS](board-rooms-props.cave.md).
 
+### `not-on-prop` / `not-seated` / `not-in-corner` / `not-exact-chamber`
+
+```ts
+{ type: 'not-on-prop'; characterId: CharacterId; propId: PropAssetId }
+{ type: 'not-seated'; characterId: CharacterId }
+{ type: 'not-in-corner'; characterId: CharacterId }
+{ type: 'not-exact-chamber'; characterId: CharacterId; chamberId: string }
+```
+
+EXACT NEGATE `on-prop` / SEAT-KIND-PROP CHECK / `in-corner` / `exact-chamber` — SAME
+`'unknown'`-TILL-PLACE RULE, BOOLEAN FLIP.
+
+### `beside-wall`
+
+```ts
+{ type: 'beside-wall'; characterId: CharacterId }
+```
+
+EXACT NEGATE `not-beside-wall` — TRUE WHEN AT LEAST ONE ORTHOGONAL NEIGHBOR OFF-BOARD OR
+DIFFERENT CHAMBER.
+
+### `near-prop` / `not-near-prop`
+
+```ts
+{ type: 'near-prop'; characterId: CharacterId; propId: PropAssetId }
+{ type: 'not-near-prop'; characterId: CharacterId; propId: PropAssetId }
+```
+
+GENERIC VERSION `by-window` — ORTHOGONAL ADJACENT (SINGLE) CELL BEAR `propId` **AND**
+SAME CHAMBER AS THAT CELL (MATCH FAN GLOSSARY "BESIDE" = ADJACENT + SAME REGION).
+`by-window` NEVER NEED CHAMBER CHECK SINCE WINDOW SIT CHAMBER OWN EDGE CELL — PLANT/
+CABINET/DOOR CAN SIT NEAR A CHAMBER BOUNDARY, WHERE ADJACENT-ONLY WOULD LEAK ACROSS
+WALL. `not-near-prop` = EXACT NEGATE, `'unknown'` PROPAGATE.
+
+### `prop-in-axis`
+
+```ts
+{ type: 'prop-in-axis'; characterId: CharacterId; propId: PropAssetId; axis: 'row' | 'column' }
+```
+
+`'unknown'` TILL PLACE. ELSE TRUE WHEN SOME CELL SHARE `characterId` ROW (OR COLUMN, PER
+`axis`) BEAR `propId` — OWN CELL NOT COUNT. "THERE WAS A WINDOW SOMEWHERE IN HIS ROW."
+
+### `beside-empty-cell`
+
+```ts
+{ type: 'beside-empty-cell'; characterId: CharacterId }
+```
+
+`'unknown'` TILL PLACE. TRUE WHEN AT LEAST ONE SAME-CHAMBER ORTHOGONAL OPEN (UNBLOCK)
+NEIGHBOR CELL END UP UNOCCUPY BY ANOTHER CHARACTER. NO OPEN NEIGHBOR AT ALL → `false`
+IMMEDIATE. OCCUPANCY ONLY GROW AS MORE CHARACTER PLACE, SO "EVERY NEIGHBOR TAKEN"
+DECISIVE `false` EARLY; OPEN NEIGHBOR STAY `'unknown'` TILL WHOLE CAST PLACE.
+
+### `category-on-prop`
+
+```ts
+{ type: 'category-on-prop'; category: string; propId: PropAssetId }
+```
+
+NAME NO SPECIFIC CHARACTER. WHOEVER OCCUPY (SINGLE) CELL BEAR `propId` DECIDE THIS
+IMMEDIATE ONCE SOMEONE PLACE THERE (NO WAIT WHOLE CAST) — TRUE IF THAT OCCUPANT
+`InquestCharacter.category` MATCH `category`. NOBODY THERE YET + WHOLE CAST PLACE →
+`false`. LET CLUE SAY "A MAN SAT IN ARMCHAIR" NO NAME WHO.
+
+### `prop-in-chamber`
+
+```ts
+{ type: 'prop-in-chamber'; chamberId: string; propId: PropAssetId }
+```
+
+PURE BOARD-LAYOUT FACT, NEVER PLACEMENT-DEPEND, NEVER `'unknown'`. TRUE WHEN (SINGLE)
+CELL BEAR `propId` SIT `chamberId`. NAME NO CHARACTER — HALF A COMPOUND CLUE LIKE "HE
+WAS IN ROOM WITH A PLANT" (OTHER HALF = `exact-chamber` NAME SAME CHAMBER); NEVER USE
+ALONE, NAME NOTHING PIN DOWN BY ITSELF.
+
+### `axis-offset-from`
+
+```ts
+{
+  type: 'axis-offset-from';
+  subjectCharacterId: CharacterId;
+  referenceCharacterId: CharacterId;
+  axis: 'row' | 'column';
+  offset: number;
+}
+```
+
+GENERALIZE `offset-from` TO SINGLE AXIS, LIKE `direction-from` GENERALIZE TO DIRECTION
+NO DISTANCE. `'unknown'` UNLESS BOTH PLACE. ELSE TRUE WHEN
+`subject.<axis> - reference.<axis> === offset`. "X EXACT ONE ROW SOUTH OF Y" (IGNORE
+COLUMN).
+
+### `category-chamber-count`
+
+```ts
+{ type: 'category-chamber-count'; category: string; chamberId: string; count: number }
+```
+
+CAST-WIDE QUANTIFIER, LIKE `seated-character-count`, BUT SCOPE ONE CHAMBER + COUNT BY
+`InquestCharacter.category` INSTEAD SEAT OCCUPY. "EXACT 2 [CATEGORY] IN KITCHEN."
+
+### `chamber-rank`
+
+```ts
+{
+  type: 'chamber-rank';
+  characterId: CharacterId;
+  chamberId: string;
+  rank: 'topmost' | 'bottommost' | 'leftmost' | 'rightmost';
+}
+```
+
+TRUE WHEN `characterId` = EXTREME (TOP/BOTTOM/LEFT/RIGHT-MOST) ROW OR COLUMN AMONG
+EVERY OTHER OCCUPANT SAME CHAMBER. TWO CHARACTER SHARE CHAMBER ALWAYS DISTINCT ROW +
+DISTINCT COLUMN (PERMUTATION BOARD) — NO TIE HANDLE NEED. DECISIVE `false` IMMEDIATE IF
+`characterId` NOT EVEN IN `chamberId`; ELSE `'unknown'` TILL WHOLE CAST PLACE (LOOP CHECK
+EVERY OTHER CHARACTER, SKIP UNPLACE ONE).
+
+### `one-of` / `all-of`
+
+```ts
+{ type: 'one-of'; options: InquestPredicate[] }
+{ type: 'all-of'; predicates: InquestPredicate[] }
+```
+
+RECURSIVE DISJUNCTION/CONJUNCTION OVER NEST PREDICATE. `one-of`: ANY OPTION `true` →
+`true`; ELSE `'unknown'` IF ANY OPTION `'unknown'`; ELSE `false`. `all-of`: ANY OPTION
+`false` → `false`; ELSE `'unknown'` IF ANY OPTION `'unknown'`; ELSE `true`. MAIN USE
+`all-of` NEST INSIDE `one-of` — REAL CLUE DISJUNCT BETWEEN TWO MULTI-PART ALTERNATIVE
+("SHE WAS IN KITCHEN WITH DANA, OR DEN WITH EZRA"). NO FIX RATING — EFFECTIVE RATING =
+MAX OF NEST OPTION, RECURSIVE, SEE `effectivePredicateDifficulty` BELOW.
+
+### `chamber-order-compare`
+
+```ts
+{
+  type: 'chamber-order-compare';
+  subjectCharacterId: CharacterId;
+  referenceCharacterId: CharacterId;
+  comparator: 'greater' | 'less' | 'immediately-after' | 'immediately-before';
+}
+```
+
+NEED NEW `InquestDefinition.chamberOrder?: Record<string, number>` FIELD — OPTIONAL,
+ONLY CASE USE THIS PREDICATE SET IT (GOLF HOLE, BUS STOP, COURSE ORDER). `'unknown'`
+UNLESS BOTH CHARACTER CHAMBER RESOLVE **AND** BOTH HAVE `chamberOrder` ENTRY.
+`validateInquestDefinition` REJECT ANY CLUE REFERENCE CHAMBER WITH NO `chamberOrder`
+ENTRY AT AUTHOR TIME (ENGINE VERSION SILENT EVAL `'unknown'` FOREVER INSTEAD — ROYAL
+INQUEST CATCH EARLIER, SAME SPIRIT AS SWAP-HAZARD CATCH).
+
+### `shares-prop-category-neighbor`
+
+```ts
+{
+  type: 'shares-prop-category-neighbor';
+  firstCharacterId: CharacterId;
+  secondCharacterId: CharacterId;
+}
+```
+
+NEED NEW `propCategoryByAsset: Record<PropAssetId, string>` MAP IN
+`src/assets/royal-inquest/manifest.ts` (SEE [BOARD, ROOMS, PROPS]
+(board-rooms-props.cave.md)), GROUP ASSET VARIANT SAME "THING" DIFFERENT SKIN/
+ENVIRONMENT (E.G. `stone-planter`/`wooden-planter` → `planter`). `'unknown'` UNLESS BOTH
+PLACE. ELSE TRUE WHEN SET PROP CATEGORY ORTHOGONAL ADJACENT EACH CHARACTER INTERSECT —
+"X AND Y EACH BESIDE A PLANT," NOT NECESSARY SAME PLANT.
+
 ## PREDICATE DIFFICULTY RATING
 
 **SOLE CANONICAL SOURCE FOR EVERY DIFFICULTY NUMBER IN THIS DOC SET** — TABLE BELOW ONLY
@@ -274,14 +445,22 @@ APPEAR IN ANY PUZZLE DECLARE RATING N **OR HIGHER**. FIX AUTHOR-TIME, LIVE IN
 
 | RATING | MEAN | PREDICATE |
 | --- | --- | --- |
-| 1 | TRIVIAL/FOUNDATION FACT | `exact-row`, `exact-column`, `exact-chamber`, `same-chamber`, `different-chamber`, `on-prop`, `beside`, `not-beside`, `seated-character-count` |
-| 2 | MODERATE COUNT/POSITION REASON | `direction-from`, `chamber-occupant-count`, `in-corner`, `not-beside-wall`, `shares-prop-neighbor`, `area-occupant-count`, `by-window` |
-| 3 | HARD MULTI-AXIS OR EXISTENTIAL REASON | `category-not-beside-prop`, `diagonal-from`, `not-diagonal-from`, `offset-from`, `prop-neighbor-count` |
+| 1 | TRIVIAL/FOUNDATION FACT | `exact-row`, `exact-column`, `exact-chamber`, `same-chamber`, `different-chamber`, `on-prop`, `beside`, `not-beside`, `seated-character-count`, `not-on-prop`, `not-seated`, `not-exact-chamber`, `prop-in-chamber` |
+| 2 | MODERATE COUNT/POSITION REASON | `direction-from`, `chamber-occupant-count`, `in-corner`, `not-beside-wall`, `shares-prop-neighbor`, `area-occupant-count`, `by-window`, `not-in-corner`, `beside-wall`, `near-prop`, `not-near-prop`, `prop-in-axis`, `beside-empty-cell`, `category-on-prop`, `axis-offset-from`, `category-chamber-count`, `chamber-rank`, `shares-prop-category-neighbor` |
+| 3 | HARD MULTI-AXIS OR EXISTENTIAL REASON | `category-not-beside-prop`, `diagonal-from`, `not-diagonal-from`, `offset-from`, `prop-neighbor-count`, `chamber-order-compare` |
+
+`one-of`/`all-of` HAVE NO FIX RATING — `effectivePredicateDifficulty(predicate)` IN
+`predicateDifficulty.ts` RETURN MAX OF NEST OPTION RATING, RECURSIVE (AN OPTION CAN
+ITSELF BE `one-of`/`all-of`). `validateInquestDefinition`'s DIFFICULTY GATE CALL
+`effectivePredicateDifficulty`, NOT PLAIN TABLE LOOKUP, SO NEST PREDICATE STILL GATE
+CORRECT.
 
 RATING REVISE FROM ORIGINAL ([MURDOKU BOOK GLOSSARY](#murdoku-book-glossary-source-vocab)
 CROSS-CHECK PASS) — `beside`/`not-beside`/`seated-character-count` DROP 2→1 (SIMPLE
 DIRECT ADJACENCY/UNIQUENESS FACT, NO HARDER THAN `on-prop`), `shares-prop-neighbor` DROP
-3→2 (EXISTENTIAL PAIR BUT SINGLE PROP ANCHOR, NOT MULTI-AXIS LIKE `diagonal-from`).
+3→2 (EXISTENTIAL PAIR BUT SINGLE PROP ANCHOR, NOT MULTI-AXIS LIKE `diagonal-from`). 18
+NEW PREDICATE (2026-08-16 CATCH-UP PASS VS `murdoku-logic-engine`) RATE MIRROR THAT
+ENGINE'S OWN `PREDICATE_DIFFICULTY` TABLE.
 
 EVERY `InquestDefinition` DECLARE OWN `difficulty: number` (ALSO 1-3).
 `validateInquestDefinition` REJECT ANY CLUE WHOSE PREDICATE RATING EXCEED CASE DECLARE
@@ -420,6 +599,21 @@ DISJUNCTIVE CORNER SET, GLOBAL UNIQUENESS QUANTIFIER, "NOT BESIDE WALL" — ALL 
 `shares-prop-neighbor`, `in-corner`, `seated-character-count`, `not-beside-wall` ABOVE.
 RELATIVE OFFSET, BY-WINDOW, ALONE-ON-PROP-AREA (THREE REAL REMAIN GAP) NOW
 `offset-from`, `by-window`, `area-occupant-count` — SEE "PREDICATE REFERENCE" ABOVE.
+
+THIS SECTION TRACK GAP VS THE P13-BOOK-SCAN CATALOG ONLY. 2026-08-16 PASS CROSS-CHECK
+AGAINST A BIGGER SOURCE INSTEAD — SIBLING REPO `murdoku-logic-engine`, WHICH CROSS-CHECK
+ITS OWN VOCAB AGAINST `https://murdoku.fans/en/` PLUS IMPORT FAN-WIKI CASE DATA (SUPERSET
+OF P13 BOOK SCAN, NOT SUBSET). THAT DIFF FOUND 18 MORE REAL GAP (`not-on-prop`,
+`not-seated`, `not-in-corner`, `not-exact-chamber`, `beside-wall`, `near-prop`,
+`not-near-prop`, `prop-in-axis`, `beside-empty-cell`, `category-on-prop`,
+`prop-in-chamber`, `axis-offset-from`, `category-chamber-count`, `chamber-rank`,
+`one-of`, `all-of`, `chamber-order-compare`, `shares-prop-category-neighbor`) PLUS ONE
+STALE SEMANTIC BUG (`direction-from` VACUOUS, SEE ITS "PREDICATE REFERENCE" ENTRY
+ABOVE) — ALL CLOSE THIS PASS, SEE
+`docs/superpowers/specs/2026-08-16-royal-inquest-predicate-catchup-2-design.md`.
+REMAIN NON-PARITY VS `murdoku-logic-engine`, BOTH DELIBERATE: `beside`/`not-beside`
+(BAN, VACUOUS ON PERMUTATION BOARD, SEE "WHAT CLUE MAY NOT DO") AND `exact-row`/
+`exact-column` (BAN BY DESIGN, SAME SECTION).
 
 ONLY ONE ITEM NEVER WAS CLUE PREDICATE, STAY OUT SCOPE HERE:
 

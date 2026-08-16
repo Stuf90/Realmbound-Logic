@@ -30,4 +30,41 @@ export const predicateDifficulty: Record<InquestPredicate['type'], number> = {
   'by-window': 2,
   'offset-from': 3,
   'prop-neighbor-count': 3,
+  'not-on-prop': 1,
+  'not-seated': 1,
+  'not-in-corner': 2,
+  'not-exact-chamber': 1,
+  'beside-wall': 2,
+  'near-prop': 2,
+  'not-near-prop': 2,
+  'prop-in-axis': 2,
+  'beside-empty-cell': 2,
+  'category-on-prop': 2,
+  'prop-in-chamber': 1,
+  'axis-offset-from': 2,
+  'category-chamber-count': 2,
+  'chamber-rank': 2,
+  'chamber-order-compare': 3,
+  'shares-prop-category-neighbor': 2,
+  // Placeholder only: one-of/all-of are as hard as their hardest nested option, so
+  // effectivePredicateDifficulty is authoritative for these two types.
+  'one-of': 1,
+  'all-of': 1,
 };
+
+/**
+ * Tier of a concrete predicate instance. Identical to the table lookup except for `one-of`/
+ * `all-of`, whose difficulty is the maximum of their (possibly nested) options rather than a
+ * fixed value. Mirrors murdoku-logic-engine's `effectivePredicateDifficulty`.
+ */
+export function effectivePredicateDifficulty(predicate: InquestPredicate): number {
+  const nested =
+    predicate.type === 'one-of' ? predicate.options : predicate.type === 'all-of' ? predicate.predicates : undefined;
+  if (nested === undefined) return predicateDifficulty[predicate.type];
+  let max = 1;
+  for (const option of nested) {
+    const rating = effectivePredicateDifficulty(option);
+    if (rating > max) max = rating;
+  }
+  return max;
+}

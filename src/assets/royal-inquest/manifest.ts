@@ -169,6 +169,37 @@ export const propKindByAsset: Record<PropAssetId, 'seat' | 'decorative'> = {
   window: 'decorative',
 };
 
+// Groups asset variants that are the same "thing" in different skins/environments, for
+// `shares-prop-category-neighbor` ("X and Y are each beside a plant" — not necessarily the same
+// plant). Assets with no sibling variant map to their own id, which is already a unique category.
+export const propCategoryByAsset: Record<PropAssetId, string> = {
+  throne: 'throne',
+  'formal-chair': 'formal-chair',
+  'simple-chair': 'simple-chair',
+  'wooden-bench': 'wooden-bench',
+  'wooden-bench-left': 'wooden-bench',
+  'wooden-bench-right': 'wooden-bench',
+  'church-pew': 'church-pew',
+  'church-pew-left': 'church-pew',
+  'church-pew-right': 'church-pew',
+  'stone-planter': 'planter',
+  'wooden-planter': 'planter',
+  'dining-table': 'dining-table',
+  'dining-table-left': 'dining-table',
+  'dining-table-right': 'dining-table',
+  'kitchen-worktable': 'kitchen-worktable',
+  'kitchen-worktable-left': 'kitchen-worktable',
+  'kitchen-worktable-right': 'kitchen-worktable',
+  'barrel-cluster': 'barrel-cluster',
+  bookshelf: 'bookshelf',
+  'bookshelf-left': 'bookshelf',
+  'bookshelf-right': 'bookshelf',
+  'dungeon-cage': 'dungeon-cage',
+  'candle-stand': 'candle-stand',
+  'offering-chest': 'offering-chest',
+  window: 'window',
+};
+
 export const royalInquestAssets = {
   avatars: {
     monarch,
