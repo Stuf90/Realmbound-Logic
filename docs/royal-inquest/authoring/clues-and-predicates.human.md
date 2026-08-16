@@ -86,18 +86,22 @@ pairs with.
 }
 ```
 
-`'unknown'` unless both characters are placed. Otherwise:
+`'unknown'` unless both characters are placed. Otherwise, a loose single-axis comparison
+— no shared-row/column requirement (fixed 2026-08-16, matching `murdoku-logic-engine`
+and the fan glossary's "south of" reading: "strictly below, any column"):
 
-- `north`: same column, subject's row strictly less than reference's row.
-- `south`: same column, subject's row strictly greater than reference's row.
-- `east`: same row, subject's column strictly greater than reference's column.
-- `west`: same row, subject's column strictly less than reference's column.
+- `north`: subject's row strictly less than reference's row.
+- `south`: subject's row strictly greater than reference's row.
+- `east`: subject's column strictly greater than reference's column.
+- `west`: subject's column strictly less than reference's column.
 
-Because these all require the subject and reference to share a row or column, a
-solution that is a full row/column permutation (see
-[character placement](character-placement.human.md)) can never make a `direction-from`
-clue true for any pair — the shipped case never uses it as a real clue for exactly this
-reason. A future case with a non-permutation solution could use it for real.
+The old version additionally required the subject and reference to share the other
+axis — dead on this board, since a full row/column permutation solution (see
+[character placement](character-placement.human.md)) means two characters never share a
+row *or* column, so the old check could never pass and the predicate was vacuous. It's
+real and usable now. Diagonal directions (NE/NW/SE/SW) are still not modeled here,
+engine-side only (see `murdoku-logic-engine/src/predicates.ts`'s `directionHolds`), not
+yet ported.
 
 ### `beside` / `not-beside`
 
@@ -283,6 +287,184 @@ asset, so any edge-anchored prop could reuse this shape — not just `window`.
 `definitionValidation.ts` separately requires any cell whose `propId` is `window` to sit
 on the board's outer edge; see [board, rooms, and props](board-rooms-props.human.md).
 
+### `not-on-prop` / `not-seated` / `not-in-corner` / `not-exact-chamber`
+
+```ts
+{ type: 'not-on-prop'; characterId: CharacterId; propId: PropAssetId }
+{ type: 'not-seated'; characterId: CharacterId }
+{ type: 'not-in-corner'; characterId: CharacterId }
+{ type: 'not-exact-chamber'; characterId: CharacterId; chamberId: string }
+```
+
+Exact negations of `on-prop` / the seat-kind-prop check / `in-corner` / `exact-chamber`
+— same `'unknown'`-until-placed rule, boolean flipped.
+
+### `beside-wall`
+
+```ts
+{ type: 'beside-wall'; characterId: CharacterId }
+```
+
+Exact negation of `not-beside-wall` — true when at least one orthogonal neighbor is
+off-board or in a different chamber.
+
+### `near-prop` / `not-near-prop`
+
+```ts
+{ type: 'near-prop'; characterId: CharacterId; propId: PropAssetId }
+{ type: 'not-near-prop'; characterId: CharacterId; propId: PropAssetId }
+```
+
+A generic version of `by-window`: orthogonal adjacency to the (single) cell bearing
+`propId` **and** the same chamber as that cell (matching the fan glossary's "Beside" =
+adjacent + same region). `by-window` never needed the chamber check because a window
+sits on the chamber's own edge cell; a plant/cabinet/door can sit near a chamber
+boundary, where adjacency alone would leak across a wall. `not-near-prop` is the exact
+negation, `'unknown'` propagates.
+
+### `prop-in-axis`
+
+```ts
+{ type: 'prop-in-axis'; characterId: CharacterId; propId: PropAssetId; axis: 'row' | 'column' }
+```
+
+`'unknown'` until placed. Otherwise true when some cell sharing the character's row (or
+column, per `axis`) bears `propId` — the character's own cell doesn't count. "There was
+a window somewhere in his row."
+
+### `beside-empty-cell`
+
+```ts
+{ type: 'beside-empty-cell'; characterId: CharacterId }
+```
+
+`'unknown'` until placed. True when at least one same-chamber orthogonal open
+(unblocked) neighbor cell ends up unoccupied by another character. No open neighbor at
+all resolves `false` immediately. Occupancy only grows as more characters place, so
+"every neighbor taken" is decisive `false` early; an open neighbor stays `'unknown'`
+until the whole cast is placed.
+
+### `category-on-prop`
+
+```ts
+{ type: 'category-on-prop'; category: string; propId: PropAssetId }
+```
+
+Names no specific character. Whoever occupies the (single) cell bearing `propId`
+decides this immediately once someone is placed there (no need to wait for the whole
+cast) — true if that occupant's `InquestCharacter.category` matches `category`. Nobody
+there yet and the whole cast is placed resolves `false`. Lets a clue say "a man sat in
+the armchair" without naming who.
+
+### `prop-in-chamber`
+
+```ts
+{ type: 'prop-in-chamber'; chamberId: string; propId: PropAssetId }
+```
+
+A pure board-layout fact, never placement-dependent, never `'unknown'`. True when the
+(single) cell bearing `propId` sits in `chamberId`. Names no character — half of a
+compound clue like "he was in a room with a plant" (the other half being an
+`exact-chamber` naming that same chamber); never use it alone, it pins nothing down by
+itself.
+
+### `axis-offset-from`
+
+```ts
+{
+  type: 'axis-offset-from';
+  subjectCharacterId: CharacterId;
+  referenceCharacterId: CharacterId;
+  axis: 'row' | 'column';
+  offset: number;
+}
+```
+
+Generalizes `offset-from` to a single axis, the way `direction-from` generalizes to a
+direction without distance. `'unknown'` unless both are placed. Otherwise true when
+`subject.<axis> - reference.<axis> === offset`. "X is exactly one row south of Y"
+(ignoring column).
+
+### `category-chamber-count`
+
+```ts
+{ type: 'category-chamber-count'; category: string; chamberId: string; count: number }
+```
+
+Cast-wide quantifier, like `seated-character-count`, but scoped to one chamber and
+counted by `InquestCharacter.category` instead of seat occupancy. "Exactly 2 [category]
+are in the kitchen."
+
+### `chamber-rank`
+
+```ts
+{
+  type: 'chamber-rank';
+  characterId: CharacterId;
+  chamberId: string;
+  rank: 'topmost' | 'bottommost' | 'leftmost' | 'rightmost';
+}
+```
+
+True when `characterId` is the extreme (top/bottom/left/right-most) row or column among
+every other occupant of the same chamber. Two characters sharing a chamber always have
+distinct rows and distinct columns (permutation board), so no tie handling is needed.
+Decisive `false` immediately if `characterId` isn't even in `chamberId`; otherwise
+`'unknown'` until the whole cast is placed (the check loops over every other character,
+skipping any not yet placed).
+
+### `one-of` / `all-of`
+
+```ts
+{ type: 'one-of'; options: InquestPredicate[] }
+{ type: 'all-of'; predicates: InquestPredicate[] }
+```
+
+Recursive disjunction/conjunction over nested predicates. `one-of`: any option `true` →
+`true`; else `'unknown'` if any option is `'unknown'`; else `false`. `all-of`: any option
+`false` → `false`; else `'unknown'` if any option is `'unknown'`; else `true`. Mainly
+useful with `all-of` nested inside a `one-of`, for a real clue that disjuncts between two
+multi-part alternatives ("she was in the kitchen with Dana, or the den with Ezra"). No
+fixed rating — the effective rating is the max of the nested options, recursively, see
+`effectivePredicateDifficulty` below.
+
+### `chamber-order-compare`
+
+```ts
+{
+  type: 'chamber-order-compare';
+  subjectCharacterId: CharacterId;
+  referenceCharacterId: CharacterId;
+  comparator: 'greater' | 'less' | 'immediately-after' | 'immediately-before';
+}
+```
+
+Needs a new `InquestDefinition.chamberOrder?: Record<string, number>` field — optional,
+only cases using this predicate set it (golf holes, bus stops, course order).
+`'unknown'` unless both characters' chambers resolve **and** both have a `chamberOrder`
+entry. `validateInquestDefinition` rejects any clue referencing a chamber with no
+`chamberOrder` entry at authoring time (the engine's version silently evaluates
+`'unknown'` forever instead — Royal Inquest catches it earlier, the same spirit as the
+swap-hazard catch).
+
+### `shares-prop-category-neighbor`
+
+```ts
+{
+  type: 'shares-prop-category-neighbor';
+  firstCharacterId: CharacterId;
+  secondCharacterId: CharacterId;
+}
+```
+
+Needs a new `propCategoryByAsset: Record<PropAssetId, string>` map in
+`src/assets/royal-inquest/manifest.ts` (see
+[board, rooms, and props](board-rooms-props.human.md)), grouping asset variants that are
+the same "thing" in different skins/environments (e.g. `stone-planter`/`wooden-planter`
+→ `planter`). `'unknown'` unless both are placed. Otherwise true when the sets of prop
+categories orthogonally adjacent to each character intersect — "X and Y are each beside
+a plant," not necessarily the same plant.
+
 ## Predicate difficulty rating
 
 **The sole canonical source for every difficulty number in this doc set** — the table
@@ -296,15 +478,23 @@ any puzzle that declares rating N **or higher**. Fixed at authoring time, lives 
 
 | Rating | Meaning | Predicates |
 | --- | --- | --- |
-| 1 | Trivial/foundational fact | `exact-row`, `exact-column`, `exact-chamber`, `same-chamber`, `different-chamber`, `on-prop`, `beside`, `not-beside`, `seated-character-count` |
-| 2 | Moderate counting/positional reasoning | `direction-from`, `chamber-occupant-count`, `in-corner`, `not-beside-wall`, `shares-prop-neighbor`, `area-occupant-count`, `by-window` |
-| 3 | Hard multi-axis or existential reasoning | `category-not-beside-prop`, `diagonal-from`, `not-diagonal-from`, `offset-from`, `prop-neighbor-count` |
+| 1 | Trivial/foundational fact | `exact-row`, `exact-column`, `exact-chamber`, `same-chamber`, `different-chamber`, `on-prop`, `beside`, `not-beside`, `seated-character-count`, `not-on-prop`, `not-seated`, `not-exact-chamber`, `prop-in-chamber` |
+| 2 | Moderate counting/positional reasoning | `direction-from`, `chamber-occupant-count`, `in-corner`, `not-beside-wall`, `shares-prop-neighbor`, `area-occupant-count`, `by-window`, `not-in-corner`, `beside-wall`, `near-prop`, `not-near-prop`, `prop-in-axis`, `beside-empty-cell`, `category-on-prop`, `axis-offset-from`, `category-chamber-count`, `chamber-rank`, `shares-prop-category-neighbor` |
+| 3 | Hard multi-axis or existential reasoning | `category-not-beside-prop`, `diagonal-from`, `not-diagonal-from`, `offset-from`, `prop-neighbor-count`, `chamber-order-compare` |
+
+`one-of`/`all-of` have no fixed rating — `effectivePredicateDifficulty(predicate)` in
+`predicateDifficulty.ts` returns the max of the nested options' ratings, recursively (an
+option can itself be a `one-of`/`all-of`). `validateInquestDefinition`'s difficulty gate
+calls `effectivePredicateDifficulty`, not the plain table lookup, so nested predicates
+still gate correctly.
 
 Ratings revised from the original, after a cross-check pass against the
 [Murdoku book glossary](#murdoku-book-glossary-source-vocab) — `beside`/`not-beside`/
 `seated-character-count` drop from 2 to 1 (a simple direct adjacency/uniqueness fact, no
 harder than `on-prop`), and `shares-prop-neighbor` drops from 3 to 2 (an existential pair,
-but anchored to a single prop, not multi-axis like `diagonal-from`).
+but anchored to a single prop, not multi-axis like `diagonal-from`). The 18 new
+predicates (2026-08-16 catch-up pass against `murdoku-logic-engine`) are rated to mirror
+that engine's own `PREDICATE_DIFFICULTY` table.
 
 Every `InquestDefinition` declares its own `difficulty: number` (also 1-3).
 `validateInquestDefinition` rejects any clue whose predicate rating exceeds the case's
@@ -454,6 +644,21 @@ simply wasn't pruned to match — see `diagonal-from`/`not-diagonal-from`,
 by-window, and alone-on-a-prop-area (the three genuine remaining gaps) are now
 `offset-from`, `by-window`, and `area-occupant-count` respectively — see "Predicate
 reference" above.
+
+This section tracks the gap against the P13 book-scan catalog only. The 2026-08-16 pass
+cross-checked against a bigger source instead — the sibling repo `murdoku-logic-engine`,
+which cross-checks its own vocabulary against `https://murdoku.fans/en/` plus imported
+fan-wiki case data (a superset of the P13 book scan, not a subset). That diff found 18
+more real gaps (`not-on-prop`, `not-seated`, `not-in-corner`, `not-exact-chamber`,
+`beside-wall`, `near-prop`, `not-near-prop`, `prop-in-axis`, `beside-empty-cell`,
+`category-on-prop`, `prop-in-chamber`, `axis-offset-from`, `category-chamber-count`,
+`chamber-rank`, `one-of`, `all-of`, `chamber-order-compare`,
+`shares-prop-category-neighbor`) plus one stale semantic bug (`direction-from` was
+vacuous, see its "Predicate reference" entry above) — all closed this pass, see
+`docs/superpowers/specs/2026-08-16-royal-inquest-predicate-catchup-2-design.md`. The
+remaining non-parity against `murdoku-logic-engine` is both deliberate: `beside`/
+`not-beside` (banned, vacuous on this permutation board, see "What a clue may not do")
+and `exact-row`/`exact-column` (banned by design, same section).
 
 Only one item never was a clue predicate at all and stays out of scope here:
 

@@ -527,6 +527,344 @@ describe('evaluatePredicate', () => {
     expect(evaluatePredicate(predicate, { aldric: { row: 5, column: 5 } }, definition)).toBe(false);
     expect(evaluatePredicate(predicate, {}, definition)).toBe('unknown');
   });
+
+  it('evaluates direction-from without requiring a shared row or column', () => {
+    // Regression test: direction-from used to require subject/reference to share the other axis,
+    // which is never true on this one-per-row/column permutation board (a dead predicate). The
+    // fix drops that requirement, so an off-row, off-column pair like this now resolves decisively.
+    const predicate = {
+      type: 'direction-from' as const,
+      subjectCharacterId: 'aldric',
+      referenceCharacterId: 'daria',
+      direction: 'north' as const,
+    };
+
+    expect(
+      evaluatePredicate(
+        predicate,
+        { aldric: { row: 1, column: 1 }, daria: { row: 5, column: 5 } },
+        blackwoodKeep,
+      ),
+    ).toBe(true);
+    expect(
+      evaluatePredicate(
+        { ...predicate, direction: 'south' as const },
+        { aldric: { row: 1, column: 1 }, daria: { row: 5, column: 5 } },
+        blackwoodKeep,
+      ),
+    ).toBe(false);
+  });
+
+  it('evaluates not-on-prop as the exact negation of on-prop', () => {
+    const predicate = { type: 'not-on-prop' as const, characterId: 'aldric', propId: 'formal-chair' as const };
+
+    expect(evaluatePredicate(predicate, { aldric: { row: 1, column: 0 } }, blackwoodKeep)).toBe(false);
+    expect(evaluatePredicate(predicate, { aldric: { row: 0, column: 0 } }, blackwoodKeep)).toBe(true);
+    expect(evaluatePredicate(predicate, {}, blackwoodKeep)).toBe('unknown');
+  });
+
+  it('evaluates not-seated against whether the cell holds a seat-kind prop', () => {
+    const predicate = { type: 'not-seated' as const, characterId: 'aldric' };
+
+    expect(evaluatePredicate(predicate, { aldric: { row: 1, column: 0 } }, blackwoodKeep)).toBe(false);
+    expect(evaluatePredicate(predicate, { aldric: { row: 0, column: 0 } }, blackwoodKeep)).toBe(true);
+    expect(evaluatePredicate(predicate, {}, blackwoodKeep)).toBe('unknown');
+  });
+
+  it('evaluates not-in-corner as the exact negation of in-corner', () => {
+    const predicate = { type: 'not-in-corner' as const, characterId: 'aldric' };
+
+    expect(evaluatePredicate(predicate, { aldric: { row: 0, column: 0 } }, blackwoodKeep)).toBe(false);
+    expect(evaluatePredicate(predicate, { aldric: { row: 1, column: 0 } }, blackwoodKeep)).toBe(true);
+    expect(evaluatePredicate(predicate, {}, blackwoodKeep)).toBe('unknown');
+  });
+
+  it('evaluates not-exact-chamber as the exact negation of exact-chamber', () => {
+    const predicate = { type: 'not-exact-chamber' as const, characterId: 'aldric', chamberId: 'solar' };
+
+    expect(evaluatePredicate(predicate, { aldric: { row: 1, column: 0 } }, blackwoodKeep)).toBe(false);
+    expect(
+      evaluatePredicate({ ...predicate, chamberId: 'guardroom' }, { aldric: { row: 1, column: 0 } }, blackwoodKeep),
+    ).toBe(true);
+    expect(evaluatePredicate(predicate, {}, blackwoodKeep)).toBe('unknown');
+  });
+
+  it('evaluates beside-wall as the exact negation of not-beside-wall', () => {
+    const predicate = { type: 'beside-wall' as const, characterId: 'aldric' };
+
+    // Solar is only 2 rows tall, so every solar cell touches either the board edge or a
+    // different chamber below it.
+    expect(evaluatePredicate(predicate, { aldric: { row: 1, column: 0 } }, blackwoodKeep)).toBe(true);
+    expect(evaluatePredicate(predicate, {}, blackwoodKeep)).toBe('unknown');
+
+    const interiorDefinition = {
+      ...blackwoodKeep,
+      rows: 3,
+      columns: 3,
+      cells: Array.from({ length: 3 }, (_, row) =>
+        Array.from({ length: 3 }, (_, column) => ({
+          position: { row, column },
+          chamberId: 'hall',
+          blocked: false,
+        })),
+      ).flat(),
+    };
+    expect(
+      evaluatePredicate(predicate, { aldric: { row: 1, column: 1 } }, interiorDefinition),
+    ).toBe(false);
+  });
+
+  it('evaluates near-prop as adjacency AND same chamber, unlike by-window', () => {
+    // dining-table sits at (3,3) in the archives chamber. (3,4) is also archives and adjacent;
+    // (3,2) is adjacent but belongs to the chapel chamber instead.
+    const predicate = { type: 'near-prop' as const, characterId: 'edmund', propId: 'dining-table' as const };
+
+    expect(evaluatePredicate(predicate, { edmund: { row: 3, column: 4 } }, blackwoodKeep)).toBe(true);
+    expect(
+      evaluatePredicate({ ...predicate, characterId: 'aldric' }, { aldric: { row: 3, column: 2 } }, blackwoodKeep),
+    ).toBe(false);
+    expect(evaluatePredicate(predicate, {}, blackwoodKeep)).toBe('unknown');
+  });
+
+  it('evaluates not-near-prop as the exact negation of near-prop', () => {
+    const predicate = { type: 'not-near-prop' as const, characterId: 'edmund', propId: 'dining-table' as const };
+
+    expect(evaluatePredicate(predicate, { edmund: { row: 3, column: 4 } }, blackwoodKeep)).toBe(false);
+    expect(
+      evaluatePredicate({ ...predicate, characterId: 'aldric' }, { aldric: { row: 3, column: 2 } }, blackwoodKeep),
+    ).toBe(true);
+    expect(evaluatePredicate(predicate, {}, blackwoodKeep)).toBe('unknown');
+  });
+
+  it('evaluates prop-in-axis against the whole row/column, excluding the character\'s own cell', () => {
+    // dining-table sits at (3,3).
+    const rowPredicate = {
+      type: 'prop-in-axis' as const,
+      characterId: 'cedric',
+      propId: 'dining-table' as const,
+      axis: 'row' as const,
+    };
+
+    expect(evaluatePredicate(rowPredicate, { cedric: { row: 3, column: 1 } }, blackwoodKeep)).toBe(true);
+    expect(evaluatePredicate(rowPredicate, { cedric: { row: 0, column: 0 } }, blackwoodKeep)).toBe(false);
+    expect(evaluatePredicate(rowPredicate, {}, blackwoodKeep)).toBe('unknown');
+
+    const columnPredicate = { ...rowPredicate, axis: 'column' as const };
+    expect(evaluatePredicate(columnPredicate, { cedric: { row: 0, column: 3 } }, blackwoodKeep)).toBe(true);
+  });
+
+  it('evaluates beside-empty-cell against same-chamber orthogonal open neighbors', () => {
+    const predicate = { type: 'beside-empty-cell' as const, characterId: 'aldric' };
+
+    // aldric (1,0, solar) has two same-chamber open neighbors: (0,0) and (1,1).
+    expect(
+      evaluatePredicate(
+        predicate,
+        { aldric: { row: 1, column: 0 }, beatrice: { row: 0, column: 0 }, cedric: { row: 1, column: 1 } },
+        blackwoodKeep,
+      ),
+    ).toBe(false);
+    expect(evaluatePredicate(predicate, blackwoodKeep.solution, blackwoodKeep)).toBe(true);
+    expect(evaluatePredicate(predicate, { aldric: { row: 1, column: 0 } }, blackwoodKeep)).toBe('unknown');
+    expect(evaluatePredicate(predicate, {}, blackwoodKeep)).toBe('unknown');
+  });
+
+  it('evaluates category-on-prop against whoever currently occupies that prop cell', () => {
+    const definition = {
+      ...blackwoodKeep,
+      characters: blackwoodKeep.characters.map((character) =>
+        character.id === 'aldric' ? { ...character, category: 'noble' } : character,
+      ),
+    };
+    const predicate = { type: 'category-on-prop' as const, category: 'noble', propId: 'formal-chair' as const };
+
+    expect(evaluatePredicate(predicate, { aldric: { row: 1, column: 0 } }, definition)).toBe(true);
+    expect(evaluatePredicate(predicate, { beatrice: { row: 1, column: 0 } }, definition)).toBe(false);
+    expect(evaluatePredicate(predicate, {}, definition)).toBe('unknown');
+    // Nobody sits on the chair, but the rest of the cast is fully placed — decisive false.
+    expect(
+      evaluatePredicate(predicate, { ...definition.solution, aldric: { row: 0, column: 0 } }, definition),
+    ).toBe(false);
+  });
+
+  it('evaluates prop-in-chamber as a pure board-layout fact, never unknown', () => {
+    const predicate = { type: 'prop-in-chamber' as const, chamberId: 'archives', propId: 'dining-table' as const };
+
+    expect(evaluatePredicate(predicate, {}, blackwoodKeep)).toBe(true);
+    expect(evaluatePredicate({ ...predicate, chamberId: 'chapel' }, {}, blackwoodKeep)).toBe(false);
+  });
+
+  it('evaluates axis-offset-from as offset-from pinned to a single axis', () => {
+    const predicate = {
+      type: 'axis-offset-from' as const,
+      subjectCharacterId: 'edmund',
+      referenceCharacterId: 'beatrice',
+      axis: 'row' as const,
+      offset: 1,
+    };
+
+    // edmund (3,4), beatrice (2,1): one row apart, four columns apart.
+    expect(
+      evaluatePredicate(
+        predicate,
+        { edmund: { row: 3, column: 4 }, beatrice: { row: 2, column: 1 } },
+        blackwoodKeep,
+      ),
+    ).toBe(true);
+    expect(
+      evaluatePredicate(
+        { ...predicate, offset: 2 },
+        { edmund: { row: 3, column: 4 }, beatrice: { row: 2, column: 1 } },
+        blackwoodKeep,
+      ),
+    ).toBe(false);
+    expect(
+      evaluatePredicate(predicate, { edmund: { row: 3, column: 4 } }, blackwoodKeep),
+    ).toBe('unknown');
+  });
+
+  it('evaluates category-chamber-count as a cast-wide, chamber-scoped category tally', () => {
+    const definition = {
+      ...blackwoodKeep,
+      characters: blackwoodKeep.characters.map((character) =>
+        character.id === 'aldric' ? { ...character, category: 'noble' } : character,
+      ),
+    };
+    const predicate = { type: 'category-chamber-count' as const, category: 'noble', chamberId: 'solar', count: 1 };
+
+    expect(evaluatePredicate(predicate, { aldric: { row: 1, column: 0 } }, definition)).toBe(true);
+    expect(evaluatePredicate({ ...predicate, count: 0 }, { aldric: { row: 1, column: 0 } }, definition)).toBe(false);
+    expect(evaluatePredicate(predicate, {}, definition)).toBe('unknown');
+  });
+
+  it('evaluates chamber-rank against every other same-chamber occupant', () => {
+    const predicate = {
+      type: 'chamber-rank' as const,
+      characterId: 'beatrice',
+      chamberId: 'guardroom',
+      rank: 'leftmost' as const,
+    };
+    // Full cast placed (chamber-rank waits for everyone, not just the chamber's occupants) —
+    // cedric moved from his authored chapel cell into the guardroom for this test.
+    const fullyPlaced = { ...blackwoodKeep.solution, beatrice: { row: 2, column: 1 }, cedric: { row: 2, column: 3 } };
+
+    expect(evaluatePredicate(predicate, fullyPlaced, blackwoodKeep)).toBe(true);
+    expect(
+      evaluatePredicate({ ...predicate, characterId: 'cedric' }, fullyPlaced, blackwoodKeep),
+    ).toBe(false);
+    // Wrong chamber entirely — decisive false even before considering other occupants.
+    expect(evaluatePredicate(predicate, { beatrice: { row: 0, column: 0 } }, blackwoodKeep)).toBe(false);
+    // Only occupant placed so far, no violation found yet, but the whole cast isn't placed.
+    expect(evaluatePredicate(predicate, { beatrice: { row: 2, column: 1 } }, blackwoodKeep)).toBe('unknown');
+    expect(evaluatePredicate(predicate, {}, blackwoodKeep)).toBe('unknown');
+  });
+
+  it('evaluates one-of as a disjunction over nested predicates', () => {
+    const predicate = {
+      type: 'one-of' as const,
+      options: [
+        { type: 'exact-chamber' as const, characterId: 'aldric', chamberId: 'solar' },
+        { type: 'exact-chamber' as const, characterId: 'aldric', chamberId: 'guardroom' },
+      ],
+    };
+
+    expect(evaluatePredicate(predicate, { aldric: { row: 1, column: 0 } }, blackwoodKeep)).toBe(true);
+    expect(evaluatePredicate(predicate, { aldric: { row: 4, column: 0 } }, blackwoodKeep)).toBe(false);
+    expect(evaluatePredicate(predicate, {}, blackwoodKeep)).toBe('unknown');
+  });
+
+  it('evaluates all-of as a conjunction over nested predicates', () => {
+    const predicate = {
+      type: 'all-of' as const,
+      predicates: [
+        { type: 'exact-chamber' as const, characterId: 'aldric', chamberId: 'solar' },
+        { type: 'on-prop' as const, characterId: 'aldric', propId: 'formal-chair' as const },
+      ],
+    };
+
+    expect(evaluatePredicate(predicate, { aldric: { row: 1, column: 0 } }, blackwoodKeep)).toBe(true);
+    expect(evaluatePredicate(predicate, { aldric: { row: 1, column: 1 } }, blackwoodKeep)).toBe(false);
+    expect(evaluatePredicate(predicate, {}, blackwoodKeep)).toBe('unknown');
+  });
+
+  it('evaluates chamber-order-compare against InquestDefinition.chamberOrder', () => {
+    const definition = {
+      ...blackwoodKeep,
+      chamberOrder: { solar: 1, guardroom: 2, archives: 3, chapel: 4, crypt: 5 },
+    };
+    const placements = { aldric: { row: 1, column: 0 }, beatrice: { row: 2, column: 1 } };
+
+    expect(
+      evaluatePredicate(
+        { type: 'chamber-order-compare', subjectCharacterId: 'beatrice', referenceCharacterId: 'aldric', comparator: 'greater' },
+        placements,
+        definition,
+      ),
+    ).toBe(true);
+    expect(
+      evaluatePredicate(
+        { type: 'chamber-order-compare', subjectCharacterId: 'beatrice', referenceCharacterId: 'aldric', comparator: 'immediately-after' },
+        placements,
+        definition,
+      ),
+    ).toBe(true);
+    expect(
+      evaluatePredicate(
+        { type: 'chamber-order-compare', subjectCharacterId: 'aldric', referenceCharacterId: 'beatrice', comparator: 'immediately-before' },
+        placements,
+        definition,
+      ),
+    ).toBe(true);
+    expect(
+      evaluatePredicate(
+        { type: 'chamber-order-compare', subjectCharacterId: 'aldric', referenceCharacterId: 'beatrice', comparator: 'greater' },
+        placements,
+        definition,
+      ),
+    ).toBe(false);
+    // No chamberOrder on the definition at all: unresolvable, unknown even fully placed.
+    expect(
+      evaluatePredicate(
+        { type: 'chamber-order-compare', subjectCharacterId: 'aldric', referenceCharacterId: 'beatrice', comparator: 'greater' },
+        placements,
+        blackwoodKeep,
+      ),
+    ).toBe('unknown');
+    expect(
+      evaluatePredicate(
+        { type: 'chamber-order-compare', subjectCharacterId: 'aldric', referenceCharacterId: 'beatrice', comparator: 'greater' },
+        { aldric: placements.aldric },
+        definition,
+      ),
+    ).toBe('unknown');
+  });
+
+  it('evaluates shares-prop-category-neighbor via propCategoryByAsset, not a single prop instance', () => {
+    // barrel-cluster appears at (3,0) and (2,3), both in the guardroom chamber, as two separate
+    // instances of the same category.
+    const predicate = {
+      type: 'shares-prop-category-neighbor' as const,
+      firstCharacterId: 'aldric',
+      secondCharacterId: 'beatrice',
+    };
+
+    expect(
+      evaluatePredicate(
+        predicate,
+        { aldric: { row: 2, column: 0 }, beatrice: { row: 2, column: 2 } },
+        blackwoodKeep,
+      ),
+    ).toBe(true);
+    // beatrice moved beside the dungeon-cage instead — a different category, no overlap.
+    expect(
+      evaluatePredicate(
+        predicate,
+        { aldric: { row: 2, column: 0 }, beatrice: { row: 5, column: 5 } },
+        blackwoodKeep,
+      ),
+    ).toBe(false);
+    expect(evaluatePredicate(predicate, { aldric: { row: 2, column: 0 } }, blackwoodKeep)).toBe('unknown');
+  });
 });
 
 describe('getPredicateCharacterIds', () => {
@@ -621,5 +959,97 @@ describe('getPredicateCharacterIds', () => {
     expect(
       getPredicateCharacterIds({ type: 'by-window', characterId: 'aldric', propId: 'window' }),
     ).toEqual(['aldric']);
+  });
+
+  it('returns the single character id for the new unary predicates', () => {
+    expect(getPredicateCharacterIds({ type: 'not-on-prop', characterId: 'aldric', propId: 'formal-chair' })).toEqual([
+      'aldric',
+    ]);
+    expect(getPredicateCharacterIds({ type: 'not-seated', characterId: 'aldric' })).toEqual(['aldric']);
+    expect(getPredicateCharacterIds({ type: 'not-in-corner', characterId: 'aldric' })).toEqual(['aldric']);
+    expect(
+      getPredicateCharacterIds({ type: 'not-exact-chamber', characterId: 'aldric', chamberId: 'solar' }),
+    ).toEqual(['aldric']);
+    expect(getPredicateCharacterIds({ type: 'beside-wall', characterId: 'aldric' })).toEqual(['aldric']);
+    expect(getPredicateCharacterIds({ type: 'near-prop', characterId: 'aldric', propId: 'formal-chair' })).toEqual([
+      'aldric',
+    ]);
+    expect(
+      getPredicateCharacterIds({ type: 'not-near-prop', characterId: 'aldric', propId: 'formal-chair' }),
+    ).toEqual(['aldric']);
+    expect(
+      getPredicateCharacterIds({ type: 'prop-in-axis', characterId: 'aldric', propId: 'formal-chair', axis: 'row' }),
+    ).toEqual(['aldric']);
+    expect(getPredicateCharacterIds({ type: 'beside-empty-cell', characterId: 'aldric' })).toEqual(['aldric']);
+    expect(
+      getPredicateCharacterIds({
+        type: 'chamber-rank',
+        characterId: 'aldric',
+        chamberId: 'solar',
+        rank: 'topmost',
+      }),
+    ).toEqual(['aldric']);
+  });
+
+  it('returns both character ids for axis-offset-from, chamber-order-compare, and shares-prop-category-neighbor', () => {
+    expect(
+      getPredicateCharacterIds({
+        type: 'axis-offset-from',
+        subjectCharacterId: 'edmund',
+        referenceCharacterId: 'beatrice',
+        axis: 'row',
+        offset: 1,
+      }),
+    ).toEqual(['edmund', 'beatrice']);
+    expect(
+      getPredicateCharacterIds({
+        type: 'chamber-order-compare',
+        subjectCharacterId: 'edmund',
+        referenceCharacterId: 'beatrice',
+        comparator: 'greater',
+      }),
+    ).toEqual(['edmund', 'beatrice']);
+    expect(
+      getPredicateCharacterIds({
+        type: 'shares-prop-category-neighbor',
+        firstCharacterId: 'aldric',
+        secondCharacterId: 'beatrice',
+      }),
+    ).toEqual(['aldric', 'beatrice']);
+  });
+
+  it('names no character for category-on-prop, prop-in-chamber, and category-chamber-count', () => {
+    expect(
+      getPredicateCharacterIds({ type: 'category-on-prop', category: 'noble', propId: 'formal-chair' }),
+    ).toEqual([]);
+    expect(
+      getPredicateCharacterIds({ type: 'prop-in-chamber', chamberId: 'archives', propId: 'dining-table' }),
+    ).toEqual([]);
+    expect(
+      getPredicateCharacterIds({
+        type: 'category-chamber-count',
+        category: 'noble',
+        chamberId: 'solar',
+        count: 1,
+      }),
+    ).toEqual([]);
+  });
+
+  it('recurses into nested one-of/all-of options', () => {
+    expect(
+      getPredicateCharacterIds({
+        type: 'one-of',
+        options: [
+          { type: 'exact-chamber', characterId: 'aldric', chamberId: 'solar' },
+          {
+            type: 'all-of',
+            predicates: [
+              { type: 'exact-chamber', characterId: 'beatrice', chamberId: 'guardroom' },
+              { type: 'on-prop', characterId: 'cedric', propId: 'formal-chair' },
+            ],
+          },
+        ],
+      }),
+    ).toEqual(['aldric', 'beatrice', 'cedric']);
   });
 });

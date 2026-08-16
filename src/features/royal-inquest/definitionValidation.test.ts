@@ -302,4 +302,143 @@ describe('Blackwood Keep definition', () => {
     expect(issues.some((issue) => issue.includes('offset-from'))).toBe(false);
     expect(issues.some((issue) => issue.includes('prop-neighbor-count'))).toBe(false);
   });
+
+  it('accepts clues using the negation and wall/prop-adjacency predicate types added in the catch-up pass', () => {
+    const augmented = structuredClone(blackwoodKeep) as InquestDefinition;
+    augmented.difficulty = 3;
+    augmented.clues.push(
+      { id: 'aldric-not-on-bookshelf', text: '', predicate: { type: 'not-on-prop', characterId: 'aldric', propId: 'bookshelf' } },
+      { id: 'beatrice-not-seated', text: '', predicate: { type: 'not-seated', characterId: 'beatrice' } },
+      { id: 'aldric-not-in-corner', text: '', predicate: { type: 'not-in-corner', characterId: 'aldric' } },
+      { id: 'aldric-not-guardroom', text: '', predicate: { type: 'not-exact-chamber', characterId: 'aldric', chamberId: 'guardroom' } },
+      { id: 'aldric-beside-wall', text: '', predicate: { type: 'beside-wall', characterId: 'aldric' } },
+      { id: 'edmund-near-table', text: '', predicate: { type: 'near-prop', characterId: 'edmund', propId: 'dining-table' } },
+      { id: 'aldric-not-near-table', text: '', predicate: { type: 'not-near-prop', characterId: 'aldric', propId: 'dining-table' } },
+      { id: 'beatrice-prop-in-row', text: '', predicate: { type: 'prop-in-axis', characterId: 'beatrice', propId: 'barrel-cluster', axis: 'row' } },
+      { id: 'aldric-beside-empty', text: '', predicate: { type: 'beside-empty-cell', characterId: 'aldric' } },
+    );
+
+    const issues = validateInquestDefinition(augmented);
+    expect(issues).toEqual([]);
+  });
+
+  it('accepts clues using the count/rank/board-fact predicate types added in the catch-up pass', () => {
+    const augmented = structuredClone(blackwoodKeep) as InquestDefinition;
+    augmented.difficulty = 3;
+    augmented.characters = augmented.characters.map((character) =>
+      character.id === 'aldric' ? { ...character, category: 'noble' } : character,
+    );
+    augmented.clues.push(
+      { id: 'noble-on-chair', text: '', predicate: { type: 'category-on-prop', category: 'noble', propId: 'formal-chair' } },
+      { id: 'table-in-archives', text: '', predicate: { type: 'prop-in-chamber', chamberId: 'archives', propId: 'dining-table' } },
+      {
+        id: 'edmund-axis-offset-beatrice',
+        text: '',
+        predicate: { type: 'axis-offset-from', subjectCharacterId: 'edmund', referenceCharacterId: 'beatrice', axis: 'row', offset: 1 },
+      },
+      { id: 'one-noble-in-solar', text: '', predicate: { type: 'category-chamber-count', category: 'noble', chamberId: 'solar', count: 1 } },
+      { id: 'daria-alone-topmost-crypt', text: '', predicate: { type: 'chamber-rank', characterId: 'daria', chamberId: 'crypt', rank: 'topmost' } },
+      {
+        id: 'aldric-solar-or-guardroom',
+        text: '',
+        predicate: {
+          type: 'one-of',
+          options: [
+            { type: 'exact-chamber', characterId: 'aldric', chamberId: 'solar' },
+            { type: 'exact-chamber', characterId: 'aldric', chamberId: 'guardroom' },
+          ],
+        },
+      },
+      {
+        id: 'aldric-solar-and-seated',
+        text: '',
+        predicate: {
+          type: 'all-of',
+          predicates: [
+            { type: 'exact-chamber', characterId: 'aldric', chamberId: 'solar' },
+            { type: 'on-prop', characterId: 'aldric', propId: 'formal-chair' },
+          ],
+        },
+      },
+    );
+
+    const issues = validateInquestDefinition(augmented);
+    expect(issues).toEqual([]);
+  });
+
+  it('accepts a chamber-order-compare clue backed by a valid chamberOrder map', () => {
+    const augmented = structuredClone(blackwoodKeep) as InquestDefinition;
+    augmented.difficulty = 3;
+    augmented.chamberOrder = { solar: 1, guardroom: 2, archives: 3, chapel: 4, crypt: 5 };
+    augmented.clues.push({
+      id: 'aldric-before-beatrice',
+      text: '',
+      predicate: {
+        type: 'chamber-order-compare',
+        subjectCharacterId: 'aldric',
+        referenceCharacterId: 'beatrice',
+        comparator: 'less',
+      },
+    });
+
+    expect(validateInquestDefinition(augmented)).toEqual([]);
+  });
+
+  it('rejects a chamberOrder with a non-integer value or an unknown chamber id', () => {
+    const nonInteger = structuredClone(blackwoodKeep) as InquestDefinition;
+    nonInteger.chamberOrder = { solar: 1.5 };
+    expect(validateInquestDefinition(nonInteger)).toContain('chamberOrder["solar"] must be an integer.');
+
+    const unknownChamber = structuredClone(blackwoodKeep) as InquestDefinition;
+    unknownChamber.chamberOrder = { nonexistent: 1 };
+    expect(validateInquestDefinition(unknownChamber)).toContain(
+      'chamberOrder references unknown chamber "nonexistent".',
+    );
+  });
+
+  it('rejects a chamber-order-compare clue against a chamber with no chamberOrder entry', () => {
+    const malformed = structuredClone(blackwoodKeep) as InquestDefinition;
+    malformed.clues.push({
+      id: 'aldric-before-beatrice',
+      text: '',
+      predicate: {
+        type: 'chamber-order-compare',
+        subjectCharacterId: 'aldric',
+        referenceCharacterId: 'beatrice',
+        comparator: 'less',
+      },
+    });
+
+    expect(validateInquestDefinition(malformed)).toContain(
+      'Clue "aldric-before-beatrice" uses chamber-order-compare against character "aldric", whose chamber has no chamberOrder entry.',
+    );
+  });
+
+  it('accepts a shares-prop-category-neighbor clue naming two different instances of the same prop category', () => {
+    const augmented = structuredClone(blackwoodKeep) as InquestDefinition;
+    augmented.difficulty = 3;
+    // Two separate window instances, both on the board's outer edge, each adjacent to a different
+    // already-placed character — same category ("window"), not the same prop cell.
+    for (const cell of augmented.cells) {
+      if (cell.position.row === 0 && cell.position.column === 0) {
+        cell.propId = 'window';
+        cell.blocked = true;
+      }
+      if (cell.position.row === 4 && cell.position.column === 5) {
+        cell.propId = 'window';
+        cell.blocked = true;
+      }
+    }
+    augmented.clues.push({
+      id: 'aldric-and-daria-each-by-a-window',
+      text: '',
+      predicate: {
+        type: 'shares-prop-category-neighbor',
+        firstCharacterId: 'aldric',
+        secondCharacterId: 'daria',
+      },
+    });
+
+    expect(validateInquestDefinition(augmented)).toEqual([]);
+  });
 });
