@@ -1,5 +1,3 @@
-import { royalInquestLevels } from '../features/royal-inquest/levels';
-
 export type PuzzleFamilyId =
   | 'royal-inquest'
   | 'siege-lines'
@@ -26,9 +24,9 @@ export const PUZZLE_FAMILIES: PuzzleFamily[] = [
     name: 'Royal Inquest',
     discipline: 'Investigation',
     description: 'Place six persons within the keep and expose the traitor through spatial deduction.',
-    available: true,
+    available: false,
     accent: 'crimson',
-    levels: royalInquestLevels.map((level) => ({ title: level.title, puzzleId: level.id })),
+    levels: [],
   },
   {
     id: 'siege-lines',
