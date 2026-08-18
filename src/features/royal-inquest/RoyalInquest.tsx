@@ -273,7 +273,7 @@ export function RoyalInquest({ level, onBack }: { level: RoyalInquestLevel; onBa
                 if (hint.suspectId && hint.position) dispatch({ type: 'place', suspectId: hint.suspectId, position: hint.position });
               }}
             >
-              Hint
+              Apply hint
             </button>
             <button onClick={reset}>Reset</button>
           </div>
