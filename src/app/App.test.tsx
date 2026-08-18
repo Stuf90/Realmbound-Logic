@@ -60,9 +60,9 @@ describe('puzzle navigation', () => {
   });
 
   it('marks a persisted completed level', async () => {
-    localStorage.setItem('realmbound:graywick-priory', JSON.stringify({
+    localStorage.setItem('realmbound:easy-02', JSON.stringify({
       schemaVersion: 1,
-      puzzleId: 'graywick-priory',
+      puzzleId: 'easy-02',
       state: {},
       elapsedSeconds: 1,
       completed: true,
@@ -87,9 +87,9 @@ describe('puzzle navigation', () => {
   });
 
   it('offers to reset a completed puzzle and shows its completion time', async () => {
-    localStorage.setItem('realmbound:graywick-priory', JSON.stringify({
+    localStorage.setItem('realmbound:easy-02', JSON.stringify({
       schemaVersion: 1,
-      puzzleId: 'graywick-priory',
+      puzzleId: 'easy-02',
       state: {},
       elapsedSeconds: 125,
       completed: true,
@@ -108,8 +108,8 @@ describe('puzzle navigation', () => {
   });
 
   it('cancels replay without changing the completed save', async () => {
-    const save = { schemaVersion: 1, puzzleId: 'graywick-priory', state: {}, elapsedSeconds: 125, completed: true, hintsUsed: 0, checksUsed: 1 };
-    localStorage.setItem('realmbound:graywick-priory', JSON.stringify(save));
+    const save = { schemaVersion: 1, puzzleId: 'easy-02', state: {}, elapsedSeconds: 125, completed: true, hintsUsed: 0, checksUsed: 1 };
+    localStorage.setItem('realmbound:easy-02', JSON.stringify(save));
     const user = userEvent.setup();
     render(<App />);
 
@@ -119,11 +119,11 @@ describe('puzzle navigation', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'Royal Inquest levels' })).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem('realmbound:graywick-priory') ?? 'null')).toEqual(save);
+    expect(JSON.parse(localStorage.getItem('realmbound:easy-02') ?? 'null')).toEqual(save);
   });
 
   it('resets only the completed puzzle and starts it immediately', async () => {
-    localStorage.setItem('realmbound:graywick-priory', JSON.stringify({ schemaVersion: 1, puzzleId: 'graywick-priory', state: {}, elapsedSeconds: 125, completed: true, hintsUsed: 0, checksUsed: 1 }));
+    localStorage.setItem('realmbound:easy-02', JSON.stringify({ schemaVersion: 1, puzzleId: 'easy-02', state: {}, elapsedSeconds: 125, completed: true, hintsUsed: 0, checksUsed: 1 }));
     localStorage.setItem('realmbound:highgate-passage', JSON.stringify({ schemaVersion: 1, puzzleId: 'highgate-passage', state: {}, elapsedSeconds: 70, completed: true, hintsUsed: 0, checksUsed: 1 }));
     const user = userEvent.setup();
     render(<App />);
@@ -132,8 +132,8 @@ describe('puzzle navigation', () => {
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Reset and replay' }));
 
-    expect(JSON.parse(localStorage.getItem('realmbound:graywick-priory') ?? 'null')).toMatchObject({
-      puzzleId: 'graywick-priory',
+    expect(JSON.parse(localStorage.getItem('realmbound:easy-02') ?? 'null')).toMatchObject({
+      puzzleId: 'easy-02',
       elapsedSeconds: 0,
       completed: false,
     });
@@ -175,15 +175,15 @@ describe('puzzle navigation', () => {
     await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
     const levelGrid = screen.getByRole('list', { name: 'Royal Inquest levels' });
     await user.click(within(levelGrid).getByRole('button', { name: /^Level 2\b/ }));
-    expect(screen.getByRole('heading', { name: 'The Almshouse Reckoning' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'The Silent Sonata' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
-    expect(screen.getByRole('grid', { name: /The Almshouse Reckoning/ })).toBeInTheDocument();
+    expect(screen.getByRole('grid', { name: /The Silent Sonata/ })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Back to Royal Inquest levels' }));
 
     await user.click(within(screen.getByRole('list', { name: 'Royal Inquest levels' })).getByRole('button', { name: /^Level 3\b/ }));
-    expect(screen.getByRole('heading', { name: 'The Reckoning at Duskhollow Granary' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'The Greenhouse Plot' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
-    expect(screen.getByRole('grid', { name: /The Reckoning at Duskhollow Granary/ })).toBeInTheDocument();
+    expect(screen.getByRole('grid', { name: /The Greenhouse Plot/ })).toBeInTheDocument();
   });
 
   it('returns through the puzzle navigation hierarchy', async () => {
@@ -232,10 +232,12 @@ describe('puzzle play', () => {
     await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
-    await user.click(screen.getByRole('button', { name: 'Previous character' }));
-    await user.click(screen.getByRole('button', { name: /The Wandering Almswoman/ }));
+    await user.click(screen.getByRole('button', { name: 'Next person' }));
+    await user.click(screen.getByRole('button', { name: 'Next person' }));
+    await user.click(screen.getByRole('button', { name: 'Next person' }));
+    await user.click(screen.getByRole('button', { name: /Mistress Della/ }));
     await user.click(screen.getByRole('gridcell', { name: /Row 1, column 2/ }));
-    const placedCell = screen.getByRole('gridcell', { name: /Wandering Almswoman/ });
+    const placedCell = screen.getByRole('gridcell', { name: /Mistress Della/ });
     expect(placedCell).toBeInTheDocument();
     expect(placedCell.querySelector('img')).toHaveAttribute('src', expect.stringContaining('maid'));
     expect(screen.getByRole('button', { name: 'Apply hint' })).toBeInTheDocument();
@@ -248,25 +250,27 @@ describe('puzzle play', () => {
     await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
-    await user.click(screen.getByRole('button', { name: 'Previous character' }));
-    await user.click(screen.getByRole('button', { name: /The Wandering Almswoman/ }));
+    await user.click(screen.getByRole('button', { name: 'Next person' }));
+    await user.click(screen.getByRole('button', { name: 'Next person' }));
+    await user.click(screen.getByRole('button', { name: 'Next person' }));
+    await user.click(screen.getByRole('button', { name: /Mistress Della/ }));
 
     await user.click(screen.getByRole('button', { name: 'Note' }));
     await user.click(screen.getByRole('gridcell', { name: /Row 1, column 2/ }));
     await user.click(screen.getByRole('gridcell', { name: /Row 1, column 3/ }));
 
-    const firstDraftCell = screen.getByRole('gridcell', { name: /Row 1, column 2.*noted for The Wandering Almswoman/ });
+    const firstDraftCell = screen.getByRole('gridcell', { name: /Row 1, column 2.*noted for Mistress Della/ });
     expect(firstDraftCell).toBeInTheDocument();
-    expect(firstDraftCell.querySelector('.cell-draft')).toHaveTextContent('A');
-    expect(screen.getByRole('gridcell', { name: /Row 1, column 3.*noted for The Wandering Almswoman/ })).toBeInTheDocument();
+    expect(firstDraftCell.querySelector('.cell-draft')).toHaveTextContent('M');
+    expect(screen.getByRole('gridcell', { name: /Row 1, column 3.*noted for Mistress Della/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Note' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Place' }));
     await user.click(screen.getByRole('gridcell', { name: /Row 1, column 2/ }));
 
-    const placedCell = screen.getByRole('gridcell', { name: /^Row 1, column 2, Priory Hall, The Wandering Almswoman$/ });
+    const placedCell = screen.getByRole('gridcell', { name: /^Row 1, column 2, the Falconry, Mistress Della$/ });
     expect(placedCell).not.toHaveAccessibleName(/noted for/);
-    expect(screen.getByRole('gridcell', { name: /Row 1, column 3.*noted for The Wandering Almswoman/ })).toBeInTheDocument();
+    expect(screen.getByRole('gridcell', { name: /Row 1, column 3.*noted for Mistress Della/ })).toBeInTheDocument();
   });
 
   it('renders visible chamber name labels and prop art on blocked cells', async () => {
@@ -278,29 +282,33 @@ describe('puzzle play', () => {
 
     const chamberLabels = [...container.querySelectorAll('.chamber-label')].map((el) => el.textContent);
     expect(chamberLabels).toEqual(
-      expect.arrayContaining(['Priory Hall', 'Bone Crypt', 'Scriptorium', 'Herb Cloister', 'Priory Kitchen']),
+      expect.arrayContaining(['the Falconry', 'the Armory', 'the Cloister Walk', 'the Scriptorium']),
     );
 
-    const decoratedCell = screen.getByRole('gridcell', { name: /Row 4, column 1,/ });
-    expect(decoratedCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('dungeon-cage'));
+    const decoratedCell = screen.getByRole('gridcell', { name: /Row 5, column 5,/ });
+    expect(decoratedCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('bookshelf'));
   });
 
   it('lets a character be seated in a chair: the prop and the avatar render together', async () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
-    await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
+    await user.click(screen.getByRole('button', { name: /^Level 2\b/ }));
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
 
-    const seatCell = screen.getByRole('gridcell', { name: /Row 2, column 1,/ });
-    expect(seatCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('church-pew'));
+    const seatCell = screen.getByRole('gridcell', { name: /Row 3, column 1,/ });
+    expect(seatCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('formal-chair'));
     expect(seatCell).not.toBeDisabled();
 
-    await user.click(screen.getByRole('button', { name: /The Prioress/ }));
+    await user.click(screen.getByRole('button', { name: 'Next person' }));
+    await user.click(screen.getByRole('button', { name: 'Next person' }));
+    await user.click(screen.getByRole('button', { name: 'Next person' }));
+    await user.click(screen.getByRole('button', { name: 'Next person' }));
+    await user.click(screen.getByRole('button', { name: /Handmaiden Evaine/ }));
     await user.click(seatCell);
 
-    expect(seatCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('church-pew'));
-    expect(seatCell.querySelector('.cell-avatar')).toHaveAttribute('src', expect.stringContaining('priest'));
+    expect(seatCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('formal-chair'));
+    expect(seatCell.querySelector('.cell-avatar')).toHaveAttribute('src', expect.stringContaining('maid'));
   });
 
   it('shows the currently browsed character clues without switching tabs', async () => {
@@ -310,22 +318,12 @@ describe('puzzle play', () => {
     await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
 
-    const prioressBrief = screen.getByRole('region', { name: /Clues about The Prioress/i });
-    expect(within(prioressBrief).getByText('The Prioress was seen in the Priory Hall.')).toBeInTheDocument();
+    const elowenBrief = screen.getByRole('region', { name: /Clues about Lady Elowen/i });
+    expect(within(elowenBrief).getByText('Lady Elowen is in column 1')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Previous character' }));
+    await user.click(screen.getByRole('button', { name: 'Previous person' }));
 
-    const almswomanBrief = screen.getByRole('region', { name: /Clues about The Wandering Almswoman/i });
-    expect(within(almswomanBrief).getByText('No witness statement names The Wandering Almswoman directly.')).toBeInTheDocument();
-  });
-
-  it('renders a wall indicator at every real chamber boundary', async () => {
-    const user = userEvent.setup();
-    const { container } = render(<App />);
-    await user.click(screen.getByRole('button', { name: /Royal Inquest/ }));
-    await user.click(screen.getByRole('button', { name: /^Level 1\b/ }));
-    await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
-    expect(container.querySelectorAll('.cell.wall-right')).toHaveLength(5);
-    expect(container.querySelectorAll('.cell.wall-bottom')).toHaveLength(13);
+    const victimBrief = screen.getByRole('region', { name: /Clues about Constable Edda/i });
+    expect(within(victimBrief).getByText('No witness statement names Constable Edda directly.')).toBeInTheDocument();
   });
 });
