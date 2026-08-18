@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { RoyalInquest } from '../features/royal-inquest/RoyalInquest';
-import { getRoyalInquestLevel } from '../features/royal-inquest/levels';
 import { SiegeLines } from '../features/siege-lines/SiegeLines';
 import { deletePuzzle, loadPuzzle, type PuzzleSave } from '../shared/persistence';
 import { getPuzzleFamily, PUZZLE_FAMILIES, type PuzzleFamily, type PuzzleFamilyId } from './puzzleCatalog';
@@ -21,7 +19,6 @@ export function App() {
   const level = family.levels[view.levelIndex - 1];
   if (!level) return null;
   if (view.kind === 'briefing') return <Briefing family={family} level={level} onBack={showLevels} onBegin={() => setView({ kind: 'puzzle', familyId: family.id, levelIndex: view.levelIndex })} />;
-  if (family.id === 'royal-inquest') return <RoyalInquest definition={getRoyalInquestLevel(level.puzzleId)} onBack={showLevels} />;
   if (family.id === 'siege-lines') return <SiegeLines onBack={showLevels} />;
   return null;
 }
