@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
-    "murdoku-logic-engine": "file:../murdoku-logic-engine",
+    "murdoku-logic-engine": "file:vendor/murdoku-logic-engine-0.1.0.tgz",
     "react": "latest",
     "react-dom": "latest",
     "vite": "latest"
