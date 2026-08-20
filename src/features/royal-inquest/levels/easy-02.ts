@@ -77,7 +77,7 @@ export const definition: MurdokuDefinition = {
     },
     {
       id: 'clue-5',
-      text: '(supplemental) A is in column 3',
+      text: '(supplemental) A is in column 4',
       predicate: { type: 'exact-column', suspectId: 'A', column: 3 },
     },
   ],
