@@ -149,27 +149,27 @@ export const definition: MurdokuDefinition = {
     },
     {
       id: 'clue-8',
-      text: '(supplemental) C is in row 1',
+      text: '(supplemental) C is in row 2',
       predicate: { type: 'exact-row', suspectId: 'C', row: 1 },
     },
     {
       id: 'clue-9',
-      text: '(supplemental) C is in column 1',
+      text: '(supplemental) C is in column 2',
       predicate: { type: 'exact-column', suspectId: 'C', column: 1 },
     },
     {
       id: 'clue-10',
-      text: '(supplemental) D is in row 0',
+      text: '(supplemental) D is in row 1',
       predicate: { type: 'exact-row', suspectId: 'D', row: 0 },
     },
     {
       id: 'clue-11',
-      text: '(supplemental) D is in column 3',
+      text: '(supplemental) D is in column 4',
       predicate: { type: 'exact-column', suspectId: 'D', column: 3 },
     },
     {
       id: 'clue-12',
-      text: '(supplemental) A is in row 4',
+      text: '(supplemental) A is in row 5',
       predicate: { type: 'exact-row', suspectId: 'A', row: 4 },
     },
   ],
