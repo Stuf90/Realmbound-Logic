@@ -114,6 +114,7 @@ export function RoyalInquest({ level, onBack }: { level: RoyalInquestLevel; onBa
     }
     return anchors;
   }, [definition]);
+  const cellByKey = useMemo(() => new Map(definition.cells.map((cell) => [positionKey(cell.position), cell])), [definition]);
 
   const victim = definition.suspects.find(({ isVictim }) => isVictim)!;
   const murderer = definition.suspects.find(({ id }) => id === definition.murdererId)!;
@@ -201,11 +202,14 @@ export function RoyalInquest({ level, onBack }: { level: RoyalInquestLevel; onBa
                 const propUrl = propAssetId ? royalInquestAssets.props[propAssetId] : undefined;
                 const isConflict = conflictCellKey === positionKey(cell.position);
                 const conflictClass = isConflict ? ' conflict' : '';
+                const rightCell = cellByKey.get(positionKey({ row: cell.position.row, column: cell.position.column + 1 }));
+                const bottomCell = cellByKey.get(positionKey({ row: cell.position.row + 1, column: cell.position.column }));
+                const wallClass = `${rightCell && rightCell.roomId !== cell.roomId ? ' wall-right' : ''}${bottomCell && bottomCell.roomId !== cell.roomId ? ' wall-bottom' : ''}`;
                 return (
                   <button
                     key={positionKey(cell.position)}
                     role="gridcell"
-                    className={`cell ${cellState}${conflictClass}`}
+                    className={`cell ${cellState}${conflictClass}${wallClass}`}
                     style={{ backgroundImage: `var(--cell-tint), url(${tileUrl})` }}
                     disabled={cell.blocked}
                     aria-label={label}
