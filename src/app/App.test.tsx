@@ -256,21 +256,21 @@ describe('puzzle play', () => {
     await user.click(screen.getByRole('button', { name: /Mistress Della/ }));
 
     await user.click(screen.getByRole('button', { name: 'Note' }));
-    await user.click(screen.getByRole('gridcell', { name: /Row 1, column 2/ }));
-    await user.click(screen.getByRole('gridcell', { name: /Row 1, column 3/ }));
+    await user.click(screen.getByRole('gridcell', { name: /Row 1, column 5/ }));
+    await user.click(screen.getByRole('gridcell', { name: /Row 2, column 4/ }));
 
-    const firstDraftCell = screen.getByRole('gridcell', { name: /Row 1, column 2.*noted for Mistress Della/ });
+    const firstDraftCell = screen.getByRole('gridcell', { name: /Row 1, column 5.*noted for Mistress Della/ });
     expect(firstDraftCell).toBeInTheDocument();
     expect(firstDraftCell.querySelector('.cell-draft')).toHaveTextContent('M');
-    expect(screen.getByRole('gridcell', { name: /Row 1, column 3.*noted for Mistress Della/ })).toBeInTheDocument();
+    expect(screen.getByRole('gridcell', { name: /Row 2, column 4.*noted for Mistress Della/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Note' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Place' }));
-    await user.click(screen.getByRole('gridcell', { name: /Row 1, column 2/ }));
+    await user.click(screen.getByRole('gridcell', { name: /Row 1, column 5/ }));
 
-    const placedCell = screen.getByRole('gridcell', { name: /^Row 1, column 2, the Falconry, Mistress Della$/ });
+    const placedCell = screen.getByRole('gridcell', { name: /^Row 1, column 5, the Falconry, Mistress Della$/ });
     expect(placedCell).not.toHaveAccessibleName(/noted for/);
-    expect(screen.getByRole('gridcell', { name: /Row 1, column 3.*noted for Mistress Della/ })).toBeInTheDocument();
+    expect(screen.getByRole('gridcell', { name: /Row 2, column 4.*noted for Mistress Della/ })).toBeInTheDocument();
   });
 
   it('renders visible chamber name labels and prop art on blocked cells', async () => {
@@ -282,10 +282,10 @@ describe('puzzle play', () => {
 
     const chamberLabels = [...container.querySelectorAll('.chamber-label')].map((el) => el.textContent);
     expect(chamberLabels).toEqual(
-      expect.arrayContaining(['the Falconry', 'the Armory', 'the Cloister Walk', 'the Scriptorium']),
+      expect.arrayContaining(['the Falconry', 'the Armory', 'the Cloister Walk']),
     );
 
-    const decoratedCell = screen.getByRole('gridcell', { name: /Row 5, column 5,/ });
+    const decoratedCell = screen.getByRole('gridcell', { name: /Row 4, column 3,/ });
     expect(decoratedCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('bookshelf'));
   });
 
@@ -296,8 +296,8 @@ describe('puzzle play', () => {
     await user.click(screen.getByRole('button', { name: /^Level 2\b/ }));
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
 
-    const seatCell = screen.getByRole('gridcell', { name: /Row 3, column 1,/ });
-    expect(seatCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('formal-chair'));
+    const seatCell = screen.getByRole('gridcell', { name: /Row 1, column 1,/ });
+    expect(seatCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('wooden-bench'));
     expect(seatCell).not.toBeDisabled();
 
     await user.click(screen.getByRole('button', { name: 'Next person' }));
@@ -307,7 +307,7 @@ describe('puzzle play', () => {
     await user.click(screen.getByRole('button', { name: /Handmaiden Evaine/ }));
     await user.click(seatCell);
 
-    expect(seatCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('formal-chair'));
+    expect(seatCell.querySelector('.cell-prop')).toHaveAttribute('src', expect.stringContaining('wooden-bench'));
     expect(seatCell.querySelector('.cell-avatar')).toHaveAttribute('src', expect.stringContaining('maid'));
   });
 
@@ -319,7 +319,7 @@ describe('puzzle play', () => {
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
 
     const elowenBrief = screen.getByRole('region', { name: /Clues about Lady Elowen/i });
-    expect(within(elowenBrief).getByText('Lady Elowen is in column 1')).toBeInTheDocument();
+    expect(within(elowenBrief).getByText('Lady Elowen is in column 3')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Previous person' }));
 
