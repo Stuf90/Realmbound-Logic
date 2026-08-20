@@ -6,25 +6,25 @@ import { definition as easy13Definition, skin as easy13Skin } from './levels/eas
 
 describe('resolveClueText', () => {
   it('substitutes suspect, room, and prop ids with their skin display names', () => {
-    const clue = easy13Definition.clues.find((candidate) => candidate.id === 'clue-3')!;
-    expect(clue.text).toBe('C is beside asset-1-1');
+    const clue = easy13Definition.clues.find((candidate) => candidate.id === 'clue-2')!;
+    expect(clue.text).toBe('B is beside asset-2-1');
     const resolved = resolveClueText(clue, easy13Skin, easy13Definition);
-    expect(resolved).toBe('Sister Clarimond is beside Bookshelf');
+    expect(resolved).toBe('Sir Boren is beside Barrel Cluster');
   });
 
   it('strips the "(supplemental) " authoring prefix', () => {
     const clue = easy13Definition.clues.find((candidate) => candidate.id === 'clue-6')!;
-    expect(clue.text).toBe('(supplemental) A is in column 5');
+    expect(clue.text).toBe('(supplemental) A is in column 0');
     const resolved = resolveClueText(clue, easy13Skin, easy13Definition);
     expect(resolved.startsWith('(supplemental)')).toBe(false);
-    expect(resolved).toBe('Lady Annora is in column 5');
+    expect(resolved).toBe('Lady Annora is in column 0');
   });
 
   it('does not let a shorter overlapping id clobber a longer asterisked id', () => {
-    const clue = easy13Definition.clues.find((candidate) => candidate.id === 'clue-5')!;
-    expect(clue.text).toBe('E is on asset-4*-1');
+    const clue = easy13Definition.clues.find((candidate) => candidate.id === 'clue-4')!;
+    expect(clue.text).toBe('E is on asset-4*-2');
     const resolved = resolveClueText(clue, easy13Skin, easy13Definition);
-    expect(resolved).toBe('Handmaiden Evaine is on Formal Chair');
+    expect(resolved).toBe('Handmaiden Evaine is on Simple Chair');
   });
 });
 

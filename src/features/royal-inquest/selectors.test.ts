@@ -17,43 +17,43 @@ describe('getClueState', () => {
   it('exact-room: undetermined before placement, satisfied on the room, violated elsewhere', () => {
     const clue = clueById(easy02, 'clue-1'); // A is in room-1
     expect(getClueState(clue, {}, easy02)).toBe('undetermined');
-    expect(getClueState(clue, { A: { row: 0, column: 1 } }, easy02)).toBe('satisfied');
+    expect(getClueState(clue, { A: { row: 0, column: 4 } }, easy02)).toBe('satisfied');
     expect(getClueState(clue, { A: { row: 2, column: 0 } }, easy02)).toBe('violated');
   });
 
   it('exact-column: transitions from undetermined to satisfied/violated', () => {
-    const clue = clueById(easy02, 'clue-5'); // A is in column 1
+    const clue = clueById(easy02, 'clue-5'); // (supplemental) A is in column 3
     expect(getClueState(clue, {}, easy02)).toBe('undetermined');
-    expect(getClueState(clue, { A: { row: 0, column: 1 } }, easy02)).toBe('satisfied');
+    expect(getClueState(clue, { A: { row: 1, column: 3 } }, easy02)).toBe('satisfied');
     expect(getClueState(clue, { A: { row: 0, column: 0 } }, easy02)).toBe('violated');
   });
 
   it('exact-row: transitions from undetermined to satisfied/violated', () => {
-    const clue = clueById(easy01, 'clue-8'); // A is in row 3
+    const clue = clueById(easy01, 'clue-8'); // (supplemental) A is in row 5
     expect(getClueState(clue, {}, easy01)).toBe('undetermined');
-    expect(getClueState(clue, { A: { row: 3, column: 1 } }, easy01)).toBe('satisfied');
+    expect(getClueState(clue, { A: { row: 5, column: 6 } }, easy01)).toBe('satisfied');
     expect(getClueState(clue, { A: { row: 0, column: 1 } }, easy01)).toBe('violated');
   });
 
   it('near-prop: satisfied when adjacent, violated otherwise', () => {
-    const clue = clueById(easy02, 'clue-2'); // B is beside asset-1-1 at row4/col4
+    const clue = clueById(easy02, 'clue-2'); // B is beside asset-2-1 at row3/col2
     expect(getClueState(clue, {}, easy02)).toBe('undetermined');
-    expect(getClueState(clue, { B: { row: 3, column: 4 } }, easy02)).toBe('satisfied');
+    expect(getClueState(clue, { B: { row: 4, column: 2 } }, easy02)).toBe('satisfied');
     expect(getClueState(clue, { B: { row: 0, column: 0 } }, easy02)).toBe('violated');
   });
 
   it('not-near-prop: violated when adjacent, satisfied otherwise', () => {
-    const clue = clueById(easy14, 'clue-4b'); // C is not beside asset-3-1 at row4/col4
+    const clue = clueById(easy14, 'clue-4b'); // C is not beside any of the three trees (all-of of not-near-prop)
     expect(getClueState(clue, {}, easy14)).toBe('undetermined');
-    expect(getClueState(clue, { C: { row: 4, column: 3 } }, easy14)).toBe('violated');
-    expect(getClueState(clue, { C: { row: 0, column: 0 } }, easy14)).toBe('satisfied');
+    expect(getClueState(clue, { C: { row: 1, column: 0 } }, easy14)).toBe('violated');
+    expect(getClueState(clue, { C: { row: 4, column: 3 } }, easy14)).toBe('satisfied');
   });
 
   it('different-room: satisfied when in different rooms, violated when in the same room', () => {
     const clue = clueById(easy02, 'clue-3'); // C and B are in different rooms
     expect(getClueState(clue, {}, easy02)).toBe('undetermined');
-    expect(getClueState(clue, { C: { row: 2, column: 3 }, B: { row: 3, column: 4 } }, easy02)).toBe('satisfied');
-    expect(getClueState(clue, { C: { row: 3, column: 0 }, B: { row: 3, column: 4 } }, easy02)).toBe('violated');
+    expect(getClueState(clue, { C: { row: 3, column: 0 }, B: { row: 3, column: 4 } }, easy02)).toBe('satisfied');
+    expect(getClueState(clue, { C: { row: 2, column: 3 }, B: { row: 3, column: 4 } }, easy02)).toBe('violated');
   });
 
   it('same-room: satisfied when in the same room, violated otherwise', () => {
@@ -64,42 +64,41 @@ describe('getClueState', () => {
   });
 
   it('on-prop: satisfied on the seat, violated elsewhere', () => {
-    const clue = clueById(easy01, 'clue-3'); // C is on asset-4*-1 at row2/col6
+    const clue = clueById(easy01, 'clue-3'); // C is on asset-2*-1 at row2/col5
     expect(getClueState(clue, {}, easy01)).toBe('undetermined');
-    expect(getClueState(clue, { C: { row: 2, column: 6 } }, easy01)).toBe('satisfied');
+    expect(getClueState(clue, { C: { row: 2, column: 5 } }, easy01)).toBe('satisfied');
     expect(getClueState(clue, { C: { row: 0, column: 0 } }, easy01)).toBe('violated');
   });
 
   it('axis-offset-from: satisfied on the exact offset, violated otherwise', () => {
-    const clue = clueById(easy13, 'clue-4'); // D is exactly 1 row north of C
-    expect(getClueState(clue, {}, easy13)).toBe('undetermined');
-    expect(getClueState(clue, { C: { row: 1, column: 3 }, D: { row: 0, column: 1 } }, easy13)).toBe('satisfied');
-    expect(getClueState(clue, { C: { row: 1, column: 3 }, D: { row: 5, column: 5 } }, easy13)).toBe('violated');
+    const clue = clueById(easy04, 'clue-3'); // C is exactly 1 column west of E
+    expect(getClueState(clue, {}, easy04)).toBe('undetermined');
+    expect(getClueState(clue, { C: { row: 5, column: 5 }, E: { row: 0, column: 6 } }, easy04)).toBe('satisfied');
+    expect(getClueState(clue, { C: { row: 5, column: 5 }, E: { row: 0, column: 8 } }, easy04)).toBe('violated');
   });
 
   it('one-of: satisfied when any option holds, violated when every option fails', () => {
     const clue = clueById(easy01, 'clue-7'); // F is in the same room as A or E
-    const placements: Placements = { F: { row: 1, column: 2 }, A: { row: 3, column: 1 } };
+    const placements: Placements = { F: { row: 3, column: 3 }, E: { row: 4, column: 0 } };
     expect(getClueState(clue, placements, easy01)).toBe('satisfied');
-    const violating: Placements = { F: { row: 1, column: 2 }, A: { row: 3, column: 1 }, E: { row: 4, column: 0 } };
-    // A is in room-1 (same as F); still satisfied by the A branch.
+    const violating: Placements = { F: { row: 3, column: 3 }, A: { row: 5, column: 6 }, E: { row: 4, column: 0 } };
+    // E is in room-1 (same as F); still satisfied by the E branch even with A placed elsewhere.
     expect(getClueState(clue, violating, easy01)).toBe('satisfied');
   });
 
   it('all-of (nested inside one-of): satisfied only when a full branch holds', () => {
-    const clue = clueById(easy13, 'clue-3b');
+    const clue = clueById(easy13, 'clue-3');
     expect(getClueState(clue, {}, easy13)).toBe('undetermined');
-    // A same-room as C and north of C: solution has A at (5,5), C at (1,3) — same room-4? No: A room-4, C room-1 -> not same room.
-    // Use D, who solves at (0,1), same room-1 as C (1,3), and north of C.
-    const satisfying: Placements = { C: { row: 1, column: 3 }, D: { row: 0, column: 1 } };
+    // B same-room as C (both room-2) and north of C.
+    const satisfying: Placements = { B: { row: 0, column: 0 }, C: { row: 2, column: 3 } };
     expect(getClueState(clue, satisfying, easy13)).toBe('satisfied');
   });
 
   it('category-on-prop: satisfied when a matching-category suspect sits there, violated when a non-matching one does', () => {
-    const clue = clueById(easy04, 'clue-3b'); // A woman is on asset-3*-2 at row4/col4
+    const clue = clueById(easy04, 'clue-3b'); // A woman is on asset-3*-2 at row2/col8
     expect(getClueState(clue, {}, easy04)).toBe('undetermined');
-    expect(getClueState(clue, { D: { row: 4, column: 4 } }, easy04)).toBe('satisfied'); // D is category "woman"
-    expect(getClueState(clue, { B: { row: 4, column: 4 } }, easy04)).toBe('violated'); // B is category "man"
+    expect(getClueState(clue, { D: { row: 2, column: 8 } }, easy04)).toBe('satisfied'); // D is category "woman"
+    expect(getClueState(clue, { B: { row: 2, column: 8 } }, easy04)).toBe('violated'); // B is category "man"
   });
 });
 
@@ -114,7 +113,7 @@ describe('getAllClueStates', () => {
 describe('getCluesForSuspect', () => {
   it('finds clues naming a suspect, including inside one-of/all-of', () => {
     const clues = getCluesForSuspect(easy13, 'D');
-    expect(clues.map((clue) => clue.id)).toEqual(expect.arrayContaining(['clue-4', 'clue-3b', 'clue-7']));
+    expect(clues.map((clue) => clue.id)).toEqual(expect.arrayContaining(['clue-3', 'clue-11', 'clue-12']));
   });
 });
 
