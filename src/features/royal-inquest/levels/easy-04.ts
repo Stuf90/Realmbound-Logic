@@ -147,7 +147,7 @@ export const definition: MurdokuDefinition = {
     },
     {
       id: 'clue-4',
-      text: 'D is in column 4',
+      text: 'D is in column 5',
       predicate: { type: 'exact-column', suspectId: 'D', column: 4 },
     },
     {
@@ -182,32 +182,32 @@ export const definition: MurdokuDefinition = {
     },
     {
       id: 'clue-11',
-      text: '(supplemental) C is in row 0',
+      text: '(supplemental) C is in row 1',
       predicate: { type: 'exact-row', suspectId: 'C', row: 0 },
     },
     {
       id: 'clue-12',
-      text: '(supplemental) D is in row 6',
+      text: '(supplemental) D is in row 7',
       predicate: { type: 'exact-row', suspectId: 'D', row: 6 },
     },
     {
       id: 'clue-13',
-      text: '(supplemental) E is in row 2',
+      text: '(supplemental) E is in row 3',
       predicate: { type: 'exact-row', suspectId: 'E', row: 2 },
     },
     {
       id: 'clue-14',
-      text: '(supplemental) E is in column 8',
+      text: '(supplemental) E is in column 9',
       predicate: { type: 'exact-column', suspectId: 'E', column: 8 },
     },
     {
       id: 'clue-15',
-      text: '(supplemental) G is in row 3',
+      text: '(supplemental) G is in row 4',
       predicate: { type: 'exact-row', suspectId: 'G', row: 3 },
     },
     {
       id: 'clue-16',
-      text: '(supplemental) G is in column 0',
+      text: '(supplemental) G is in column 1',
       predicate: { type: 'exact-column', suspectId: 'G', column: 0 },
     },
   ],

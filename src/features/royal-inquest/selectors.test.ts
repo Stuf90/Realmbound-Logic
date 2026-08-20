@@ -22,14 +22,14 @@ describe('getClueState', () => {
   });
 
   it('exact-column: transitions from undetermined to satisfied/violated', () => {
-    const clue = clueById(easy02, 'clue-5'); // (supplemental) A is in column 3
+    const clue = clueById(easy02, 'clue-5'); // (supplemental) A is in column 4
     expect(getClueState(clue, {}, easy02)).toBe('undetermined');
     expect(getClueState(clue, { A: { row: 1, column: 3 } }, easy02)).toBe('satisfied');
     expect(getClueState(clue, { A: { row: 0, column: 0 } }, easy02)).toBe('violated');
   });
 
   it('exact-row: transitions from undetermined to satisfied/violated', () => {
-    const clue = clueById(easy01, 'clue-8'); // (supplemental) A is in row 5
+    const clue = clueById(easy01, 'clue-8'); // (supplemental) A is in row 6
     expect(getClueState(clue, {}, easy01)).toBe('undetermined');
     expect(getClueState(clue, { A: { row: 5, column: 6 } }, easy01)).toBe('satisfied');
     expect(getClueState(clue, { A: { row: 0, column: 1 } }, easy01)).toBe('violated');
