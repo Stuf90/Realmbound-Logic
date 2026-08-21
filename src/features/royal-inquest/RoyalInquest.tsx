@@ -5,7 +5,7 @@ import { positionKey } from '../../shared/geometry';
 import { royalInquestAssets } from '../../assets/royal-inquest/manifest';
 import { getRoyalInquestHint } from './hints';
 import { createInitialState, reduceRoyalInquest } from './reducer';
-import { getAllClueStates, getCellState, getCluesForSuspect, isRoyalInquestComplete } from './selectors';
+import { getAllClueStates, getCellState, getCluesForSuspect, getGeneralClues, isRoyalInquestComplete } from './selectors';
 import { resolveClueText } from './skin';
 import type { RoyalInquestLevel, RoyalInquestState } from './types';
 import '../../app/puzzle.css';
@@ -103,6 +103,7 @@ export function RoyalInquest({ level, onBack }: { level: RoyalInquestLevel; onBa
 
   const visibleSuspect = definition.suspects[suspectIndex]!;
   const visibleSuspectClues = useMemo(() => getCluesForSuspect(definition, visibleSuspect.id), [definition, visibleSuspect.id]);
+  const generalClues = useMemo(() => getGeneralClues(definition), [definition]);
   const clueStates = useMemo(() => getAllClueStates(definition, state.placements), [definition, state.placements]);
   const roomAnchorKeys = useMemo(() => {
     const seenRooms = new Set<string>();
@@ -291,6 +292,18 @@ export function RoyalInquest({ level, onBack }: { level: RoyalInquestLevel; onBa
             {dossierOpen ? '▾ Persons of interest' : '▸ Persons of interest'}
           </button>
           <div className={`dossier-content${dossierOpen ? '' : ' collapsed'}`}>
+            {generalClues.length > 0 && (
+              <section className="general-clue-brief" role="region" aria-live="polite" aria-label="General witness statements">
+                <ol>
+                  {generalClues.map((clue) => (
+                    <li key={clue.id} data-state={clueStates[clue.id]}>
+                      {resolveClueText(clue, skin, definition)}
+                      {clueStates[clue.id] === 'violated' ? ' ⚠' : clueStates[clue.id] === 'satisfied' ? ' ✓' : ''}
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
             <section className="character-carousel" aria-label="Persons of interest">
               <div className="carousel-controls">
                 <button aria-label="Previous person" onClick={() => goToSuspect(suspectIndex - 1)}>
