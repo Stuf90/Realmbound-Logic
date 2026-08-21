@@ -97,6 +97,7 @@ export const definition: MurdokuDefinition = {
     {
       id: 'clue-3',
       text: 'Someone is in the same room as C and north of C',
+      scope: 'general',
       predicate: {
         type: 'one-of',
         options: [

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Placements } from 'murdoku-logic-engine';
-import { getAllClueStates, getClueState, getCluesForSuspect, isRoyalInquestComplete } from './selectors';
+import { getAllClueStates, getClueState, getCluesForSuspect, getGeneralClues, isRoyalInquestComplete } from './selectors';
 import { definition as easy02 } from './levels/easy-02';
 import { definition as easy13 } from './levels/easy-13';
 import { definition as easy01 } from './levels/easy-01';
@@ -113,7 +113,19 @@ describe('getAllClueStates', () => {
 describe('getCluesForSuspect', () => {
   it('finds clues naming a suspect, including inside one-of/all-of', () => {
     const clues = getCluesForSuspect(easy13, 'D');
-    expect(clues.map((clue) => clue.id)).toEqual(expect.arrayContaining(['clue-3', 'clue-11', 'clue-12']));
+    expect(clues.map((clue) => clue.id)).toEqual(expect.arrayContaining(['clue-11', 'clue-12']));
+  });
+
+  it('excludes general-scope clues, even when they name the suspect', () => {
+    const clues = getCluesForSuspect(easy13, 'D');
+    expect(clues.map((clue) => clue.id)).not.toContain('clue-3');
+  });
+});
+
+describe('getGeneralClues', () => {
+  it('returns only clues scoped as general', () => {
+    const clues = getGeneralClues(easy13);
+    expect(clues.map((clue) => clue.id)).toEqual(['clue-3']);
   });
 });
 

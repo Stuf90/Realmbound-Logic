@@ -21,7 +21,13 @@ export function getAllClueStates(definition: MurdokuDefinition, placements: Plac
 }
 
 export function getCluesForSuspect(definition: MurdokuDefinition, suspectId: string): Clue[] {
-  return definition.clues.filter((clue) => getPredicateSuspectIds(clue.predicate).includes(suspectId));
+  return definition.clues.filter(
+    (clue) => clue.scope !== 'general' && getPredicateSuspectIds(clue.predicate).includes(suspectId),
+  );
+}
+
+export function getGeneralClues(definition: MurdokuDefinition): Clue[] {
+  return definition.clues.filter((clue) => clue.scope === 'general');
 }
 
 export type CellState = 'blocked' | 'manual-cross' | 'auto-cross' | 'occupied' | 'available';
