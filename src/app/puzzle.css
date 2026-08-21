@@ -65,6 +65,10 @@
 .character-clue-brief li { margin-bottom: .3rem; }
 .character-clue-brief p { font-style: italic; opacity: .8; }
 
+.general-clue-brief { border: 1px solid var(--ink); border-radius: .3rem; padding: .5rem .6rem; margin-bottom: .6rem; font-size: .85rem; line-height: 1.35; background: rgba(0, 0, 0, .03); }
+.general-clue-brief ol { margin: 0; padding-left: 1.2rem; }
+.general-clue-brief li { margin-bottom: .3rem; }
+
 /* Resolution banner */
 .resolution { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 1.25rem; background: rgba(20, 14, 8, .68); }
 .resolution-card { max-width: 34rem; max-height: 80vh; overflow-y: auto; padding: 1.25rem; border: 3px double var(--gold); background: #fff1b9; text-align: center; box-shadow: 0 0 0 3px var(--ink), 0 1rem 2.5rem rgba(0,0,0,.5); }
