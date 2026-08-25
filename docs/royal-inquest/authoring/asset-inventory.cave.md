@@ -93,6 +93,20 @@ doc, not on `main` yet.
   `weapon-rack`/`shield-display` for possible new `armory` environment.
 - **New tile variant**: `hallway-stone-2/3`, `dungeon-masonry-2/3`, `royal-marble-2/3`
   (every env got 3 variant except `hallway`/`dungeon` — only 1 each).
+  - **Distinctness rule**: variant of same tile must look clear different at glance,
+    not just subtle texture tweak. Ex: wood floor horizontal-plank next to same floor
+    vertical-plank — too similar, player struggle tell apart. Where 2 variant near-dupe,
+    push apart via color/tone, not just plank direction/grain detail. Apply to ALL new
+    tile variant above, not harbor set only.
+  - **Dedup rule**: before gen new tile, check if existing/planned tile close enough
+    reuse across env under 1 asset — don't ship 2nd file same material, new name only.
+    Check when land: `tavern-planks-*` vs `harbor-planks-*` (both plain wood plank,
+    1 indoor 1 outdoor dock — maybe share 1 tile, or need color/weather tweak only, not
+    full separate asset); `armory-stone-*` vs existing `hallway-stone-*`/
+    `church-stone-*` (stone-floor family — confirm armory floor actual distinct before
+    add 3rd near-dupe stone texture). Same look wanted 2 env -> point both tile entry
+    same file in `manifest.ts`, don't duplicate. Reuse across env fine — distinctness
+    rule above about telling *variant* apart, not ban on intentional cross-env reuse.
 - **New `armory` `TileEnvironment`** with own `armory-stone-1/2/3` tile, paired with
   weapon-rack/shield-display prop above.
 - **New outdoor/rural environment** — rustier, non-court counterpart to existing
@@ -105,6 +119,10 @@ doc, not on `main` yet.
   - `cabin` — tile like `cabin-log-1/2/3`; prop: `cabin-bed` (seat, doubles as
     "resting place"), `wood-stove`, `washbasin`, `rocking-chair` (seat), `chest`
     (decorative, distinct from `offering-chest`).
+  - `harbor` — tile like `harbor-planks-1/2/3`; prop: `mooring-bollard` (seat),
+    `crate-stack`, `fishing-net`, `ship-wheel`, `anchor-display`, `fish-rack`
+    (decorative). Natural home for `barrel-cluster` too, plausible nautical case
+    setting outside keep.
   Each need own `propsByEnvironment` allow-list entry, same pattern as existing 7
   env — see [board-rooms-props.cave.md](board-rooms-props.cave.md#allow-list-by-environment).
 - **Wall texture** — `walls/<environment>.png` set (1 per env, 8 incl armory) +

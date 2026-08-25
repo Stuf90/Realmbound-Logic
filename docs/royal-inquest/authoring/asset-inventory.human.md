@@ -105,6 +105,26 @@ commitment.
 - **New tile variants**: `hallway-stone-2/3`, `dungeon-masonry-2/3`, `royal-marble-2/3`
   (every environment currently has 3 variants except `hallway` and `dungeon`, which
   only have 1).
+  - **Distinctness note**: variants of the same tile must read as clearly different at
+    a glance, not just a subtle texture tweak. E.g. a wood floor with horizontal planks
+    next to the same floor with vertical planks is too similar — players struggle to
+    tell them apart. Where two variants would otherwise be near-duplicates, pull them
+    apart with a different color/tone, not just a different plank direction or grain
+    detail. Applies to every new tile variant above, not only the harbor set.
+  - **Dedup note**: before generating a new tile, check whether an existing or
+    already-planned tile is visually close enough to reuse across environments under
+    one asset — don't ship a second file that's the same material with a new name.
+    Likely candidates to check when these land: `tavern-planks-*` vs `harbor-planks-*`
+    (both plain wood planking, one indoor one outdoor dock — may end up close enough to
+    share a single tile, or need only a color/weathering tweak rather than a fully
+    separate asset); and `armory-stone-*` vs the existing `hallway-stone-*` /
+    `church-stone-*` (stone-floor family — confirm the armory floor is actually distinct
+    before adding a third near-identical stone texture). If two environments genuinely
+    call for the same look, point both `propsByEnvironment`/tile entries at the same
+    file in `manifest.ts` instead of duplicating it — reuse is fine as long as the
+    reused tile doesn't sit next to a genuinely different-but-similar variant (see the
+    distinctness note above, which is about telling *variants* apart, not about
+    banning intentional reuse across environments).
 - **New `armory` `TileEnvironment`** with its own `armory-stone-1/2/3` tiles, paired
   with the `weapon-rack`/`shield-display` props above.
 - **New outdoor/rural environments** — a rustier, non-court counterpart to the
@@ -118,6 +138,10 @@ commitment.
   - `cabin` — tiles like `cabin-log-1/2/3`; props: `cabin-bed` (seat, doubling as
     "resting place"), `wood-stove`, `washbasin`, `rocking-chair` (seat), `chest`
     (decorative, distinct from `offering-chest`).
+  - `harbor` — tiles like `harbor-planks-1/2/3`; props: `mooring-bollard` (seat),
+    `crate-stack`, `fishing-net`, `ship-wheel`, `anchor-display`, `fish-rack`
+    (decorative). A natural home for `barrel-cluster` too, and a plausible setting for
+    a nautical-themed case outside the keep.
   Each would need its own `propsByEnvironment` allow-list entry, following the same
   pattern as the existing seven environments — see
   [board, rooms, and props](board-rooms-props.human.md#allow-list-by-environment).
