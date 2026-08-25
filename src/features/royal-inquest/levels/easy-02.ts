@@ -75,11 +75,6 @@ export const definition: MurdokuDefinition = {
       text: 'D is beside asset-1-1',
       predicate: { type: 'near-prop', suspectId: 'D', propId: 'asset-1-1' },
     },
-    {
-      id: 'clue-5',
-      text: '(supplemental) A is in column 4',
-      predicate: { type: 'exact-column', suspectId: 'A', column: 3 },
-    },
   ],
   murdererId: 'B',
   solution: {

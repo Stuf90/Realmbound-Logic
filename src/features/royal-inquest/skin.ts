@@ -7,8 +7,6 @@ export interface RoyalInquestSkin {
   props: Record<string, { assetId: PropAssetId }>;
 }
 
-const SUPPLEMENTAL_PREFIX = '(supplemental) ';
-
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -24,12 +22,9 @@ function humanizeAssetId(assetId: string): string {
 /**
  * Substitutes every suspect/room/prop id appearing in a clue's placeholder text with the skin's
  * display name (props render as a humanized version of their chosen asset id, since the skin has
- * no separate prop display name). Also strips the "(supplemental) " authoring prefix, which is
- * authoring metadata not meant for players.
+ * no separate prop display name).
  */
 export function resolveClueText(clue: Clue, skin: RoyalInquestSkin, definition: MurdokuDefinition): string {
-  const text = clue.text.startsWith(SUPPLEMENTAL_PREFIX) ? clue.text.slice(SUPPLEMENTAL_PREFIX.length) : clue.text;
-
   const tokens = new Map<string, string>();
   for (const suspect of definition.suspects) {
     const entry = skin.suspects[suspect.id];
@@ -45,8 +40,8 @@ export function resolveClueText(clue: Clue, skin: RoyalInquestSkin, definition: 
   }
 
   const ids = [...tokens.keys()].sort((a, b) => b.length - a.length);
-  if (ids.length === 0) return text;
+  if (ids.length === 0) return clue.text;
 
   const pattern = new RegExp(`\\b(${ids.map(escapeRegExp).join('|')})\\b`, 'g');
-  return text.replace(pattern, (match) => tokens.get(match) ?? match);
+  return clue.text.replace(pattern, (match) => tokens.get(match) ?? match);
 }

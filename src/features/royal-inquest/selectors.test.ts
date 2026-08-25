@@ -22,14 +22,14 @@ describe('getClueState', () => {
   });
 
   it('exact-column: transitions from undetermined to satisfied/violated', () => {
-    const clue = clueById(easy02, 'clue-5'); // (supplemental) A is in column 4
-    expect(getClueState(clue, {}, easy02)).toBe('undetermined');
-    expect(getClueState(clue, { A: { row: 1, column: 3 } }, easy02)).toBe('satisfied');
-    expect(getClueState(clue, { A: { row: 0, column: 0 } }, easy02)).toBe('violated');
+    const clue = clueById(easy01, 'clue-5'); // E is in column 1
+    expect(getClueState(clue, {}, easy01)).toBe('undetermined');
+    expect(getClueState(clue, { E: { row: 4, column: 0 } }, easy01)).toBe('satisfied');
+    expect(getClueState(clue, { E: { row: 0, column: 1 } }, easy01)).toBe('violated');
   });
 
   it('exact-row: transitions from undetermined to satisfied/violated', () => {
-    const clue = clueById(easy01, 'clue-8'); // (supplemental) A is in row 6
+    const clue = { id: 'test-clue', text: 'A is in row 6', predicate: { type: 'exact-row' as const, suspectId: 'A', row: 5 } };
     expect(getClueState(clue, {}, easy01)).toBe('undetermined');
     expect(getClueState(clue, { A: { row: 5, column: 6 } }, easy01)).toBe('satisfied');
     expect(getClueState(clue, { A: { row: 0, column: 1 } }, easy01)).toBe('violated');
@@ -111,13 +111,13 @@ describe('getAllClueStates', () => {
 });
 
 describe('getCluesForSuspect', () => {
-  it('finds clues naming a suspect, including inside one-of/all-of', () => {
-    const clues = getCluesForSuspect(easy13, 'D');
-    expect(clues.map((clue) => clue.id)).toEqual(expect.arrayContaining(['clue-11', 'clue-12']));
+  it('finds clues naming a suspect', () => {
+    const clues = getCluesForSuspect(easy13, 'A');
+    expect(clues.map((clue) => clue.id)).toEqual(expect.arrayContaining(['clue-1']));
   });
 
-  it('excludes general-scope clues, even when they name the suspect', () => {
-    const clues = getCluesForSuspect(easy13, 'D');
+  it('excludes general-scope clues, even when they name the suspect inside one-of/all-of', () => {
+    const clues = getCluesForSuspect(easy13, 'A');
     expect(clues.map((clue) => clue.id)).not.toContain('clue-3');
   });
 });

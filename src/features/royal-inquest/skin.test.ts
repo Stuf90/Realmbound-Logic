@@ -12,14 +12,6 @@ describe('resolveClueText', () => {
     expect(resolved).toBe('Sir Boren is beside Barrel Cluster');
   });
 
-  it('strips the "(supplemental) " authoring prefix', () => {
-    const clue = easy13Definition.clues.find((candidate) => candidate.id === 'clue-6')!;
-    expect(clue.text).toBe('(supplemental) A is in column 1');
-    const resolved = resolveClueText(clue, easy13Skin, easy13Definition);
-    expect(resolved.startsWith('(supplemental)')).toBe(false);
-    expect(resolved).toBe('Lady Annora is in column 1');
-  });
-
   it('does not let a shorter overlapping id clobber a longer asterisked id', () => {
     const clue = easy13Definition.clues.find((candidate) => candidate.id === 'clue-4')!;
     expect(clue.text).toBe('E is on asset-4*-2');
