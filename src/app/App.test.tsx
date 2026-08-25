@@ -319,7 +319,7 @@ describe('puzzle play', () => {
     await user.click(screen.getByRole('button', { name: 'Begin the inquest' }));
 
     const elowenBrief = screen.getByRole('region', { name: /Clues about Lady Elowen/i });
-    expect(within(elowenBrief).getByText('Lady Elowen is in column 4')).toBeInTheDocument();
+    expect(within(elowenBrief).getByText('Lady Elowen is in the Falconry')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Previous person' }));
 
