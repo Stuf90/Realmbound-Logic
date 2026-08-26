@@ -123,6 +123,28 @@ as an object with an abruptly cropped edge. Always place them as a pair. If no a
 same-chamber cell is free — not a solution cell, not already holding another prop — use the plain
 base asset (`bookshelf`, `dining-table`, `kitchen-worktable`, …) instead of a lone half.
 
+**Span indicator.** The `-left`/`-right` suffix pair *is* the multi-tile indicator today — any prop
+id carrying it spans exactly 2 cells; any prop id without it is single-cell. There's no id that spans
+3+ cells yet. When a new prop needs multiple tiles (a bed, a large bookcase, a long table), name and
+document it the same way: the id says how many tiles and which arrangement, not just "this prop is
+big." Note the id count in the asset-inventory doc entry for that prop (see
+[asset inventory](asset-inventory.human.md)) so authors don't discover the span by trial and error.
+
+**Source art must be full-bleed.** `split_prop.py` cuts one source image in half at the cell
+boundary — the source must be exactly N cells wide/tall (2 cells for today's pairs) with the art
+running edge-to-edge, no padding or margin inside each half's cell area. Any margin baked into the
+source shows up as a visible seam or gap once the two tile-sized halves sit in adjacent grid cells;
+the two only read as one continuous object if the art fills the full tile canvas on both sides of
+the cut.
+
+**Horizontal only, for now.** Every existing pair is a *left/right* (horizontally-adjacent) split.
+There's no `-top`/`-bottom` (vertically-adjacent) convention yet, and no code path expects one. A
+prop that reads naturally in a vertical layout — e.g. a bed with the headboard on one row and the
+foot on the row below — needs its own separately authored top/bottom artwork; it is not just the
+left/right image rotated 90°, since the object's silhouette differs by orientation. If a chamber
+layout could place such a prop either way, both orientations need their own asset pair, and the
+level author picks whichever pair actually fits the chamber's free cells.
+
 ### Validation
 
 For every cell with `propId` set, `validateInquestDefinition` requires all of:
