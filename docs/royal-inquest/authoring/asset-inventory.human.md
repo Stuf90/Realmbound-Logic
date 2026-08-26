@@ -136,8 +136,8 @@ commitment.
     counter), `barstool` (seat), `ale-barrel`, `fireplace`, `dartboard`. A natural
     home for `barrel-cluster` too.
   - `cabin` — tiles like `cabin-log-1/2/3`; props: `cabin-bed` (seat, doubling as
-    "resting place"), `wood-stove`, `washbasin`, `rocking-chair` (seat), `chest`
-    (decorative, distinct from `offering-chest`).
+    "resting place" — **2-tile prop**, see note below), `wood-stove`, `washbasin`,
+    `rocking-chair` (seat), `chest` (decorative, distinct from `offering-chest`).
   - `harbor` — tiles like `harbor-planks-1/2/3`; props: `mooring-bollard` (seat),
     `crate-stack`, `fishing-net`, `ship-wheel`, `anchor-display`, `fish-rack`
     (decorative). A natural home for `barrel-cluster` too, and a plausible setting for
@@ -145,6 +145,16 @@ commitment.
   Each would need its own `propsByEnvironment` allow-list entry, following the same
   pattern as the existing seven environments — see
   [board, rooms, and props](board-rooms-props.human.md#allow-list-by-environment).
+  - **Multi-tile props**: some of the above (`cabin-bed` at least; a bookcase-style prop
+    would be another) are naturally too large for one cell and need the same multi-tile
+    treatment as the existing `bookshelf`/`dining-table`/etc. `-left`/`-right` pairs —
+    see [the span-indicator, full-bleed source art, and horizontal/vertical
+    notes](board-rooms-props.human.md#-left-right-variants-are-two-cell-spans-not-single-cell-flavors).
+    Concretely: the prop id must say how many tiles it spans, the source art must fill
+    each tile's full canvas with no margin so the halves join seamlessly, and — because
+    the current split tooling only supports left/right — a prop that could sit either
+    horizontally or vertically in a room needs two separately authored asset pairs, not
+    one image reused at a rotation.
 - **Wall textures** — a `walls/<environment>.png` set (one per environment, 8 including
   `armory`) plus a `getCellWallTexture()` accessor, replacing the current plain
   CSS-drawn walls (`getCellWalls` in `visuals.ts`).

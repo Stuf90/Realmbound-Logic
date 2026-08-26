@@ -117,14 +117,23 @@ doc, not on `main` yet.
     counter), `barstool` (seat), `ale-barrel`, `fireplace`, `dartboard`. Natural home
     for `barrel-cluster` too.
   - `cabin` — tile like `cabin-log-1/2/3`; prop: `cabin-bed` (seat, doubles as
-    "resting place"), `wood-stove`, `washbasin`, `rocking-chair` (seat), `chest`
-    (decorative, distinct from `offering-chest`).
+    "resting place" — **2-tile prop**, see note below), `wood-stove`, `washbasin`,
+    `rocking-chair` (seat), `chest` (decorative, distinct from `offering-chest`).
   - `harbor` — tile like `harbor-planks-1/2/3`; prop: `mooring-bollard` (seat),
     `crate-stack`, `fishing-net`, `ship-wheel`, `anchor-display`, `fish-rack`
     (decorative). Natural home for `barrel-cluster` too, plausible nautical case
     setting outside keep.
   Each need own `propsByEnvironment` allow-list entry, same pattern as existing 7
   env — see [board-rooms-props.cave.md](board-rooms-props.cave.md#allow-list-by-environment).
+  - **Multi-tile prop**: some above (`cabin-bed` at least; bookcase-style prop = another)
+    naturally too big 1 cell, need same multi-tile treat as existing `bookshelf`/
+    `dining-table`/etc `-left`/`-right` pair — see [span indicator, full-bleed source
+    art, horizontal/vertical
+    note](board-rooms-props.cave.md#-left-right-variants-are-two-cell-spans-not-single-cell-flavors).
+    Concrete: prop id must say how many tile it span, source art must fill each tile
+    full canvas no margin so half join seamless, and — since current split tool only
+    support left/right — prop could sit horizontal OR vertical in room need 2 separate
+    author asset pair, not 1 image reuse at rotation.
 - **Wall texture** — `walls/<environment>.png` set (1 per env, 8 incl armory) +
   `getCellWallTexture()` accessor, replace current plain CSS wall (`getCellWalls`,
   visuals.ts).
