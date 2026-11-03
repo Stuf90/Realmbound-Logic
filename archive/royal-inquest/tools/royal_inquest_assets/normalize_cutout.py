@@ -15,13 +15,16 @@ LOW_ALPHA_KEY_RESIDUE_CUTOFF = 40
 BREATHING_ROOM = 0.08
 
 
-def normalize_cutout(source: Path, destination: Path, size: int = 512) -> None:
+def normalize_cutout(source: Path, destination: Path, size: int = 512, *, breathing_room: float = BREATHING_ROOM) -> None:
     """Remove the sampled border key, square-pad the subject, and resize it.
 
     The alpha matte uses a smooth transition from fully transparent at a color
     distance of 12 to opaque at 80.  That is deliberately broad enough to
     absorb generator anti-aliasing around a nominally flat chroma-key border.
     """
+
+    if not 0 <= breathing_room < 0.5:
+        raise ValueError("breathing_room must be between zero and 0.5")
 
     if size <= 0:
         raise ValueError("size must be positive")
@@ -37,13 +40,14 @@ def normalize_cutout(source: Path, destination: Path, size: int = 512) -> None:
     image.putalpha(alpha)
     image = _despill_chroma_key(image, key_color)
 
-    bounds = alpha.getbbox()
+    # Ignore almost-transparent key residue when measuring the visible footprint.
+    bounds = image.getchannel("A").point(lambda value: 255 if value > LOW_ALPHA_KEY_RESIDUE_CUTOFF else 0).getbbox()
     if bounds is None:
         raise ValueError(f"No foreground remained after keying {source}.")
 
     subject = image.crop(bounds)
     subject_width, subject_height = subject.size
-    available = max(1, round(size * (1 - (2 * BREATHING_ROOM))))
+    available = max(1, round(size * (1 - (2 * breathing_room))))
     scale = min(available / subject_width, available / subject_height)
     resized_size = (
         max(1, round(subject_width * scale)),

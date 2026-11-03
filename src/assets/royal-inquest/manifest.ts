@@ -1,3 +1,30 @@
+import manualCross from './marks/manual-cross.png';
+import autoCross from './marks/auto-cross.png';
+import hayBale from './props/hay-bale.png';
+import feedTrough from './props/feed-trough.png';
+import well from './props/well.png';
+import scarecrow from './props/scarecrow.png';
+import farmFence from './props/farm-fence.png';
+import tavernBar from './props/tavern-bar.png';
+import barstool from './props/barstool.png';
+import aleBarrel from './props/ale-barrel.png';
+import fireplace from './props/fireplace.png';
+import dartboard from './props/dartboard.png';
+import cabinBed from './props/cabin-bed.png';
+import woodStove from './props/wood-stove.png';
+import washbasin from './props/washbasin.png';
+import rockingChair from './props/rocking-chair.png';
+import chest from './props/chest.png';
+import farmDirt1 from './tiles/farm-dirt-1.png';
+import farmDirt2 from './tiles/farm-dirt-2.png';
+import farmDirt3 from './tiles/farm-dirt-3.png';
+import tavernPlanks1 from './tiles/tavern-planks-1.png';
+import tavernPlanks2 from './tiles/tavern-planks-2.png';
+import tavernPlanks3 from './tiles/tavern-planks-3.png';
+import cabinLog1 from './tiles/cabin-log-1.png';
+import cabinLog2 from './tiles/cabin-log-2.png';
+import cabinLog3 from './tiles/cabin-log-3.png';
+
 import monarch from './avatars/monarch.png';
 import royalConsort from './avatars/royal-consort.png';
 import royalHeir from './avatars/royal-heir.png';
@@ -103,9 +130,24 @@ export type PropAssetId =
   | 'dungeon-cage'
   | 'candle-stand'
   | 'offering-chest'
-  | 'window';
+  | 'window'
+  | 'hay-bale'
+  | 'feed-trough'
+  | 'well'
+  | 'scarecrow'
+  | 'farm-fence'
+  | 'tavern-bar'
+  | 'barstool'
+  | 'ale-barrel'
+  | 'fireplace'
+  | 'dartboard'
+  | 'cabin-bed'
+  | 'wood-stove'
+  | 'washbasin'
+  | 'rocking-chair'
+  | 'chest';
 
-export type TileEnvironment = 'room' | 'garden' | 'church' | 'kitchen' | 'hallway' | 'dungeon' | 'royalRoom';
+export type TileEnvironment = 'room' | 'garden' | 'church' | 'kitchen' | 'hallway' | 'dungeon' | 'royalRoom' | 'farm' | 'tavern' | 'cabin';
 
 export const propsByEnvironment: Record<TileEnvironment, readonly PropAssetId[]> = {
   royalRoom: ['throne', 'formal-chair', 'window'],
@@ -137,6 +179,9 @@ export const propsByEnvironment: Record<TileEnvironment, readonly PropAssetId[]>
     'window',
   ],
   hallway: ['window'],
+  farm: ['hay-bale', 'feed-trough', 'well', 'scarecrow', 'farm-fence', 'window'],
+  tavern: ['tavern-bar', 'barstool', 'ale-barrel', 'fireplace', 'dartboard', 'barrel-cluster', 'window'],
+  cabin: ['cabin-bed', 'wood-stove', 'washbasin', 'rocking-chair', 'chest', 'window'],
 };
 
 // A "seat" prop sits on an unblocked, legal cell — a character may be placed there, with the prop
@@ -167,6 +212,22 @@ export const propKindByAsset: Record<PropAssetId, 'seat' | 'decorative'> = {
   'candle-stand': 'decorative',
   'offering-chest': 'decorative',
   window: 'decorative',
+  'hay-bale': 'decorative',
+  'feed-trough': 'decorative',
+  'well': 'decorative',
+  'scarecrow': 'decorative',
+  'farm-fence': 'decorative',
+  'tavern-bar': 'seat',
+  'barstool': 'seat',
+  'ale-barrel': 'decorative',
+  'fireplace': 'decorative',
+  'dartboard': 'decorative',
+  'cabin-bed': 'seat',
+  'wood-stove': 'decorative',
+  'washbasin': 'decorative',
+  'rocking-chair': 'seat',
+  'chest': 'decorative',
+
 };
 
 // Groups asset variants that are the same "thing" in different skins/environments, for
@@ -198,6 +259,22 @@ export const propCategoryByAsset: Record<PropAssetId, string> = {
   'candle-stand': 'candle-stand',
   'offering-chest': 'offering-chest',
   window: 'window',
+  'hay-bale': 'hay-bale',
+  'feed-trough': 'feed-trough',
+  'well': 'well',
+  'scarecrow': 'scarecrow',
+  'farm-fence': 'farm-fence',
+  'tavern-bar': 'tavern-bar',
+  'barstool': 'barstool',
+  'ale-barrel': 'ale-barrel',
+  'fireplace': 'fireplace',
+  'dartboard': 'dartboard',
+  'cabin-bed': 'cabin-bed',
+  'wood-stove': 'wood-stove',
+  'washbasin': 'washbasin',
+  'rocking-chair': 'rocking-chair',
+  'chest': 'chest',
+
 };
 
 export const royalInquestAssets = {
@@ -249,7 +326,24 @@ export const royalInquestAssets = {
     // TODO(art): placeholder texture — swap for a real window sprite once sourced; see
     // docs/royal-inquest/authoring/board-rooms-props.human.md#asset-idea-not-yet-built.
     window: stonePlanter,
+    'hay-bale': hayBale,
+    'feed-trough': feedTrough,
+    'well': well,
+    'scarecrow': scarecrow,
+    'farm-fence': farmFence,
+    'tavern-bar': tavernBar,
+    'barstool': barstool,
+    'ale-barrel': aleBarrel,
+    'fireplace': fireplace,
+    'dartboard': dartboard,
+    'cabin-bed': cabinBed,
+    'wood-stove': woodStove,
+    'washbasin': washbasin,
+    'rocking-chair': rockingChair,
+    'chest': chest,
+
   },
+  marks: { manualCross, autoCross },
   tiles: {
     room: [roomTimber1, roomTimber2, roomTimber3],
     garden: [garden1, garden2, garden3],
@@ -258,8 +352,13 @@ export const royalInquestAssets = {
     hallway: [hallwayStone1],
     dungeon: [dungeonMasonry1],
     royalRoom: [royalMarble1],
+    farm: [farmDirt1, farmDirt2, farmDirt3],
+    tavern: [tavernPlanks1, tavernPlanks2, tavernPlanks3],
+    cabin: [cabinLog1, cabinLog2, cabinLog3],
+
   },
 } as const satisfies {
+  marks: { manualCross: string; autoCross: string };
   avatars: Record<AvatarAssetId, string>;
   props: Record<PropAssetId, string>;
   tiles: Record<TileEnvironment, readonly string[]>;

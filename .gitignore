@@ -10,3 +10,7 @@ coverage/
 /playwright-report/
 /test-results/
 /blob-report/
+
+# Generated image sources and Python caches
+tmp/royal-inquest-assets/
+__pycache__/

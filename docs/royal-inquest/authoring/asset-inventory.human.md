@@ -1,5 +1,12 @@
 # Asset inventory
 
+> **Rural expansion delivered:** the 2026-08-15 plan is implemented. Farm, tavern and cabin
+> now have 9 tiles and 15 props; both cross marks are images. Current totals: 18 avatars,
+> 40 prop ids / 39 files, 24 tiles / 10 environments, 2 marks (83 distinct files).
+> See [rural assets](rural-assets.human.md) for current details and validation.
+> The corresponding rural/mark entries in the historical backlog below are completed;
+> harbor, wall textures, armory and dedicated window art remain future work.
+
 > Human version. Agent version: [`asset-inventory.cave.md`](asset-inventory.cave.md).
 > Back to [Royal Inquest rules](../rules.human.md).
 

@@ -10,9 +10,9 @@ from PIL import Image, ImageChops
 
 
 def build_environment(
-    sources: list[Path], destinations: list[Path], size: int = 512, edge_band: int = 48
+    sources: list[Path], destinations: list[Path], size: int = 512, edge_band: int = 48, *, shared_edges: bool = False
 ) -> None:
-    """Build every source as an independently self-seamless tile."""
+    """Build seamless tiles, optionally sharing a feathered boundary across variants."""
 
     if not sources:
         raise ValueError("At least one source tile is required.")
@@ -23,9 +23,21 @@ def build_environment(
     if not 0 < edge_band <= size // 2:
         raise ValueError("edge_band must be greater than zero and at most half of size.")
 
+    common = None
     for source, destination in zip(sources, destinations):
         texture = _offset_wrapped_texture(source, size, edge_band)
         seamless = _feather_opposing_edges(texture, edge_band)
+        if shared_edges:
+            if common is None:
+                common = seamless.copy()
+            else:
+                mask = Image.new("L", (size, size))
+                mask.putdata([
+                    round(255 * _cosine_falloff(min(x, y, size - 1 - x, size - 1 - y), edge_band))
+                    if min(x, y, size - 1 - x, size - 1 - y) < edge_band else 0
+                    for y in range(size) for x in range(size)
+                ])
+                seamless = Image.composite(common, seamless, mask)
         destination.parent.mkdir(parents=True, exist_ok=True)
         seamless.save(destination, format="PNG")
 

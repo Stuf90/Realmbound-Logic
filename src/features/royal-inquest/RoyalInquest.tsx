@@ -235,9 +235,12 @@ export function RoyalInquest({ level, onBack }: { level: RoyalInquestLevel; onBa
                       <img className="cell-avatar" src={royalInquestAssets.avatars[skin.suspects[occupantSuspect.id]!.avatarId]} alt="" />
                     )}
                     {!occupantSuspect && isCrossed && (
-                      <span className={`cell-mark ${cellState}`} aria-hidden="true">
-                        {cellState === 'manual-cross' ? '×' : '·'}
-                      </span>
+                      <img
+                        className={`cell-mark ${cellState}`}
+                        src={cellState === 'manual-cross' ? royalInquestAssets.marks.manualCross : royalInquestAssets.marks.autoCross}
+                        alt=""
+                        aria-hidden="true"
+                      />
                     )}
                     {!occupantSuspect && !isCrossed && draftSuspects.length > 0 && (
                       <span className="cell-draft" aria-hidden="true">
